@@ -6,27 +6,33 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Start seeding ...");
 
-  // Create default super admin
-  const adminEmail = "admin@example.com";
-  const existingAdmin = await prisma.user.findUnique({
-    where: { email: adminEmail },
-  });
+  // Create default super admins
+  const admins = [
+    { name: "Wilter Econos", email: "wilter@econos.io" },
+    { name: "Ramon Econos", email: "ramon@econos.io" }
+  ];
 
-  if (!existingAdmin) {
-    const hashedPassword = await bcrypt.hash("admin123", 10);
-    
-    await prisma.user.create({
-      data: {
-        name: "Super Admin",
-        email: adminEmail,
-        password: hashedPassword,
-        role: "SUPER_ADMIN",
-      },
+  const defaultPassword = "Econos2026!";
+  const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+  for (const admin of admins) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: admin.email },
     });
-    
-    console.log(`Created default user: ${adminEmail} / admin123`);
-  } else {
-    console.log(`User ${adminEmail} already exists`);
+
+    if (!existingUser) {
+      await prisma.user.create({
+        data: {
+          name: admin.name,
+          email: admin.email,
+          password: hashedPassword,
+          role: "SUPER_ADMIN",
+        },
+      });
+      console.log(`Created super admin: ${admin.email} / ${defaultPassword}`);
+    } else {
+      console.log(`User ${admin.email} already exists`);
+    }
   }
 
   // Create base permissions
