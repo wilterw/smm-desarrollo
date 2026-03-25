@@ -138,7 +138,7 @@ export async function publishToYouTube(
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "video/*",
       },
-      body: videoBuffer,
+      body: new Uint8Array(videoBuffer),
     });
 
     const uploadData = await uploadRes.json();
