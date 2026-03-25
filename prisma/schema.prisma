@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          String    @default("VIEWER") // SUPER_ADMIN, ADMIN, EDITOR, VIEWER
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  userPermissions UserPermission[]
+  socialAccounts  SocialAccount[]
+  campaigns       Campaign[]
+}
+
+// NextAuth models
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  
+  access_token       String?  
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// SMM specific models
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "create_ads", "publish_facebook"
+  description String?
+  
+  userPermissions UserPermission[]
+}
+
+model UserPermission {
+  id           String     @id @default(cuid())
+  userId       String
+  permissionId String
+  
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+}
+
+model SocialAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String   // "facebook", "instagram", "youtube"
+  providerAccountId String
+  accessToken       String   
+  refreshToken      String?  
+  expiresAt         DateTime?
+  accountName       String?  // Display name from the platform
+  pageId            String?  // Facebook Page ID (for fanpage publishing)
+  pageName          String?  // Facebook Page display name
+  igAccountId       String?  // Instagram Business Account ID
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@unique([userId, provider])  // One account per platform per user
+}
+
+model Campaign {
+  id           String   @id @default(cuid())
+  name         String
+  userId       String
+  status       String   @default("draft") // "draft", "scheduled", "published", "failed"
+  hashtags     String?  // comma-separated hashtags, e.g. "#sale,#promo"
+  firstComment String?  // first comment to post after publishing
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ads       Ad[]
+}
+
+model Ad {
+  id           String   @id @default(cuid())
+  campaignId   String
+  title        String
+  description  String?
+  mediaType    String   // "image", "video"
+  mediaUrl     String?  
+  thumbnailUrl String?  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  publications Publication[]
+}
+
+model Publication {
+  id             String    @id @default(cuid())
+  adId           String
+  platform       String    // "facebook", "instagram", "youtube"
+  type           String    @default("organic") // "organic", "paid"
+  status         String    @default("pending") // "pending", "published", "failed"
+  destination    String?   // "feed", "fanpage", "both", "reels", "stories", "shorts", "ads"
+  externalPostId String?
+  publishedAt    DateTime?
+  errorLog       String?
+  
+  ad             Ad        @relation(fields: [adId], references: [id], onDelete: Cascade)
+  adBudget       AdBudget?
+}
+
+model AdBudget {
+  id             String      @id @default(cuid())
+  publicationId  String      @unique
+  dailyBudget    Float?
+  totalBudget    Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  targetAudience String?     // JSON string
+
+  publication    Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+}
