@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "npx prisma migrate deploy && next start",
+    "start": "npx prisma db push && next start",
     "lint": "eslint"
   },
   "dependencies": {
