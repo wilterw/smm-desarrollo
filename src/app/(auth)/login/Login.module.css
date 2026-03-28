@@ -106,3 +106,20 @@
   font-size: 0.875rem;
   text-align: center;
 }
+.footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legalLink {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.legalLink:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}

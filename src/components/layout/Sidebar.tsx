@@ -89,14 +89,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </nav>
 
       <div className={styles.footer}>
-        <div className={styles.footerAvatar}>
-          {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+        <div className={styles.legalLinks}>
+          <Link href="/privacy-policy" className={styles.legalLink} onClick={handleNavClick}>
+            Política de Privacidad
+          </Link>
         </div>
-        <div>
-          <div className={styles.footerName}>
-            {session?.user?.name || "Usuario"}
+        <div className={styles.userInfo}>
+          <div className={styles.footerAvatar}>
+            {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
           </div>
-          <div className={styles.footerEmail}>{session?.user?.email}</div>
+          <div>
+            <div className={styles.footerName}>
+              {session?.user?.name || "Usuario"}
+            </div>
+            <div className={styles.footerEmail}>{session?.user?.email}</div>
+          </div>
         </div>
       </div>
     </aside>

@@ -182,3 +182,33 @@ export async function createFacebookAdCampaign(
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Verifies and decodes a signed_request from Meta
+ * Used for Data Deletion Callbacks
+ */
+export function verifyAndDecodeSignedRequest(signedRequest: string): any {
+  if (!signedRequest) throw new Error("No signed_request provided");
+  
+  const [encodedSig, payload] = signedRequest.split('.');
+  const appSecret = process.env.FACEBOOK_APP_SECRET;
+  if (!appSecret) throw new Error("FACEBOOK_APP_SECRET not configured");
+
+  // Decode signature
+  const sig = Buffer.from(encodedSig.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('hex');
+  
+  // Create expected signature
+  // We use the Hmac from the crypto module
+  const crypto = require('crypto');
+  const expectedSig = crypto.createHmac('sha256', appSecret).update(payload).digest('hex');
+
+  if (sig !== expectedSig) {
+    console.error("Signature mismatch", { sig, expectedSig });
+    throw new Error('Invalid signature');
+  }
+
+  // Decode payload
+  const data = JSON.parse(Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
+  return data;
+}
+

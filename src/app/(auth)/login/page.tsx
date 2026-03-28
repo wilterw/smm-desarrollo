@@ -80,6 +80,11 @@ export default function LoginPage() {
             {loading ? "Iniciando sesión..." : "Ingresar"}
           </button>
         </form>
+        
+        <footer className={styles.footer}>
+          <a href="/privacy-policy" className={styles.legalLink}>Política de Privacidad</a>
+          <p>© {new Date().getFullYear()} Econos</p>
+        </footer>
       </div>
     </div>
   );
