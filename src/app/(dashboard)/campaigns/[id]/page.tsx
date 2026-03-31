@@ -103,7 +103,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           {campaign.ads.map(ad => (
             <div key={ad.id} className={`glass-panel ${styles.card}`}>
               {ad.mediaUrl && ad.mediaType === "image" && (
-                <img src={ad.mediaUrl.split(',')[0]} alt={ad.title} className={styles.adMedia} />
+                <img src={ad.mediaUrl.split(',')[0]} alt={ad.title} className={styles.cardMedia} />
               )}
               {ad.mediaUrl && ad.mediaType === "video" && (
                 <video src={ad.mediaUrl} className={styles.cardMediaVideo} muted />
