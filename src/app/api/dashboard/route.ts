@@ -24,7 +24,7 @@ export async function GET() {
       recentPublications,
       budgetSum,
       publicationStats,
-    ] = await Promise.all([
+    ] = (await Promise.all([
       // Counts
       prisma.campaign.count({ where: { userId } }),
       prisma.ad.count({ where: { campaign: { userId } } }),
@@ -79,7 +79,7 @@ export async function GET() {
           socialAccount: {
             select: { accountName: true, pageName: true }
           }
-        },
+        } as any,
         orderBy: { publishedAt: "desc" },
         take: 5,
       }),
@@ -100,23 +100,23 @@ export async function GET() {
           spend: true
         }
       }),
-    ]);
+    ])) as any[];
 
     // Format campaign statuses
     const campaignStatuses: Record<string, number> = {};
-    campaignsByStatus.forEach((s) => {
+    campaignsByStatus.forEach((s: any) => {
       campaignStatuses[s.status] = s._count.status;
     });
 
     // Format publication statuses
     const publicationStatuses: Record<string, number> = {};
-    publicationsByStatus.forEach((s) => {
+    publicationsByStatus.forEach((s: any) => {
       publicationStatuses[s.status] = s._count.status;
     });
 
     // Format platform distribution
     const platformDistribution: Record<string, number> = {};
-    publicationsByPlatform.forEach((p) => {
+    publicationsByPlatform.forEach((p: any) => {
       platformDistribution[p.platform] = p._count.platform;
     });
 
