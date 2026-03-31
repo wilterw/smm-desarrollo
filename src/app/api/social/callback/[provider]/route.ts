@@ -94,7 +94,7 @@ export async function GET(
         maxInstagramAccounts: true,
         maxYouTubeAccounts: true,
         socialAccounts: true,
-      }
+      } as any
     }) as any;
 
     if (!user) {
