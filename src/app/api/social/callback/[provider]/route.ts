@@ -105,15 +105,29 @@ export async function GET(
     const platformAccounts = (user.socialAccounts || []).filter((a: any) => a.provider === provider);
     const existingThisAccount = platformAccounts.find((a: any) => a.providerAccountId === providerAccountId);
 
-    // If it's a new account and user already reached the limit, block it
     if (!existingThisAccount) {
-      let limit = 1;
-      if (provider === "facebook") limit = user.maxFacebookAccounts || 1;
-      else if (provider === "instagram") limit = user.maxInstagramAccounts || 1;
-      else if (provider === "youtube") limit = user.maxYouTubeAccounts || 1;
+      if (provider === "facebook") {
+        const fbCount = (user.socialAccounts || []).filter((a: any) => a.provider === "facebook").length;
+        const fbLimit = user.maxFacebookAccounts || 1;
+        if (fbCount >= fbLimit) {
+          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${fbLimit} cuentas de Facebook.`, req.url));
+        }
 
-      if (platformAccounts.length >= limit) {
-        return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${limit} cuentas para ${provider}.`, req.url));
+        // If this connection includes an Instagram account, check IG limit too
+        if (igAccountId) {
+          const igCount = (user.socialAccounts || []).filter((a: any) => a.igAccountId !== null).length;
+          const igLimit = user.maxInstagramAccounts || 1;
+          if (igCount >= igLimit) {
+            // Option: We could still allow FB but strip IG, but for now we block as requested
+            return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${igLimit} cuentas de Instagram.`, req.url));
+          }
+        }
+      } else if (provider === "youtube") {
+        const ytCount = (user.socialAccounts || []).filter((a: any) => a.provider === "youtube").length;
+        const ytLimit = user.maxYouTubeAccounts || 1;
+        if (ytCount >= ytLimit) {
+          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${ytLimit} cuentas de YouTube.`, req.url));
+        }
       }
     }
 
