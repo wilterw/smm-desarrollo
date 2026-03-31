@@ -17,8 +17,10 @@ type Publication = {
 type Ad = {
   id: string;
   title: string;
+  description?: string;
   mediaType: string;
   mediaUrl: string | null;
+  linkUrl?: string;
   createdAt: string;
   publications: Publication[];
 };
@@ -36,6 +38,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
+  const [previewAd, setPreviewAd] = useState<Ad | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -57,7 +61,26 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const getStatusClass = (status: string) => {
     if (status === "published") return styles.bgSuccess;
     if (status === "failed") return styles.bgDanger;
+    if (status === "draft") return styles.statusDraft;
     return styles.bgWarning;
+  };
+
+  const handleDeleteAd = async (adId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este anuncio? Esta acción no se puede deshacer.")) return;
+    setDeleting(adId);
+    try {
+      const res = await fetch(`/api/ads/${adId}`, { method: "DELETE" });
+      if (res.ok) {
+        setCampaign(prev => prev ? { ...prev, ads: prev.ads.filter(a => a.id !== adId) } : prev);
+        setPreviewAd(null);
+      } else {
+        alert("Error al eliminar el anuncio");
+      }
+    } catch {
+      alert("Error de conexión");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   if (loading) return <div style={{ padding: "2rem" }}>Cargando detalles de campaña...</div>;
@@ -101,7 +124,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       ) : (
         <div className={styles.grid}>
           {campaign.ads.map(ad => (
-            <div key={ad.id} className={`glass-panel ${styles.card}`}>
+            <div 
+              key={ad.id} 
+              className={`glass-panel ${styles.card}`}
+              onClick={() => setPreviewAd(ad)}
+            >
               {ad.mediaUrl && ad.mediaType === "image" && (
                 <img src={ad.mediaUrl.split(',')[0]} alt={ad.title} className={styles.cardMedia} />
               )}
@@ -125,12 +152,83 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
                   )}
                 </div>
                 <div className={styles.cardActions}>
-                  <button className={styles.iconBtn} onClick={() => router.push(`/ads/${ad.id}`)}>✏️ Editar</button>
-                  <button className={`${styles.iconBtn} ${styles.btnPrimary}`} onClick={() => router.push(`/ads/${ad.id}/publish`)}>🚀 Publicar</button>
+                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setPreviewAd(ad); }}>👁️ Ver</button>
+                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); router.push(`/ads/${ad.id}`); }}>✏️ Editar</button>
+                  <button className={`${styles.iconBtn} ${styles.btnPrimary}`} onClick={(e) => { e.stopPropagation(); router.push(`/ads/${ad.id}/publish`); }}>🚀 Publicar</button>
+                  <button 
+                    className={`${styles.iconBtn} ${styles.btnDanger}`} 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteAd(ad.id); }} 
+                    disabled={deleting === ad.id}
+                  >
+                    {deleting === ad.id ? "..." : "🗑️"}
+                  </button>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewAd && (
+        <div className={styles.modalOverlay} onClick={() => setPreviewAd(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.modalClose} onClick={() => setPreviewAd(null)}>✕</button>
+            
+            {previewAd.mediaUrl && previewAd.mediaType === "image" && (
+              <img src={previewAd.mediaUrl.split(',')[0]} alt={previewAd.title} className={styles.modalImage} />
+            )}
+            {previewAd.mediaUrl && previewAd.mediaType === "video" && (
+              <video src={previewAd.mediaUrl} className={styles.modalImage} controls />
+            )}
+            {!previewAd.mediaUrl && (
+              <div className={styles.modalImagePlaceholder}>🖼️</div>
+            )}
+
+            <div className={styles.modalBody}>
+              <h3 className={styles.modalTitle}>{previewAd.title}</h3>
+              {previewAd.description && (
+                <p className={styles.modalDescription}>{previewAd.description}</p>
+              )}
+              {previewAd.linkUrl && (
+                <a href={previewAd.linkUrl} target="_blank" rel="noopener noreferrer" className={styles.modalLink}>
+                  🔗 {previewAd.linkUrl}
+                </a>
+              )}
+
+              <div className={styles.modalMeta}>
+                <span>📅 {new Date(previewAd.createdAt).toLocaleDateString()}</span>
+                <span>📁 {previewAd.mediaType === "image" ? "Imagen" : "Video"}</span>
+                <span>📢 {previewAd.publications.length} publicaciones</span>
+              </div>
+
+              {previewAd.publications.length > 0 && (
+                <div className={styles.modalPubs}>
+                  {previewAd.publications.map(pub => (
+                    <span key={pub.id} className={`${styles.pubBadge} ${pub.status === "published" ? styles.bgSuccess : styles.bgWarning}`}>
+                      {pub.platform} • {pub.destination || pub.type} • {pub.status}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className={styles.modalActions}>
+                <button className={styles.modalBtn} onClick={() => { setPreviewAd(null); router.push(`/ads/${previewAd.id}`); }}>
+                  ✏️ Editar
+                </button>
+                <button className={styles.modalBtn} onClick={() => { setPreviewAd(null); router.push(`/ads/${previewAd.id}/publish`); }}>
+                  🚀 Publicar
+                </button>
+                <button 
+                  className={`${styles.modalBtn} ${styles.modalBtnDanger}`} 
+                  onClick={() => handleDeleteAd(previewAd.id)}
+                  disabled={deleting === previewAd.id}
+                >
+                  {deleting === previewAd.id ? "Eliminando..." : "🗑️ Eliminar"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
