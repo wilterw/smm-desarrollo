@@ -487,8 +487,12 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 return (
                   <div key={pKey} className={styles.platformGroup}>
                     <h4 className={styles.platformGroupTitle}>
-                      <img src={`/images/${pKey}.png`} alt={pKey} style={{ width: "20px", height: "20px" }} />
-                      {pKey.charAt(0) + pKey.slice(1)}
+                      <img 
+                        src={`/images/${pKey.toLowerCase()}.png`} 
+                        alt={pKey} 
+                        style={{ width: "20px", height: "18px", objectFit: "contain" }} 
+                      />
+                      {pKey.charAt(0).toUpperCase() + pKey.slice(1)}
                     </h4>
                     <div className={styles.accountSelectionGrid}>
                       {platformAccounts.map(acc => (

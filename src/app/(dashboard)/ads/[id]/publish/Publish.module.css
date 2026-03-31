@@ -2,6 +2,7 @@
   padding: var(--spacing-6);
   max-width: 1000px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 .backLink {
@@ -36,6 +37,7 @@
   margin-top: 3rem;
   margin-bottom: 4rem;
   position: relative;
+  width: 100%;
 }
 .stepper::before {
   content: "";
@@ -311,4 +313,27 @@
 }
 .summaryValue {
   font-weight: 500;
+}
+/* Responsive Tweaks */
+@media (max-width: 768px) {
+  .stepper {
+    margin-bottom: 2rem;
+  }
+  .stepLabel {
+    display: none;
+  }
+  .stepCircle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  .accountSelectionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .accountSelectionGrid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
 }
