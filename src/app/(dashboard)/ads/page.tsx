@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./Ads.module.css";
+import React from "react";
 
 type Ad = {
   id: string;
@@ -12,6 +13,7 @@ type Ad = {
   mediaType: string;
   mediaUrl: string;
   thumbnailUrl: string;
+  linkUrl?: string;
   createdAt: string;
   campaign: { name: string };
 };
@@ -22,6 +24,7 @@ export default function AdsPage() {
   const [loading, setLoading] = useState(true);
   const [viewingAd, setViewingAd] = useState<Ad | null>(null);
   const [viewingIndex, setViewingIndex] = useState(0);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchAds = async () => {
     setLoading(true);
@@ -36,9 +39,21 @@ export default function AdsPage() {
   useEffect(() => { fetchAds(); }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar este anuncio?")) return;
-    await fetch(`/api/ads/${id}`, { method: "DELETE" });
-    await fetchAds();
+    if (!confirm("¿Estás seguro de que deseas eliminar este anuncio? Esta acción no se puede deshacer.")) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/ads/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setAds(prev => prev.filter(a => a.id !== id));
+        setViewingAd(null);
+      } else {
+        alert("Error al eliminar el anuncio");
+      }
+    } catch {
+      alert("Error de conexión");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   if (loading) return <div>Cargando anuncios...</div>;
@@ -60,7 +75,11 @@ export default function AdsPage() {
       ) : (
         <div className={styles.grid}>
           {ads.map(ad => (
-            <div key={ad.id} className={`glass-panel ${styles.card}`}>
+            <div 
+              key={ad.id} 
+              className={`glass-panel ${styles.card}`}
+              onClick={() => { setViewingAd(ad); setViewingIndex(0); }}
+            >
               {ad.mediaUrl && ad.mediaType === "image" && (
                 <img src={ad.mediaUrl.split(',')[0]} alt={ad.title} className={styles.cardMedia} />
               )}
@@ -78,9 +97,16 @@ export default function AdsPage() {
                   <span className={styles.mediaBadge}>{ad.mediaType}</span>
                 </div>
                 <div className={styles.cardActions}>
-                  <button className={styles.iconBtn} title="Ver" onClick={() => { setViewingAd(ad); setViewingIndex(0); }}>👁️ Ver</button>
-                  <button className={styles.iconBtn} title="Editar" onClick={() => router.push(`/ads/${ad.id}`)}>✏️ Editar</button>
-                  <button className={`${styles.iconBtn} ${styles.iconBtnDanger}`} title="Eliminar" onClick={() => handleDelete(ad.id)}>🗑️ Eliminar</button>
+                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setViewingAd(ad); setViewingIndex(0); }}>👁️ Ver</button>
+                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); router.push(`/ads/${ad.id}`); }}>✏️ Editar</button>
+                  <button className={`${styles.iconBtn} ${styles.iconBtnPublish}`} onClick={(e) => { e.stopPropagation(); router.push(`/ads/${ad.id}/publish`); }}>🚀 Publicar</button>
+                  <button 
+                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`} 
+                    onClick={(e) => { e.stopPropagation(); handleDelete(ad.id); }}
+                    disabled={deleting === ad.id}
+                  >
+                    {deleting === ad.id ? "..." : "🗑️"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -88,13 +114,12 @@ export default function AdsPage() {
         </div>
       )}
 
+      {/* Preview Modal */}
       {viewingAd && (
         <div className={styles.modalOverlay} onClick={() => setViewingAd(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Vista Previa del Anuncio</h3>
-              <button className={styles.modalClose} onClick={() => setViewingAd(null)}>✕</button>
-            </div>
+            <button className={styles.modalClose} onClick={() => setViewingAd(null)}>✕</button>
+
             {viewingAd.mediaUrl && viewingAd.mediaType === "image" && (() => {
               const urls = viewingAd.mediaUrl.split(',');
               const currentUrl = urls[viewingIndex] || urls[0];
@@ -105,11 +130,11 @@ export default function AdsPage() {
                   <img src={currentUrl} alt={viewingAd.title} className={styles.modalMedia} />
                   {urls.length > 1 && (
                     <>
-                      <button type="button" onClick={prev} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.6)", color: "white", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>◀</button>
-                      <button type="button" onClick={next} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.6)", color: "white", border: "none", borderRadius: "50%", width: 40, height: 40, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>▶</button>
-                      <div style={{ position: "absolute", bottom: 15, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 8 }}>
+                      <button type="button" onClick={prev} className={styles.carouselBtn} style={{ left: 10 }}>◀</button>
+                      <button type="button" onClick={next} className={styles.carouselBtn} style={{ right: 10 }}>▶</button>
+                      <div className={styles.carouselDots}>
                         {urls.map((_: any, i: number) => (
-                          <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: i === viewingIndex ? "var(--accent-primary)" : "rgba(255,255,255,0.6)", transition: "all 0.2s" }} />
+                          <div key={i} className={`${styles.carouselDot} ${i === viewingIndex ? styles.carouselDotActive : ""}`} />
                         ))}
                       </div>
                     </>
@@ -120,12 +145,38 @@ export default function AdsPage() {
             {viewingAd.mediaUrl && viewingAd.mediaType === "video" && (
               <video src={viewingAd.mediaUrl} controls className={styles.modalMedia} style={{width: "100%"}} />
             )}
+            {!viewingAd.mediaUrl && (
+              <div className={styles.modalMediaPlaceholder}>🖼️</div>
+            )}
+
             <div className={styles.modalBody}>
               <h3 className={styles.modalTitle}>{viewingAd.title}</h3>
               {viewingAd.description && <p className={styles.modalDesc}>{viewingAd.description}</p>}
+              {viewingAd.linkUrl && (
+                <a href={viewingAd.linkUrl} target="_blank" rel="noopener noreferrer" className={styles.modalLink}>
+                  🔗 {viewingAd.linkUrl}
+                </a>
+              )}
               <div className={styles.modalMeta}>
                 <span>📁 {viewingAd.campaign.name}</span>
                 <span className={styles.mediaBadge}>{viewingAd.mediaType}</span>
+                <span>📅 {new Date(viewingAd.createdAt).toLocaleDateString()}</span>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button className={styles.modalBtn} onClick={() => { setViewingAd(null); router.push(`/ads/${viewingAd.id}`); }}>
+                  ✏️ Editar
+                </button>
+                <button className={styles.modalBtn} onClick={() => { setViewingAd(null); router.push(`/ads/${viewingAd.id}/publish`); }}>
+                  🚀 Publicar
+                </button>
+                <button 
+                  className={`${styles.modalBtn} ${styles.modalBtnDanger}`} 
+                  onClick={() => handleDelete(viewingAd.id)}
+                  disabled={deleting === viewingAd.id}
+                >
+                  {deleting === viewingAd.id ? "Eliminando..." : "🗑️ Eliminar"}
+                </button>
               </div>
             </div>
           </div>
