@@ -480,9 +480,12 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             <p className={styles.subtitle} style={{ marginBottom: "1.5rem" }}>Puedes seleccionar múltiples cuentas de la misma plataforma.</p>
             
             <div className={styles.platformSections}>
-              {["facebook", "instagram", "youtube"].map(pKey => {
-                const platformAccounts = socialAccounts.filter(a => a.provider === pKey);
-                if (platformAccounts.length === 0) return null;
+              {[
+                { key: "facebook", label: "Facebook", connectProvider: "facebook" },
+                { key: "instagram", label: "Instagram", connectProvider: "facebook" },
+                { key: "youtube", label: "YouTube", connectProvider: "youtube" }
+              ].map(({ key: pKey, label, connectProvider }) => {
+                const platformAccounts = socialAccounts.filter((a: any) => a.provider === pKey);
 
                 return (
                   <div key={pKey} className={styles.platformGroup}>
@@ -490,41 +493,46 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                       <img 
                         src={`/images/${pKey.toLowerCase()}.png`} 
                         alt={pKey} 
-                        style={{ width: "20px", height: "18px", objectFit: "contain" }} 
+                        style={{ width: "24px", height: "24px", objectFit: "contain" }} 
                       />
-                      {pKey.charAt(0).toUpperCase() + pKey.slice(1)}
+                      {label}
+                      {platformAccounts.length > 0 && (
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 400 }}>
+                          ({platformAccounts.length} conectada{platformAccounts.length > 1 ? "s" : ""})
+                        </span>
+                      )}
                     </h4>
-                    <div className={styles.accountSelectionGrid}>
-                      {platformAccounts.map(acc => (
-                        <div 
-                          key={acc.id} 
-                          className={`${styles.accountSelectionCard} ${selectedAccountIds.includes(acc.id) ? styles.accountSelectionCardActive : ""}`}
-                          onClick={() => toggleAccountSelection(acc.id, pKey)}
-                        >
-                          <div className={styles.accountCheck}>
-                            {selectedAccountIds.includes(acc.id) ? "✓" : ""}
+
+                    {platformAccounts.length > 0 ? (
+                      <div className={styles.accountSelectionGrid}>
+                        {platformAccounts.map((acc: any) => (
+                          <div 
+                            key={acc.id} 
+                            className={`${styles.accountSelectionCard} ${selectedAccountIds.includes(acc.id) ? styles.accountSelectionCardActive : ""}`}
+                            onClick={() => toggleAccountSelection(acc.id, pKey)}
+                          >
+                            <div className={styles.accountCheck}>
+                              {selectedAccountIds.includes(acc.id) ? "✓" : ""}
+                            </div>
+                            <div className={styles.accountInfo}>
+                              <div className={styles.accountName}>{acc.accountName || "Cuenta conectada"}</div>
+                              <div className={styles.accountHandle}>{acc.provider === "facebook" ? (acc.pageName || "Perfil") : (acc.accountName || acc.providerAccountId)}</div>
+                            </div>
                           </div>
-                          <div className={styles.accountInfo}>
-                            <div className={styles.accountName}>{acc.accountName || "Cuenta conectada"}</div>
-                            <div className={styles.accountHandle}>{acc.provider === "facebook" ? (acc.pageName || "Perfil") : (acc.accountName || acc.providerAccountId)}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className={styles.platformEmpty}>
+                        <span>No hay cuentas de {label} conectadas</span>
+                        <button type="button" className={styles.btnConnectMini} onClick={() => handleConnect(connectProvider)}>
+                          + Conectar {label}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
-
-            {socialAccounts.length === 0 && (
-              <div className={styles.noAccountsAlert}>
-                <p>No tienes cuentas conectadas todavía.</p>
-                <div style={{ display: "flex", gap: "10px", marginTop: "1rem" }}>
-                  <button type="button" className={styles.btnConnectMini} onClick={() => handleConnect("facebook")}>Conectar Facebook</button>
-                  <button type="button" className={styles.btnConnectMini} onClick={() => handleConnect("youtube")}>Conectar YouTube</button>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

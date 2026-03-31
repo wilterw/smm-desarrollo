@@ -155,6 +155,7 @@
 .accountHandle { font-size: 0.75rem; color: var(--text-muted); }
 
 .noAccountsAlert { padding: 2rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); text-align: center; color: var(--text-muted); }
+.platformEmpty { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); border-radius: var(--radius-md); color: var(--text-muted); font-size: 0.85rem; }
 .btnConnectMini { padding: 0.5rem 1rem; background: var(--bg-hover); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btnConnectMini:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
 
