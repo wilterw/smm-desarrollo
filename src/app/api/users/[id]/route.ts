@@ -17,7 +17,7 @@ export async function PUT(
 
   try {
     const body = await req.json();
-    const { name, email, password, role } = body;
+    const { name, email, password, role, maxFacebookAccounts, maxInstagramAccounts, maxYouTubeAccounts } = body;
     
     const existingUser = await prisma.user.findUnique({
       where: { id },
@@ -37,6 +37,10 @@ export async function PUT(
     const dataToUpdate: any = { name, role };
     if (email) dataToUpdate.email = email.toLowerCase();
     if (password) dataToUpdate.password = await bcrypt.hash(password, 10);
+    
+    if (maxFacebookAccounts !== undefined) dataToUpdate.maxFacebookAccounts = maxFacebookAccounts;
+    if (maxInstagramAccounts !== undefined) dataToUpdate.maxInstagramAccounts = maxInstagramAccounts;
+    if (maxYouTubeAccounts !== undefined) dataToUpdate.maxYouTubeAccounts = maxYouTubeAccounts;
 
     const updatedUser = await prisma.user.update({
       where: { id },

@@ -16,42 +16,23 @@ export async function GET(
       where: { id },
       include: {
         ads: {
-          include: { publications: true },
-          orderBy: { createdAt: "desc" },
-        },
-      },
+          include: {
+            publications: {
+              include: { adBudget: true }
+            }
+          },
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
 
-    if (!campaign) {
+    if (!campaign || campaign.userId !== session.user.id) {
       return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
 
     return NextResponse.json(campaign);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch campaign" }, { status: 500 });
-  }
-}
-
-export async function PUT(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
-    const body = await req.json();
-    const { name, status } = body;
-
-    const campaign = await prisma.campaign.update({
-      where: { id },
-      data: { name, status },
-    });
-
-    return NextResponse.json(campaign);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update campaign" }, { status: 500 });
   }
 }
 
@@ -64,8 +45,13 @@ export async function DELETE(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const campaign = await prisma.campaign.findUnique({ where: { id } });
+    if (!campaign || campaign.userId !== session.user.id) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+
     await prisma.campaign.delete({ where: { id } });
-    return NextResponse.json({ message: "Campaign deleted" });
+    return NextResponse.json({ message: "Deleted" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete campaign" }, { status: 500 });
   }

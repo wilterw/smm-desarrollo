@@ -9,6 +9,9 @@ type User = {
   name: string;
   email: string;
   role: string;
+  maxFacebookAccounts: number;
+  maxInstagramAccounts: number;
+  maxYouTubeAccounts: number;
   createdAt: string;
 };
 
@@ -26,7 +29,15 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   
   // Form state
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "VIEWER" });
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    email: "", 
+    password: "", 
+    role: "VIEWER",
+    maxFacebookAccounts: 1,
+    maxInstagramAccounts: 1,
+    maxYouTubeAccounts: 1
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -51,9 +62,25 @@ export default function UsersPage() {
   const openModal = (user: User | null = null) => {
     setEditingUser(user);
     if (user) {
-      setFormData({ name: user.name || "", email: user.email, password: "", role: user.role });
+      setFormData({ 
+        name: user.name || "", 
+        email: user.email, 
+        password: "", 
+        role: user.role,
+        maxFacebookAccounts: user.maxFacebookAccounts || 1,
+        maxInstagramAccounts: user.maxInstagramAccounts || 1,
+        maxYouTubeAccounts: user.maxYouTubeAccounts || 1
+      });
     } else {
-      setFormData({ name: "", email: "", password: "", role: "VIEWER" });
+      setFormData({ 
+        name: "", 
+        email: "", 
+        password: "", 
+        role: "VIEWER",
+        maxFacebookAccounts: 1,
+        maxInstagramAccounts: 1,
+        maxYouTubeAccounts: 1
+      });
     }
     setError("");
     setIsModalOpen(true);
@@ -145,6 +172,7 @@ export default function UsersPage() {
               <th className={styles.th}>Nombre</th>
               <th className={styles.th}>Email</th>
               <th className={styles.th}>Rol</th>
+              <th className={styles.th}>Límites (FB/IG/YT)</th>
               <th className={styles.th}>Fecha Creación</th>
               {isAdmin && <th className={styles.th}>Acciones</th>}
             </tr>
@@ -157,6 +185,11 @@ export default function UsersPage() {
                 </td>
                 <td className={styles.td}>{user.email}</td>
                 <td className={styles.td}>{getRoleBadge(user.role)}</td>
+                <td className={styles.td}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                    {user.maxFacebookAccounts} FB / {user.maxInstagramAccounts} IG / {user.maxYouTubeAccounts} YT
+                  </div>
+                </td>
                 <td className={styles.td}>{new Date(user.createdAt).toLocaleDateString()}</td>
                 {isAdmin && (
                   <td className={styles.td}>
@@ -230,18 +263,47 @@ export default function UsersPage() {
                   required={!editingUser} 
                 />
               </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Rol de Sistema</label>
+                  <select 
+                    className={styles.select}
+                    value={formData.role}
+                    onChange={(e) => setFormData({...formData, role: e.target.value})}
+                  >
+                    {ROLES.map(r => (
+                      <option key={r} value={r} style={{ color: "var(--bg-primary)" }}>{r}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Rol de Sistema</label>
-                <select 
-                  className={styles.select}
-                  value={formData.role}
-                  onChange={(e) => setFormData({...formData, role: e.target.value})}
-                >
-                  {ROLES.map(r => (
-                    <option key={r} value={r} style={{ color: "var(--bg-primary)" }}>{r}</option>
-                  ))}
-                </select>
+              <div style={{ padding: "1rem", background: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
+                <h4 style={{ fontSize: "0.85rem", marginBottom: "0.75rem", color: "var(--text-secondary)" }}>Límites de Cuentas Conectadas</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label} style={{ fontSize: "0.7rem" }}>Facebook</label>
+                    <input 
+                      type="number" min="1" max="99" className={styles.input} 
+                      value={formData.maxFacebookAccounts} 
+                      onChange={(e) => setFormData({...formData, maxFacebookAccounts: Number(e.target.value)})} 
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label} style={{ fontSize: "0.7rem" }}>Instagram</label>
+                    <input 
+                      type="number" min="1" max="99" className={styles.input} 
+                      value={formData.maxInstagramAccounts} 
+                      onChange={(e) => setFormData({...formData, maxInstagramAccounts: Number(e.target.value)})} 
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label} style={{ fontSize: "0.7rem" }}>YouTube</label>
+                    <input 
+                      type="number" min="1" max="99" className={styles.input} 
+                      value={formData.maxYouTubeAccounts} 
+                      onChange={(e) => setFormData({...formData, maxYouTubeAccounts: Number(e.target.value)})} 
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className={styles.modalFooter}>

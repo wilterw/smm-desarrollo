@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { campaignId, title, description, mediaType, mediaUrl, thumbnailUrl, hashtags, firstComment } = body;
+    const { campaignId, title, description, mediaType, mediaUrl, thumbnailUrl, hashtags, firstComment, linkUrl } = body;
 
     if (!campaignId || !title || !mediaType) {
       return NextResponse.json({ error: "Missing required fields (campaignId, title, mediaType)" }, { status: 400 });
@@ -61,11 +61,13 @@ export async function POST(req: NextRequest) {
         mediaType,
         mediaUrl: mediaUrl || null,
         thumbnailUrl: thumbnailUrl || null,
+        linkUrl: linkUrl || null,
       },
     });
 
     return NextResponse.json(ad, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to create ad" }, { status: 500 });
+  } catch (error: any) {
+    console.error("POST /api/ads error:", error?.message, error);
+    return NextResponse.json({ error: error?.message || "Failed to create ad" }, { status: 500 });
   }
 }

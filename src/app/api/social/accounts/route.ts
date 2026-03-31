@@ -18,6 +18,7 @@ export async function GET() {
         id: true,
         provider: true,
         providerAccountId: true,
+        accountName: true,
         expiresAt: true,
       },
     });

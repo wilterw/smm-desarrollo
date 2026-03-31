@@ -6,7 +6,7 @@
  * User must connect their Facebook account via OAuth to get an access token
  */
 
-const FB_GRAPH_URL = "https://graph.facebook.com/v19.0";
+const FB_GRAPH_URL = "https://graph.facebook.com/v24.0";
 
 interface FacebookPublishResult {
   success: boolean;
@@ -30,7 +30,7 @@ export function getFacebookOAuthUrl(redirectUri: string): string {
     "business_management"
   ].join(",");
 
-  return `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`;
+  return `https://www.facebook.com/v24.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`;
 }
 
 /**
@@ -211,4 +211,193 @@ export function verifyAndDecodeSignedRequest(signedRequest: string): any {
   const data = JSON.parse(Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
   return data;
 }
+
+/**
+ * Creates an Ad Set within a Campaign
+ * Handles targeting (country, age, gender, interests)
+ */
+export async function createFacebookAdSet(
+  userAccessToken: string,
+  adAccountId: string,
+  campaignId: string,
+  name: string,
+  dailyBudget: number,
+  targeting: {
+    country: string;
+    ageMin: number;
+    ageMax: number;
+    gender: string; // "all", "male", "female"
+    interests?: string[];
+  }
+): Promise<FacebookPublishResult> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adsets`;
+    
+    // Process gender to Facebook's numeric format (0=all, 1=male, 2=female)
+    const genderMap: Record<string, number[]> = {
+      "all": [1, 2],
+      "male": [1],
+      "female": [2]
+    };
+
+    const body: any = {
+      name,
+      campaign_id: campaignId,
+      daily_budget: Math.round(dailyBudget * 100), // Meta expects cents
+      billing_event: "IMPRESSIONS",
+      optimization_goal: "REACH",
+      bid_strategy: "LOWEST_COST_WITHOUT_CAP",
+      targeting: {
+        geo_locations: { countries: [targeting.country] },
+        age_min: targeting.ageMin,
+        age_max: targeting.ageMax,
+        genders: genderMap[targeting.gender] || [1, 2],
+      },
+      status: "PAUSED",
+      access_token: userAccessToken,
+    };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    if (data.error) return { success: false, error: data.error.message };
+    return { success: true, postId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Creates an Ad Creative
+ */
+export async function createFacebookAdCreative(
+  userAccessToken: string,
+  adAccountId: string,
+  pageId: string,
+  name: string,
+  message: string,
+  imageUrl?: string,
+  videoUrl?: string
+): Promise<FacebookPublishResult> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
+    
+    const object_story_spec: any = {
+      page_id: pageId,
+      link_data: {
+        message,
+        link: imageUrl || "https://econos.es", // Placeholder link if none provided
+        image_hash: "", // In a real scenario, you'd upload and get an image hash
+        caption: name,
+      }
+    };
+
+    // Note: This is a simplified version. Real ads often require uploading media 
+    // to get hashes before creating the creative.
+    const body: any = {
+      name,
+      object_story_spec,
+      access_token: userAccessToken,
+    };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    if (data.error) return { success: false, error: data.error.message };
+    return { success: true, postId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Creates the final Ad connecting AdSet and Creative
+ */
+export async function createFacebookAd(
+  userAccessToken: string,
+  adAccountId: string,
+  adSetId: string,
+  creativeId: string,
+  name: string
+): Promise<FacebookPublishResult> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adAccountId}/ads`;
+    
+    const body: any = {
+      name,
+      adset_id: adSetId,
+      creative: { creative_id: creativeId },
+      status: "PAUSED",
+      access_token: userAccessToken,
+    };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    if (data.error) return { success: false, error: data.error.message };
+    return { success: true, postId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Fetch insights for an organic post
+ */
+export async function getFacebookPostInsights(pagePostId: string, accessToken: string) {
+  try {
+    // Metrics: impressions, reach, engagement
+    const endpoint = `${FB_GRAPH_URL}/${pagePostId}/insights?metric=post_impressions_unique,post_engaged_users,post_reactions_by_type_total&access_token=${accessToken}`;
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    
+    if (data.error) throw new Error(data.error.message);
+    
+    // Extract values
+    const reach = data.data.find((m: any) => m.name === "post_impressions_unique")?.values[0]?.value || 0;
+    const engagement = data.data.find((m: any) => m.name === "post_engaged_users")?.values[0]?.value || 0;
+    
+    return { success: true, reach, engagement, impressions: reach * 1.2 }; // Estimated impressions
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Fetch insights for a paid ad
+ */
+export async function getFacebookAdInsights(adId: string, accessToken: string) {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adId}/insights?fields=impressions,reach,clicks,spend,cpc,ctr&access_token=${accessToken}`;
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    
+    if (data.error) throw new Error(data.error.message);
+    if (!data.data || data.data.length === 0) return { success: true, reach: 0, clicks: 0, impressions: 0, spend: 0 };
+    
+    const stats = data.data[0];
+    return {
+      success: true,
+      reach: parseInt(stats.reach || 0),
+      clicks: parseInt(stats.clicks || 0),
+      impressions: parseInt(stats.impressions || 0),
+      spend: parseFloat(stats.spend || 0),
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 

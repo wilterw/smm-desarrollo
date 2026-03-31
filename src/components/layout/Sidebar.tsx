@@ -37,7 +37,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
       <div className={styles.logoContainer}>
-        <Image src="/images/logo-smm.png" alt="SMM Logo" width={140} height={40} className={styles.smmLogo} priority />
+        <Image src="/images/logo-smm.png" alt="SMM Logo" width={210} height={60} className={styles.smmLogo} priority />
         {onClose && (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close menu">
             ✕
@@ -105,6 +105,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className={styles.footerEmail}>{session?.user?.email}</div>
           </div>
         </div>
+        <div className={styles.versionTag}>v1.0</div>
       </div>
     </aside>
   );

@@ -10,6 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -20,6 +21,11 @@ model User {
   role          String    @default("VIEWER") // SUPER_ADMIN, ADMIN, EDITOR, VIEWER
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // Limits per platform (Phase 11)
+  maxFacebookAccounts   Int @default(1)
+  maxInstagramAccounts  Int @default(1)
+  maxYouTubeAccounts    Int @default(1)
 
   accounts      Account[]
   sessions      Session[]
@@ -98,9 +104,9 @@ model SocialAccount {
   igAccountId       String?  // Instagram Business Account ID
   
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publications      Publication[]
 
   @@unique([provider, providerAccountId])
-  @@unique([userId, provider])  // One account per platform per user
 }
 
 model Campaign {
@@ -125,6 +131,7 @@ model Ad {
   mediaType    String   // "image", "video"
   mediaUrl     String?  
   thumbnailUrl String?  
+  linkUrl      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
@@ -143,7 +150,16 @@ model Publication {
   publishedAt    DateTime?
   errorLog       String?
   
+  // Analytics fields
+  clicks         Int       @default(0)
+  impressions    Int       @default(0)
+  reach          Int       @default(0)
+  spend          Float     @default(0)
+  insightsUpdatedAt DateTime?
+  
   ad             Ad        @relation(fields: [adId], references: [id], onDelete: Cascade)
+  socialAccountId String?  // ID of the specific account used (Phase 11)
+  socialAccount  SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
   adBudget       AdBudget?
 }
 
@@ -154,7 +170,16 @@ model AdBudget {
   totalBudget    Float?
   startDate      DateTime?
   endDate        DateTime?
-  targetAudience String?     // JSON string
+  targetAudience String?     // JSON string (country, age, gender, interests)
 
   publication    Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
 }
+
+model DataDeletionRequest {
+  id               String   @id @default(cuid())
+  providerAccountId String
+  confirmationCode String   @unique
+  status           String   @default("completed")
+  createdAt        DateTime @default(now())
+}
+

@@ -8,7 +8,14 @@ type SocialAccount = {
   id: string;
   provider: string;
   providerAccountId: string;
+  accountName: string | null;
   expiresAt: string | null;
+};
+
+type UserLimits = {
+  maxFacebookAccounts: number;
+  maxInstagramAccounts: number;
+  maxYouTubeAccounts: number;
 };
 
 const providers = [
@@ -44,13 +51,18 @@ export default function AccountsPage() {
   const errorParam = searchParams.get("error");
 
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
+  const [limits, setLimits] = useState<UserLimits | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAccounts = async () => {
-    setLoading(true);
     try {
-      const res = await fetch("/api/social/accounts");
-      if (res.ok) setAccounts(await res.json());
+      const [accRes, limitRes] = await Promise.all([
+        fetch("/api/social/accounts"),
+        fetch("/api/users/me")
+      ]);
+      
+      if (accRes.ok) setAccounts(await accRes.json());
+      if (limitRes.ok) setLimits(await limitRes.json());
     } finally {
       setLoading(false);
     }
@@ -88,18 +100,19 @@ export default function AccountsPage() {
     }
   };
 
-  const isConnected = (provider: string) => {
-    if (provider === "instagram") {
-      return accounts.some(a => a.provider === "facebook");
+  const getPlatformData = (provider: string) => {
+    const platformAccounts = accounts.filter(a => a.provider === provider);
+    let limit = 1;
+    if (limits) {
+      if (provider === "facebook") limit = limits.maxFacebookAccounts;
+      else if (provider === "instagram") limit = limits.maxInstagramAccounts; // Note: IG uses FB auth but has its own limit now
+      else if (provider === "youtube") limit = limits.maxYouTubeAccounts;
     }
-    return accounts.some(a => a.provider === provider);
-  };
-
-  const getAccount = (provider: string) => {
-    if (provider === "instagram") {
-      return accounts.find(a => a.provider === "facebook");
-    }
-    return accounts.find(a => a.provider === provider);
+    return {
+      accounts: platformAccounts,
+      limit,
+      remaining: limit - platformAccounts.length
+    };
   };
 
   if (loading) return <div>Cargando cuentas...</div>;
@@ -124,8 +137,8 @@ export default function AccountsPage() {
 
       <div className={styles.grid}>
         {providers.map(p => {
-          const connected = isConnected(p.key);
-          const account = getAccount(p.key);
+          const { accounts: platformAccounts, limit, remaining } = getPlatformData(p.key);
+          const canConnect = remaining > 0;
 
           return (
             <div key={p.key} className={`glass-panel ${styles.providerCard}`}>
@@ -139,51 +152,62 @@ export default function AccountsPage() {
                 </div>
               </div>
 
-              <div className={styles.statusRow}>
-                {connected ? (
-                  <div className={styles.statusConnected}>
-                    <span>●</span> Conectado
-                  </div>
-                ) : (
-                  <div className={styles.statusDisconnected}>
-                    <span>○</span> No conectado
-                  </div>
-                )}
+              <div className={styles.limitInfo}>
+                Capacidad: <strong>{platformAccounts.length} / {limit}</strong>
+              </div>
 
-                {connected ? (
-                  <button
-                    className={styles.disconnectBtn}
-                    onClick={() => account && handleDisconnect(account.id)}
-                  >
-                    Desconectar
-                  </button>
+              <div className={styles.accountsList}>
+                {platformAccounts.length > 0 ? (
+                  platformAccounts.map(acc => (
+                    <div key={acc.id} className={styles.accountItem}>
+                      <div className={styles.accountMain}>
+                        <div className={styles.accountAvatar}>
+                          {acc.accountName?.charAt(0) || "A"}
+                        </div>
+                        <div className={styles.accountDetails}>
+                          <div className={styles.accountTitle}>{acc.accountName || "Cuenta conectada"}</div>
+                          {acc.expiresAt && (
+                            <div className={styles.accountSubtitle}>
+                              Expira: {new Date(acc.expiresAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button 
+                        className={styles.miniDisconnectBtn}
+                        onClick={() => handleDisconnect(acc.id)}
+                        title="Desconectar"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))
                 ) : (
+                  <div className={styles.noAccounts}>Sin cuentas vinculadas</div>
+                )}
+              </div>
+
+              <div className={styles.statusRow}>
+                {canConnect ? (
                   <button
                     className={`${styles.connectBtn} ${p.btnClass}`}
                     onClick={() => handleConnect(p.key)}
                   >
-                    Conectar {p.name}
+                    + Vincular {p.name}
                   </button>
+                ) : (
+                  <div className={styles.limitReached}>
+                    Límite alcanzado
+                  </div>
                 )}
               </div>
-
-              {connected && account?.expiresAt && (
-                <div className={styles.expiresText}>
-                  Token expira: {new Date(account.expiresAt).toLocaleDateString()}
-                </div>
-              )}
             </div>
           );
         })}
       </div>
 
       <div className={styles.infoBox}>
-        <strong>💡 Nota importante:</strong> Para conectar Facebook e Instagram necesitas una{" "}
-        <strong>Meta Developer App</strong> con los permisos <code>pages_manage_posts</code> e{" "}
-        <code>instagram_content_publish</code>. Para YouTube necesitas un proyecto en{" "}
-        <strong>Google Cloud Console</strong> con la YouTube Data API v3 habilitada.
-        <br /><br />
-        Configura las credenciales en el archivo <code>.env</code> del proyecto.
+        <strong>💡</strong> Conecta tus redes sociales y concede los permisos necesarios para poder publicar directamente desde SMM.
       </div>
     </div>
   );

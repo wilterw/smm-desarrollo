@@ -1,66 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import styles from "./AdForm.module.css";
+import styles from "../new/AdForm.module.css";
 
-type Campaign = { id: string; name: string; hashtags?: string; firstComment?: string };
+type Ad = {
+  id: string;
+  title: string;
+  description: string | null;
+  mediaType: string;
+  mediaUrl: string | null;
+  linkUrl: string | null;
+  campaignId: string;
+  campaign: {
+    id: string;
+    name: string;
+    hashtags: string | null;
+    firstComment: string | null;
+  };
+};
 
-export default function NewAdPage() {
+export default function EditAdPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const preselectedCampaignId = searchParams.get("campaignId") || "";
+  const { id } = use(params);
 
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
-  const [saving, setSaving] = useState(false);
-  
+  const [adInfo, setAdInfo] = useState({ clicks: 0, ctr: "0.0%" });
+
   // Preview Logic
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
   const [previewTab, setPreviewTab] = useState<"facebook" | "instagram" | "youtube">("facebook");
+  const [ad, setAd] = useState<Ad | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  // New campaign modal state
-  const [showNewCampaignModal, setShowNewCampaignModal] = useState(false);
-  const [newCampaignName, setNewCampaignName] = useState("");
-  const [creatingCampaign, setCreatingCampaign] = useState(false);
-
-  // Scraper state
-  const [scrapeUrl, setScrapeUrl] = useState("");
-  const [scrapingLoading, setScrapingLoading] = useState(false);
-  const [scrapedImages, setScrapedImages] = useState<string[]>([]);
-
   // Form state
-  const [campaignId, setCampaignId] = useState(preselectedCampaignId);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [mediaUrl, setMediaUrl] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
-  
-  // New campaign metadata state
   const [hashtagsStr, setHashtagsStr] = useState("");
   const [firstComment, setFirstComment] = useState("");
 
   // Translation state
   const [isTranslating, setIsTranslating] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/campaigns").then(r => r.json()).then(setCampaigns).catch(() => {});
-  }, []);
+  // Scraper state
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scrapingLoading, setScrapingLoading] = useState(false);
+  const [scrapedImages, setScrapedImages] = useState<string[]>([]);
 
-  // When campaign changes, populate hashtags/firstComment if they exist
   useEffect(() => {
-    if (campaignId) {
-      const camp = campaigns.find(c => c.id === campaignId);
-      if (camp) {
-        if (camp.hashtags && !hashtagsStr) setHashtagsStr(camp.hashtags);
-        if (camp.firstComment && !firstComment) setFirstComment(camp.firstComment);
+    const fetchAd = async () => {
+      try {
+        const res = await fetch(`/api/ads/${id}`);
+        if (res.ok) {
+          const data: Ad = await res.json();
+          setAd(data);
+          setTitle(data.title);
+          setDescription(data.description || "");
+          setMediaType(data.mediaType as "image" | "video");
+          setMediaUrl(data.mediaUrl || "");
+          setLinkUrl(data.linkUrl || "");
+          setHashtagsStr(data.campaign.hashtags || "");
+          setFirstComment(data.campaign.firstComment || "");
+        } else {
+          console.error("Failed to fetch ad");
+        }
+      } catch (error) {
+        console.error("Error fetching ad:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [campaignId, campaigns]);
+    };
+
+    fetchAd();
+  }, [id]);
 
   const mediaUrls = mediaUrl ? mediaUrl.split(",") : [];
   
@@ -72,31 +90,6 @@ export default function NewAdPage() {
   const handleAddMedia = (urlToAdd: string) => {
     const updated = [...mediaUrls, urlToAdd];
     setMediaUrl(updated.join(","));
-  };
-
-  const handleCreateCampaign = async () => {
-    if (!newCampaignName.trim()) return;
-    setCreatingCampaign(true);
-    try {
-      const res = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newCampaignName }),
-      });
-      if (res.ok) {
-        const newCampaign = await res.json();
-        setCampaigns((prev) => [...prev, newCampaign]);
-        setCampaignId(newCampaign.id);
-        setNewCampaignName("");
-        setShowNewCampaignModal(false);
-      } else {
-        alert("Error al crear la campaña");
-      }
-    } catch {
-      alert("Error de conexión");
-    } finally {
-      setCreatingCampaign(false);
-    }
   };
 
   const handleScrapeLink = async () => {
@@ -199,17 +192,16 @@ export default function NewAdPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campaignId || !title || !mediaUrl) {
+    if (!title || !mediaUrl) {
       alert("Completa todos los campos obligatorios y sube un archivo multimedia.");
       return;
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/ads", {
-        method: "POST",
+      const res = await fetch(`/api/ads/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          campaignId, 
           title, 
           description, 
           mediaType, 
@@ -220,30 +212,30 @@ export default function NewAdPage() {
         }),
       });
       if (res.ok) {
-        const ad = await res.json();
-        // Redirect to the new Publish Wizard
-        router.push(`/ads/${ad.id}/publish`);
+        router.push("/ads");
       } else {
         const data = await res.json();
-        alert(data.error || "Error creando anuncio");
+        alert(data.error || "Error actualizando anuncio");
       }
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) return <div className={styles.loading}>Cargando datos del anuncio...</div>;
+  if (!ad) return <div className={styles.container}>Anuncio no encontrado</div>;
+
   const currentPreviewIndex = Math.min(previewImageIndex, Math.max(0, mediaUrls.length - 1));
   const filePreviewUrl = mediaUrls.length > 0 ? mediaUrls[currentPreviewIndex] : null;
   const nextPreview = () => setPreviewImageIndex(i => (i + 1) % mediaUrls.length);
   const prevPreview = () => setPreviewImageIndex(i => (i - 1 + mediaUrls.length) % mediaUrls.length);
-  
-  // Format hashtags for preview
+
   const previewHashtags = hashtagsStr.split(",").map(t => t.trim()).filter(t => t).map(t => t.startsWith("#") ? t : `#${t}`).join(" ");
 
   return (
     <div className={styles.container}>
-      <Link href="/campaigns" className={styles.backLink}>← Volver a Campañas</Link>
-      <h2 className={styles.title}>Crear Nuevo Anuncio</h2>
+      <Link href="/ads" className={styles.backLink}>← Volver a Anuncios</Link>
+      <h2 className={styles.title}>Editar Anuncio: {ad.title}</h2>
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
@@ -253,7 +245,7 @@ export default function NewAdPage() {
             <div className={`glass-panel`} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <h3 className={styles.sectionTitle}>Importar desde enlace</h3>
               <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "-0.5rem" }}>
-                Pega la URL para autocompletar el anuncio orgánico o ADS.
+                Pega la URL para añadir datos al anuncio.
               </p>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <input 
@@ -340,82 +332,36 @@ export default function NewAdPage() {
               <h3 className={styles.sectionTitle}>Información del Anuncio</h3>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>Campaña *</label>
-                <select 
-                  className={styles.select} 
-                  value={campaignId} 
-                  onChange={(e) => {
-                    if (e.target.value === "__new__") {
-                      setShowNewCampaignModal(true);
-                      return;
-                    }
-                    setCampaignId(e.target.value);
-                  }} 
-                  required
-                >
-                  <option value="">Seleccionar campaña</option>
-                  {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  <option value="__new__">+ Crear nueva campaña</option>
-                </select>
-                {showNewCampaignModal && (
-                  <div style={{
-                    marginTop: "0.75rem", padding: "1rem",
-                    background: "var(--bg-primary)", border: "1px solid var(--border-color)",
-                    borderRadius: "var(--radius-md)", display: "flex", gap: "0.5rem", alignItems: "center"
-                  }}>
-                    <input
-                      className={styles.input}
-                      placeholder="Nombre de la nueva campaña"
-                      value={newCampaignName}
-                      onChange={(e) => setNewCampaignName(e.target.value)}
-                      autoFocus
-                      style={{ flex: 1 }}
-                    />
-                    <button type="button" className={styles.btnPrimary}
-                      style={{ padding: "0.5rem 1rem", whiteSpace: "nowrap", border: "none" }}
-                      onClick={handleCreateCampaign} disabled={creatingCampaign}>
-                      {creatingCampaign ? "Creando..." : "Crear"}
-                    </button>
-                    <button type="button" className={styles.btnSecondary}
-                      style={{ padding: "0.5rem 0.75rem" }}
-                      onClick={() => setShowNewCampaignModal(false)}>
-                      ✕
-                    </button>
-                  </div>
-                )}
+                <label className={styles.label}>Campaña</label>
+                <input className={styles.input} value={ad.campaign.name} disabled style={{ opacity: 0.7 }} />
               </div>
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Título del Anuncio *</label>
-                <input className={styles.input} placeholder="Ej: Promoción de verano 2026" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                <input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Descripción</label>
-                <textarea className={styles.textarea} placeholder="Describe tu anuncio para las redes sociales..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                <textarea className={styles.textarea} value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>Enlace de Destino (LinkUrl)</label>
-                <input className={styles.input} placeholder="https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+                <input className={styles.input} value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
               </div>
             </div>
 
             {/* Campaign Metadata */}
             <div className={`glass-panel`} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <h3 className={styles.sectionTitle}>Metadatos de Campaña</h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "-0.5rem", marginBottom: "0.5rem" }}>
-                Estos valores se aplicarán a todas las publicaciones de esta campaña.
-              </p>
-
               <div className={styles.formGroup}>
-                <label className={styles.label}>Hashtags (separados por coma)</label>
-                <input className={styles.input} placeholder="Ej: marketing, ventas, smm" value={hashtagsStr} onChange={(e) => setHashtagsStr(e.target.value)} />
+                <label className={styles.label}>Hashtags</label>
+                <input className={styles.input} value={hashtagsStr} onChange={(e) => setHashtagsStr(e.target.value)} />
               </div>
-
               <div className={styles.formGroup}>
-                <label className={styles.label}>Automático: Primer Comentario</label>
-                <textarea className={styles.textarea} placeholder="Escribe el comentario que se publicará automáticamente después de subir el post..." value={firstComment} onChange={(e) => setFirstComment(e.target.value)} rows={3} />
+                <label className={styles.label}>Primer Comentario</label>
+                <textarea className={styles.textarea} value={firstComment} onChange={(e) => setFirstComment(e.target.value)} rows={3} />
               </div>
             </div>
 
@@ -451,7 +397,7 @@ export default function NewAdPage() {
                 >
                   <input type="file" className={styles.fileInput} accept="image/*,video/*" onChange={(e) => { if (e.target.files?.[0]) handleFileChange(e.target.files[0]); }} />
                   <div className={styles.uploadIcon}>📁</div>
-                  <p className={styles.uploadText}>Cargar nueva foto o video</p>
+                  <p className={styles.uploadText}>Haz clic o arrastra para añadir más archivos</p>
                 </div>
               )}
             </div>
@@ -622,9 +568,12 @@ export default function NewAdPage() {
         </div>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.btnSecondary} onClick={() => router.push("/campaigns")}>Cancelar</button>
-          <button type="submit" className={styles.btnPrimary} style={{ paddingLeft: "2rem", paddingRight: "2rem" }} disabled={saving || uploading}>
-            {saving ? "Guardando..." : "Crear y Continuar a Publicar →"}
+          <button type="button" className={styles.btnSecondary} onClick={() => router.push("/ads")}>Cancelar</button>
+          <button type="submit" className={styles.btnPrimary} disabled={saving || uploading}>
+            {saving ? "Guardando..." : "Guardar Cambios"}
+          </button>
+          <button type="button" className={styles.btnPrimary} style={{ background: "var(--success)" }} onClick={() => router.push(`/ads/${id}/publish`)}>
+            Siguiente: Publicar →
           </button>
         </div>
       </form>

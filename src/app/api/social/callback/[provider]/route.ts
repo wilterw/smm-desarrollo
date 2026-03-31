@@ -46,7 +46,7 @@ export async function GET(
       expiresAt = new Date(Date.now() + tokens.expiresIn * 1000);
 
       // Get user's Facebook profile
-      const meRes = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${accessToken}`);
+      const meRes = await fetch(`https://graph.facebook.com/v24.0/me?fields=id,name&access_token=${accessToken}`);
       const meData = await meRes.json();
       providerAccountId = meData.id;
       accountName = meData.name;
@@ -85,16 +85,48 @@ export async function GET(
       return NextResponse.redirect(new URL("/settings/accounts?error=invalid_provider", req.url));
     }
 
-    // Upsert the social account enforcing 1 account per platform per user
+    // 1. Fetch user to check limits
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        maxFacebookAccounts: true,
+        maxInstagramAccounts: true,
+        maxYouTubeAccounts: true,
+        socialAccounts: true,
+      }
+    }) as any;
+
+    if (!user) {
+      return NextResponse.redirect(new URL("/settings/accounts?error=user_not_found", req.url));
+    }
+
+    // 2. Enforce limits per platform
+    const platformAccounts = (user.socialAccounts || []).filter((a: any) => a.provider === provider);
+    const existingThisAccount = platformAccounts.find((a: any) => a.providerAccountId === providerAccountId);
+
+    // If it's a new account and user already reached the limit, block it
+    if (!existingThisAccount) {
+      let limit = 1;
+      if (provider === "facebook") limit = user.maxFacebookAccounts || 1;
+      else if (provider === "instagram") limit = user.maxInstagramAccounts || 1;
+      else if (provider === "youtube") limit = user.maxYouTubeAccounts || 1;
+
+      if (platformAccounts.length >= limit) {
+        return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${limit} cuentas para ${provider}.`, req.url));
+      }
+    }
+
+    // 3. Upsert the social account using provider & providerAccountId
     await prisma.socialAccount.upsert({
       where: {
-        userId_provider: {
-          userId: session.user.id,
+        provider_providerAccountId: {
           provider: provider,
+          providerAccountId: providerAccountId,
         },
       },
       update: {
-        providerAccountId,
+        userId: session.user.id, // Update owner in case someone else claimed it previously (optional policy)
         accessToken,
         refreshToken,
         expiresAt,

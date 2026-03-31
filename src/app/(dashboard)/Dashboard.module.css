@@ -18,9 +18,38 @@
 }
 
 .greetingSub {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.accountFilter {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 200px;
+}
+
+.accountFilter:focus {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(183, 6, 6, 0.15);
+}
+
+.accountFilter option {
+  background: #1a1a1a;
+  color: #fff;
 }
 
 /* ===== KPI Cards ===== */
@@ -369,4 +398,113 @@
   .platformGrid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== Analytics & Sync Styles ===== */
+.syncBtn {
+  margin-left: 1rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(183, 6, 6, 0.1);
+  border: 1px solid rgba(183, 6, 6, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.syncBtn:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: scale(1.05);
+}
+
+.syncBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kpiStats {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.kpiStats .kpiLabel {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.kpiStats .kpiValue {
+  font-size: 1.4rem;
+  color: var(--accent-blue);
+}
+
+.tableStat {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+}
+
+
+
+/* Phase 9: Table UI Enhancements */
+.activityTable tr { transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.activityTable tr:hover { background: rgba(255,255,255,0.02); }
+.activityTable td { padding: 1rem 0.75rem; vertical-align: middle; }
+.platformBadge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-size: 14px; background: rgba(255,255,255,0.1); margin-right: 8px; }
+.typeBadge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 8px; }
+.typeOrganic { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.typeAds { background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
+.metricBar { width: 60px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 8px; }
+.metricBarFill { height: 100%; border-radius: 2px; }
+.metricClicks { background: #3b82f6; }
+.metricReach { background: #8b5cf6; }
+.metricImpressions { background: #f59e0b; }
+.syncBtnSmall { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
+.syncBtnSmall:hover:not(:disabled) { border-color: var(--accent-primary); color: var(--accent-primary); background: rgba(59,130,246,0.1); }
+.syncBtnSmall:disabled { opacity: 0.5; cursor: not-allowed; }
+
+
+/* Analytics Modal & Charts */
+.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; animation: fadeIn 0.3s ease; }
+.modalContent { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.modalHeader { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.modalHeader h3 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+.closeBtn { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.closeBtn:hover { background: var(--accent-primary); color: white; }
+.modalBody { padding: 1.5rem; }
+.chartContainer { width: 100%; height: 350px; margin-top: 1rem; }
+.modalStatsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.modalStatCard { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.05); }
+.modalStatLabel { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.modalStatValue { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-top: 0.25rem; }
+.clickableCard { cursor: pointer; }
+.clickableCard:hover { transform: translateY(-5px); border-color: var(--accent-primary); box-shadow: 0 10px 30px rgba(183, 6, 6, 0.15); }
+.emptyRow {
+  padding: 3rem !important;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 1.1rem;
+}
+
+.pubAccount {
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.pubDest {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }

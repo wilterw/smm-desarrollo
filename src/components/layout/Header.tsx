@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import styles from "./Header.module.css";
 import { usePathname } from "next/navigation";
 
@@ -34,7 +35,17 @@ export function Header({ onMenuToggle }: HeaderProps) {
         )}
         <h1 className={styles.title}>{getPageTitle()}</h1>
       </div>
-      
+      <div className={styles.centerLogo}>
+        <Image 
+          src="/images/logo-econos.png" 
+          alt="Econos Logo" 
+          width={130} 
+          height={38} 
+          className={styles.econosLogo} 
+          priority 
+        />
+      </div>
+
       <div className={styles.actions}>
         <button 
           className={styles.profileBtn}

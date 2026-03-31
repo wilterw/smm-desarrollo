@@ -33,7 +33,8 @@
 .stepper {
   display: flex;
   justify-content: space-between;
-  margin-bottom: var(--spacing-8);
+  margin-top: 3rem;
+  margin-bottom: 4rem;
   position: relative;
 }
 .stepper::before {
@@ -101,7 +102,8 @@
 .platformGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-4);
+  gap: var(--spacing-6);
+  margin-top: 2rem;
 }
 
 .platformCard {
@@ -136,11 +138,31 @@
   color: var(--text-muted);
 }
 
+/* Multi-account Styles */
+.platformSections { display: flex; flex-direction: column; gap: 2rem; margin-top: 1.5rem; }
+.platformGroup { display: flex; flex-direction: column; gap: 1rem; }
+.platformGroupTitle { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); }
+.accountSelectionGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.accountSelectionCard { background: var(--bg-card); border: 2px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s; position: relative; }
+.accountSelectionCard:hover { border-color: var(--bg-hover); background: var(--bg-hover); }
+.accountSelectionCardActive { border-color: var(--accent-blue); background: rgba(183, 6, 6, 0.05); }
+.accountCheck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: transparent; flex-shrink: 0; }
+.accountSelectionCardActive .accountCheck { border-color: var(--accent-blue); background: var(--accent-blue); color: white; }
+.accountInfo { display: flex; flex-direction: column; }
+.accountName { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+.accountHandle { font-size: 0.75rem; color: var(--text-muted); }
+
+.noAccountsAlert { padding: 2rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); border-radius: var(--radius-lg); text-align: center; color: var(--text-muted); }
+.btnConnectMini { padding: 0.5rem 1rem; background: var(--bg-hover); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btnConnectMini:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+
 /* Generic Grid */
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-4);
+  gap: var(--spacing-6);
+  margin-top: 1.5rem;
 }
 
 /* Checkbox Cards for Destinations */
@@ -204,7 +226,7 @@
 .actions {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--spacing-8);
+  margin-top: 4rem;
   padding-top: var(--spacing-6);
   border-top: 1px solid var(--border-light);
 }

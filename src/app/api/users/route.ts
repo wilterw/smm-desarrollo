@@ -18,6 +18,9 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
+        maxFacebookAccounts: true,
+        maxInstagramAccounts: true,
+        maxYouTubeAccounts: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { email, name, password, role } = body;
+    const { email, name, password, role, maxFacebookAccounts, maxInstagramAccounts, maxYouTubeAccounts } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -60,6 +63,9 @@ export async function POST(req: NextRequest) {
         name,
         password: hashedPassword,
         role: role || "VIEWER",
+        maxFacebookAccounts: maxFacebookAccounts || 1,
+        maxInstagramAccounts: maxInstagramAccounts || 1,
+        maxYouTubeAccounts: maxYouTubeAccounts || 1,
       },
       select: {
         id: true,

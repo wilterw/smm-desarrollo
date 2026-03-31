@@ -5,9 +5,9 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -15,53 +15,81 @@ export async function GET(
     const ad = await prisma.ad.findUnique({
       where: { id },
       include: {
-        campaign: { select: { name: true, userId: true, status: true } },
-        publications: { include: { adBudget: true } },
+        campaign: { select: { id: true, name: true, userId: true, hashtags: true, firstComment: true } },
       },
     });
 
-    if (!ad) return NextResponse.json({ error: "Ad not found" }, { status: 404 });
+    if (!ad || ad.campaign.userId !== session.user.id) {
+      return NextResponse.json({ error: "Ad not found" }, { status: 404 });
+    }
+
     return NextResponse.json(ad);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch ad" }, { status: 500 });
+    console.error("GET /api/ads/[id] error:", error);
+    return NextResponse.json({ error: "Failed to fetch ad details" }, { status: 500 });
   }
 }
 
 export async function PUT(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const body = await req.json();
-    const { title, description, mediaType, mediaUrl, thumbnailUrl } = body;
+    const { 
+      title, 
+      description, 
+      mediaType, 
+      mediaUrl, 
+      thumbnailUrl, 
+      hashtags, 
+      firstComment,
+      linkUrl
+    } = body;
 
-    const ad = await prisma.ad.update({
+    // Check ownership
+    const ad = await prisma.ad.findUnique({
       where: { id },
-      data: { title, description, mediaType, mediaUrl, thumbnailUrl },
+      include: { campaign: true }
     });
 
-    return NextResponse.json(ad);
+    if (!ad || ad.campaign.userId !== session.user.id) {
+      return NextResponse.json({ error: "Ad not found" }, { status: 404 });
+    }
+
+    // Update the ad
+    const updatedAd = await prisma.ad.update({
+      where: { id },
+      data: {
+        title,
+        description: description ?? ad.description,
+        mediaType: mediaType ?? ad.mediaType,
+        mediaUrl: mediaUrl ?? ad.mediaUrl,
+        thumbnailUrl: thumbnailUrl ?? ad.thumbnailUrl,
+        linkUrl: linkUrl !== undefined ? linkUrl : ad.linkUrl,
+      },
+    });
+
+    // Update campaign metadata if provided
+    if (hashtags !== undefined || firstComment !== undefined) {
+      await prisma.campaign.update({
+        where: { id: ad.campaignId },
+        data: {
+          hashtags: hashtags !== undefined ? hashtags : ad.campaign.hashtags,
+          firstComment: firstComment !== undefined ? firstComment : ad.campaign.firstComment,
+        }
+      });
+    }
+
+    return NextResponse.json(updatedAd);
+
   } catch (error) {
+    console.error("PUT /api/ads/[id] error:", error);
     return NextResponse.json({ error: "Failed to update ad" }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
-    await prisma.ad.delete({ where: { id } });
-    return NextResponse.json({ message: "Ad deleted" });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to delete ad" }, { status: 500 });
-  }
-}

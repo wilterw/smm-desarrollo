@@ -3,6 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  BarChart, 
+  Bar,
+  Cell
+} from 'recharts';
 import styles from "./Dashboard.module.css";
 
 type DashboardData = {
@@ -27,33 +39,91 @@ type DashboardData = {
     platform: string;
     type: string;
     status: string;
+    destination: string | null;
+    socialAccountId: string | null;
     publishedAt: string | null;
+    clicks: number;
+    reach: number;
+    impressions: number;
     ad: { title: string; campaign: { name: string } };
+    socialAccount?: { accountName: string | null; pageName: string | null };
   }[];
+  socialAccounts: {
+    id: string;
+    provider: string;
+    accountName: string | null;
+    pageName: string | null;
+  }[];
+  stats: {
+    clicks: number;
+    impressions: number;
+    reach: number;
+    spend: number;
+  };
   budget: {
     totalBudget: number;
     dailyBudget: number;
   };
+  chartData: {
+    name: string;
+    clics: number;
+    impresiones: number;
+    alcance: number;
+    inversion: number;
+  }[];
 };
 
 export default function DashboardHome() {
   const { data: session } = useSession();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncingRows, setSyncingRows] = useState<Record<string, boolean>>({});
+  const [selectedMetric, setSelectedMetric] = useState<"clics" | "alcance" | "impresiones" | "inversion" | null>(null);
+  const [filterAccountId, setFilterAccountId] = useState<string>("all");
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await fetch("/api/dashboard");
+      if (res.ok) {
+        setData(await res.json());
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await fetch("/api/dashboard");
-        if (res.ok) {
-          setData(await res.json());
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchDashboard();
   }, []);
+
+  const handleSyncInsights = async (publicationId?: string) => {
+    const url = publicationId 
+      ? `/api/social/insights/sync?publicationId=${publicationId}`
+      : "/api/social/insights/sync";
+    
+    if (publicationId) {
+      setSyncingRows(prev => ({ ...prev, [publicationId]: true }));
+      try {
+        const res = await fetch(url);
+        if (res.ok) fetchDashboard();
+      } finally {
+        setSyncingRows(prev => ({ ...prev, [publicationId]: false }));
+      }
+      return;
+    }
+
+    if (!publicationId && data?.recentPublications) {
+      setLoading(true);
+      for (const pub of data.recentPublications) {
+        if (pub.status === "published") {
+          await fetch(`/api/social/insights/sync?publicationId=${pub.id}`);
+        }
+      }
+      fetchDashboard();
+      setLoading(false);
+      return;
+    }
+  };
 
   if (loading) {
     return (
@@ -90,6 +160,23 @@ export default function DashboardHome() {
   const safePercent = (value: number, total: number) =>
     total > 0 ? Math.round((value / total) * 100) : 0;
 
+  const getMaxMetrics = () => {
+    if (!data || data.recentPublications.length === 0) return { clicks: 1, reach: 1, impressions: 1 };
+    return {
+      clicks: Math.max(...data.recentPublications.map(p => p.clicks), 1),
+      reach: Math.max(...data.recentPublications.map(p => p.reach), 1),
+      impressions: Math.max(...data.recentPublications.map(p => p.impressions), 1)
+    };
+  };
+  const maxMetrics = getMaxMetrics();
+
+  const getPlatformIcon = (platform: string) => {
+    if (platform === "facebook") return "📘";
+    if (platform === "instagram") return "📷";
+    if (platform === "youtube") return "🎬";
+    return "🌐";
+  };
+
   return (
     <div className={styles.container}>
       {/* Greeting */}
@@ -98,7 +185,28 @@ export default function DashboardHome() {
           {getGreeting()}, {session?.user?.name || "Usuario"} 👋
         </div>
         <div className={styles.greetingSub}>
-          Aquí tienes el resumen de tu cuenta.
+          Aquí tienes el resumen de tu cuenta y el rendimiento de tus anuncios.
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <select 
+              className={styles.accountFilter} 
+              value={filterAccountId} 
+              onChange={(e) => setFilterAccountId(e.target.value)}
+            >
+              <option value="all">Todas las cuentas</option>
+              {data.socialAccounts.map(acc => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.provider.charAt(0).toUpperCase() + acc.provider.slice(1)}: {acc.accountName || acc.pageName || "Cuenta"}
+                </option>
+              ))}
+            </select>
+            <button 
+              className={styles.syncBtn} 
+              onClick={() => handleSyncInsights()}
+              disabled={loading}
+            >
+              🔄 Sincronizar
+            </button>
+          </div>
         </div>
       </div>
 
@@ -133,6 +241,122 @@ export default function DashboardHome() {
           </div>
         </div>
       </div>
+
+      {/* Analytics KPI Row */}
+      <div className={styles.kpiGrid} style={{ marginTop: "-1rem" }}>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.kpiStats} ${styles.clickableCard}`}
+          onClick={() => setSelectedMetric("clics")}
+        >
+          <div className={styles.kpiInfo}>
+            <span className={styles.kpiLabel}>Clics Totales</span>
+            <span className={styles.kpiValue}>{data.stats.clicks.toLocaleString()}</span>
+          </div>
+        </div>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.kpiStats} ${styles.clickableCard}`}
+          onClick={() => setSelectedMetric("alcance")}
+        >
+          <div className={styles.kpiInfo}>
+            <span className={styles.kpiLabel}>Alcance (Reach)</span>
+            <span className={styles.kpiValue}>{data.stats.reach.toLocaleString()}</span>
+          </div>
+        </div>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.kpiStats} ${styles.clickableCard}`}
+          onClick={() => setSelectedMetric("impresiones")}
+        >
+          <div className={styles.kpiInfo}>
+            <span className={styles.kpiLabel}>Impresiones</span>
+            <span className={styles.kpiValue}>{data.stats.impressions.toLocaleString()}</span>
+          </div>
+        </div>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.kpiStats} ${styles.clickableCard}`}
+          onClick={() => setSelectedMetric("inversion")}
+        >
+          <div className={styles.kpiInfo}>
+            <span className={styles.kpiLabel}>Inversión (Ads)</span>
+            <span className={styles.kpiValue}>${data.stats.spend.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Details Modal */}
+      {selectedMetric && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedMetric(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Detalles de {selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)}</h3>
+              <button className={styles.closeBtn} onClick={() => setSelectedMetric(null)}>✕</button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.modalStatsGrid}>
+                <div className={styles.modalStatCard}>
+                  <div className={styles.modalStatLabel}>Total Acumulado</div>
+                  <div className={styles.modalStatValue}>
+                    {selectedMetric === "inversion" ? "$" : ""}
+                    {data.stats[selectedMetric === "alcance" ? "reach" : selectedMetric === "clics" ? "clicks" : selectedMetric === "impresiones" ? "impressions" : "spend"].toLocaleString()}
+                  </div>
+                </div>
+                <div className={styles.modalStatCard}>
+                  <div className={styles.modalStatLabel}>Promedio Diario (7d)</div>
+                  <div className={styles.modalStatValue}>
+                    {selectedMetric === "inversion" ? "$" : ""}
+                    {(data.stats[selectedMetric === "alcance" ? "reach" : selectedMetric === "clics" ? "clicks" : selectedMetric === "impresiones" ? "impressions" : "spend"] / 7).toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.chartContainer}>
+                <ResponsiveContainer width="100%" height="100%">
+                  {selectedMetric === "inversion" ? (
+                    <BarChart data={data.chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
+                      <YAxis stroke="var(--text-muted)" fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px" }}
+                        itemStyle={{ color: "var(--text-primary)" }}
+                      />
+                      <Bar dataKey="inversion" name="Inversión ($)">
+                        {data.chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 6 ? "var(--accent-primary)" : "rgba(183, 6, 6, 0.4)"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  ) : (
+                    <AreaChart data={data.chartData}>
+                      <defs>
+                        <linearGradient id="colorMetric" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--accent-blue)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--accent-blue)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
+                      <YAxis stroke="var(--text-muted)" fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px" }}
+                        itemStyle={{ color: "var(--text-primary)" }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey={selectedMetric} 
+                        name={selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)}
+                        stroke="var(--accent-blue)" 
+                        fillOpacity={1} 
+                        fill="url(#colorMetric)" 
+                        strokeWidth={3}
+                      />
+                    </AreaChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status Section */}
       <div className={styles.statusGrid}>
@@ -249,47 +473,104 @@ export default function DashboardHome() {
           <table className={styles.activityTable}>
             <thead>
               <tr>
-                <th>Tipo</th>
-                <th>Título</th>
+                <th>Plataforma y Título</th>
                 <th>Campaña</th>
+                <th>Métricas</th>
                 <th>Estado</th>
-                <th>Fecha</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
-              {data.recentAds.length === 0 && data.recentPublications.length === 0 && (
-                <tr>
-                  <td colSpan={5} className={styles.emptyRow}>
-                    No hay actividad reciente
-                  </td>
-                </tr>
-              )}
-              {data.recentPublications.map((pub) => (
-                <tr key={`pub-${pub.id}`}>
-                  <td>📢 Publicación</td>
-                  <td>{pub.ad.title}</td>
-                  <td>{pub.ad.campaign.name}</td>
-                  <td>
-                    <span className={`${styles.badge} ${getStatusBadge(pub.status)}`}>
-                      {pub.status}
-                    </span>
-                  </td>
-                  <td>{formatDate(pub.publishedAt)}</td>
-                </tr>
-              ))}
+              {data.recentPublications
+                .filter(pub => filterAccountId === "all" || pub.socialAccountId === filterAccountId)
+                .map(pub => {
+                  const accName = pub.socialAccount?.accountName || pub.socialAccount?.pageName || "Perfil";
+                  return (
+                    <tr key={`pub-${pub.id}`}>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <span className={styles.platformBadge}>{getPlatformIcon(pub.platform)}</span>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{pub.ad.title}</div>
+                            <div style={{ fontSize: "0.75rem", color: "var(--accent-primary)", opacity: 0.8 }}>
+                               @{accName} • {pub.destination}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{pub.ad.campaign.name}</td>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.80rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                            <span style={{ minWidth: 50 }}>👁️ Imp: <b>{pub.impressions}</b></span>
+                            <div className={styles.metricBar}>
+                              <div className={`${styles.metricBarFill} ${styles.metricImpressions}`} style={{ width: `${safePercent(pub.impressions, maxMetrics.impressions)}%` }} />
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                            <span style={{ minWidth: 50 }}>📈 Alcance: <b>{pub.reach}</b></span>
+                            <div className={styles.metricBar}>
+                              <div className={`${styles.metricBarFill} ${styles.metricReach}`} style={{ width: `${safePercent(pub.reach, maxMetrics.reach)}%` }} />
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                            <span style={{ minWidth: 50 }}>👆 Clics: <b>{pub.clicks}</b></span>
+                            <div className={styles.metricBar}>
+                              <div className={`${styles.metricBarFill} ${styles.metricClicks}`} style={{ width: `${safePercent(pub.clicks, maxMetrics.clicks)}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <span className={`${styles.badge} ${getStatusBadge(pub.status)}`}>
+                            {pub.status}
+                          </span>
+                          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(pub.publishedAt)}</span>
+                        </div>
+                      </td>
+                      <td>
+                        {pub.status === "published" && (
+                          <button 
+                            className={styles.syncBtnSmall} 
+                            onClick={() => handleSyncInsights(pub.id)}
+                            disabled={syncingRows[pub.id]}
+                            title="Actualizar métricas manualmente"
+                          >
+                            {syncingRows[pub.id] ? "⏳ Sync..." : "🔄 Sync"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               {data.recentAds.map((ad) => (
                 <tr key={`ad-${ad.id}`}>
-                  <td>🖼️ Anuncio</td>
-                  <td>{ad.title}</td>
-                  <td>{ad.campaign.name}</td>
                   <td>
-                    <span className={`${styles.badge} ${styles.badgeDraft}`}>
-                      {ad.mediaType}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span className={styles.platformBadge}>
+                        {ad.mediaType === "video" ? "🎥" : "🖼️"}
+                      </span>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{ad.title}</div>
+                        <span className={`${styles.typeBadge}`} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-muted)" }}>
+                          BORRADOR
+                        </span>
+                      </div>
+                    </div>
                   </td>
-                  <td>{formatDate(ad.createdAt)}</td>
+                  <td style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{ad.campaign.name}</td>
+                  <td><span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontStyle: "italic" }}>Pendiente de publicación</span></td>
+                  <td>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span className={`${styles.badge} ${styles.badgeDraft}`}>Borrador</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{formatDate(ad.createdAt)}</span>
+                    </div>
+                  </td>
+                  <td></td>
                 </tr>
               ))}
+
             </tbody>
           </table>
         </div>

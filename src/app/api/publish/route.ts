@@ -2,12 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { publishToFacebook, publishToFacebookFeed, createFacebookAdCampaign } from "@/lib/social/facebook";
+import { 
+  publishToFacebook, 
+  publishToFacebookFeed, 
+  createFacebookAdCampaign,
+  createFacebookAdSet,
+  createFacebookAdCreative,
+  createFacebookAd
+} from "@/lib/social/facebook";
 import { publishToInstagram, publishToInstagramReels, publishToInstagramStories } from "@/lib/social/instagram";
 
 /**
+ * Automatically appends UTM parameters to any links in the message
+ */
+function applyUtmTracking(message: string, platform: string, destination: string, adId: string): string {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return message.replace(urlRegex, (url) => {
+    const connector = url.includes('?') ? '&' : '?';
+    return `${url}${connector}utm_source=smm&utm_medium=${platform}_${destination}&utm_campaign=ad_${adId}`;
+  });
+}
+
+/**
  * POST /api/publish
- * Body: { adId, destinations: [{ platform, destination, adsConfig }] }
  */
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -21,43 +38,78 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "adId and destinations[] are required" }, { status: 400 });
     }
 
-    // Fetch the ad and its campaign
     const ad = await prisma.ad.findUnique({
       where: { id: adId },
       include: { campaign: true },
     });
     if (!ad) return NextResponse.json({ error: "Ad not found" }, { status: 404 });
 
-    // Fetch user's connected social accounts
     const socialAccounts = await prisma.socialAccount.findMany({
       where: { userId: session.user.id },
     });
 
-    const results: { platform: string; destination: string; status: string; postId?: string; error?: string }[] = [];
-
+    const results: any[] = [];
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    let message = `${ad.title}\n\n${ad.description || ""}`;
+    
+    let rawMessage = `${ad.title}\n\n${ad.description || ""}`;
     if (ad.campaign.hashtags) {
-      // Clean and append hashtags
       const tags = ad.campaign.hashtags.split(",").map(t => t.trim().startsWith("#") ? t.trim() : `#${t.trim()}`).join(" ");
-      message += `\n\n${tags}`;
+      rawMessage += `\n\n${tags}`;
     }
+    
     const mediaFullUrl = ad.mediaUrl ? `${baseUrl}${ad.mediaUrl}` : undefined;
 
     for (const destConfig of destinations) {
-      const { platform, destination, adsConfig } = destConfig;
-      const account = socialAccounts.find(a => a.provider === platform);
+      const { platform, destination, adsConfig, socialAccountId } = destConfig;
       
-      // Create the Publication record
+      // Find the specific account if socialAccountId is provided, otherwise fallback to the first one (for backward compatibility during migration)
+      let account: any;
+      if (socialAccountId) {
+        account = socialAccounts.find(a => a.id === socialAccountId);
+      } else {
+        account = socialAccounts.find(a => a.provider === platform);
+      }
+      
+      const message = applyUtmTracking(rawMessage, platform, destination, adId);
+
       const publication = await prisma.publication.create({
         data: {
           adId,
           platform,
           destination,
+          socialAccountId: account?.id, // Link to specific account (Phase 11)
           type: destination === "ads" ? "paid" : "organic",
           status: "pending",
         },
       });
+
+      // Save budget/targeting if it's an ad
+      if (destination === "ads" && adsConfig) {
+        await prisma.adBudget.create({
+          data: {
+            publicationId: publication.id,
+            dailyBudget: adsConfig.budgetType === "daily" ? adsConfig.budgetAmount : null,
+            totalBudget: adsConfig.budgetType === "total" ? adsConfig.budgetAmount : null,
+            targetAudience: JSON.stringify({
+              campaignObjective: adsConfig.campaignObjective,
+              country: adsConfig.country,
+              state: adsConfig.state,
+              city: adsConfig.city,
+              radiusKm: adsConfig.radiusKm,
+              ageMin: adsConfig.ageMin,
+              ageMax: adsConfig.ageMax,
+              gender: adsConfig.gender,
+              languages: adsConfig.languages,
+              maritalStatus: adsConfig.maritalStatus,
+              education: adsConfig.education,
+              interests: adsConfig.interests,
+              behaviors: adsConfig.behaviors,
+              placements: adsConfig.placements,
+              bidStrategy: adsConfig.bidStrategy
+            })
+          }
+        });
+      }
 
       if (!account) {
         await prisma.publication.update({
@@ -82,19 +134,57 @@ export async function POST(req: NextRequest) {
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           } else if (destination === "ads") {
-            // Need a valid ad account ID, usually configured in settings or from API. Mocking for now.
             const adAccountId = process.env.FACEBOOK_AD_ACCOUNT_ID || "act_123456789"; 
-            const result = await createFacebookAdCampaign(
+            
+            // 1. Create Campaign
+            const campRes = await createFacebookAdCampaign(
               account.accessToken, 
               adAccountId, 
-              ad.campaign.name, 
-              adsConfig?.dailyBudget || 500,
-              "OUTCOME_TRAFFIC"
+              `SMM - ${ad.campaign.name}`, 
+              adsConfig?.budgetAmount || 10
             );
-            if (!result.success) throw new Error(result.error);
-            postId = result.postId;
+            if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
+
+            // 2. Create AdSet (Targeting)
+            const adSetRes = await createFacebookAdSet(
+              account.accessToken,
+              adAccountId,
+              campRes.postId!,
+              `AdSet - ${ad.title}`,
+              adsConfig?.budgetAmount || 10,
+              {
+                country: adsConfig?.country || "US",
+                ageMin: adsConfig?.ageMin || 18,
+                ageMax: adsConfig?.ageMax || 65,
+                gender: adsConfig?.gender || "all"
+              }
+            );
+            if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
+
+            // 3. Create Creative
+            const creativeRes = await createFacebookAdCreative(
+              account.accessToken,
+              adAccountId,
+              account.pageId || "",
+              ad.title,
+              message,
+              mediaFullUrl
+            );
+            if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
+
+            // 4. Create Ad
+            const adRes = await createFacebookAd(
+              account.accessToken,
+              adAccountId,
+              adSetRes.postId!,
+              creativeRes.postId!,
+              `Ad - ${ad.title}`
+            );
+            if (!adRes.success) throw new Error(`Final Ad error: ${adRes.error}`);
+            
+            postId = adRes.postId;
           }
-        } 
+        }
         else if (platform === "instagram") {
           if (!account.igAccountId) throw new Error("No Instagram Business Account linked to the Facebook Page");
           if (!mediaFullUrl) throw new Error("Instagram requires media");
