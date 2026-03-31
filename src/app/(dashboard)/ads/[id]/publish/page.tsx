@@ -460,14 +460,17 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
 
       <div className={styles.stepper}>
         {[
-          { num: 1, label: "Plataforma" },
-          { num: 2, label: "Destino" },
-          { num: 3, label: destination === "ads" ? "Segmentación" : "Resumen" },
-          ...(destination === "ads" ? [{ num: 4, label: "Resumen" }] : [])
+          { num: 1, label: "Plataforma", icon: "📱" },
+          { num: 2, label: "Destino", icon: "📌" },
+          { num: 3, label: destination === "ads" ? "Segmentación" : "Resumen", icon: destination === "ads" ? "🎯" : "📋" },
+          ...(destination === "ads" ? [{ num: 4, label: "Resumen", icon: "📋" }] : [])
         ].map((s) => (
           <div key={s.num} className={`${styles.step} ${step >= s.num ? styles.stepActive : ''}`}>
             <div className={styles.stepCircle}>{s.num}</div>
-            <div className={styles.stepLabel}>{s.label}</div>
+            <div className={styles.stepLabel}>
+              <span className={styles.stepIcon}>{s.icon}</span>
+              <span>{s.label}</span>
+            </div>
           </div>
         ))}
       </div>
