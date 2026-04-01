@@ -173,7 +173,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       });
       
       if (res.ok) {
-        router.push("/dashboard");
+        router.push("/");
       } else {
         const data = await res.json();
         alert(data.error || "Error al publicar");

@@ -13,8 +13,10 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const provider = req.nextUrl.searchParams.get("provider");
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-  const redirectUri = `${baseUrl}/api/social/callback/${provider}`;
+  
+  // Use current request origin to build the redirectUri (more robust than env var fallback)
+  const origin = req.nextUrl.origin;
+  const redirectUri = `${origin}/api/social/callback/${provider}`;
 
   try {
     let oauthUrl: string;
