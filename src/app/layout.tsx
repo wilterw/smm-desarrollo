@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "@/styles/globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
@@ -44,6 +45,26 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${inter.className} min-h-screen bg-neutral-900 text-white`}>
         <AuthProvider>{children}</AuthProvider>
+        <Script
+          src="https://connect.facebook.net/es_LA/sdk.js"
+          strategy="lazyOnload"
+          crossOrigin="anonymous"
+        />
+        <Script id="facebook-init" strategy="lazyOnload">
+          {`
+            window.fbAsyncInit = function() {
+              FB.init({
+                appId      : '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ""}',
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v19.0'
+              });
+              if(typeof FB !== 'undefined' && FB.AppEvents) {
+                FB.AppEvents.logPageView();
+              }
+            };
+          `}
+        </Script>
       </body>
     </html>
   );

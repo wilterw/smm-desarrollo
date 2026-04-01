@@ -126,14 +126,31 @@ async function scrapeMHEstate(propertyId: string, originalUrl: string) {
 
 // ─── Generic scraper ─────────────────────────────────────────────────────────
 async function scrapeGeneric(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-    },
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const html = await response.text();
+  let html = "";
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+      },
+    });
+    // Obtenemos el HTML incluso si no es 200 OK, ya que algunos sitios retornan 403 pero incluyen meta tags.
+    html = await response.text();
+  } catch (err) {
+    console.warn(`Scrape generic warning for ${url}:`, err);
+  }
+
+  // Si no se obtuvo HTML o falló catastróficamente, devolvemos un objeto base híbrido
+  if (!html || html.trim() === "") {
+    return {
+      title: "Enlace externo",
+      description: "No se pudo obtener información detallada de este enlace. Puedes editar este texto manualmente.",
+      images: [],
+      hashtags: [],
+      suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
+      linkUrl: url,
+    };
+  }
 
   const getMeta = (name: string) => {
     const r1 = html.match(new RegExp(`<meta[^>]+(?:name|property)=["']${name}["'][^>]*content=["']([^"']+)["']`, "i"));

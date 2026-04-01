@@ -120,4 +120,9 @@
   .profileBtn {
     padding: 0.4rem;
   }
+
+  .econosLogo {
+    width: 90px;
+    height: auto;
+  }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -75,6 +76,7 @@ type DashboardData = {
 
 export default function DashboardHome() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncingRows, setSyncingRows] = useState<Record<string, boolean>>({});
@@ -212,28 +214,40 @@ export default function DashboardHome() {
 
       {/* KPI Cards */}
       <div className={styles.kpiGrid}>
-        <div className={`glass-panel ${styles.kpiCard}`}>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
+          onClick={() => router.push("/campaigns")}
+        >
           <div className={`${styles.kpiIcon} ${styles.kpiIconBlue}`}>🚀</div>
           <div className={styles.kpiInfo}>
             <span className={styles.kpiLabel}>Campañas</span>
             <span className={styles.kpiValue}>{data.counts.campaigns}</span>
           </div>
         </div>
-        <div className={`glass-panel ${styles.kpiCard}`}>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
+          onClick={() => router.push("/ads")}
+        >
           <div className={`${styles.kpiIcon} ${styles.kpiIconPurple}`}>🖼️</div>
           <div className={styles.kpiInfo}>
             <span className={styles.kpiLabel}>Anuncios</span>
             <span className={styles.kpiValue}>{data.counts.ads}</span>
           </div>
         </div>
-        <div className={`glass-panel ${styles.kpiCard}`}>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
+          onClick={() => router.push("/ads")}
+        >
           <div className={`${styles.kpiIcon} ${styles.kpiIconGreen}`}>📢</div>
           <div className={styles.kpiInfo}>
             <span className={styles.kpiLabel}>Publicaciones</span>
             <span className={styles.kpiValue}>{data.counts.publications}</span>
           </div>
         </div>
-        <div className={`glass-panel ${styles.kpiCard}`}>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
+          onClick={() => router.push("/settings/accounts")}
+        >
           <div className={`${styles.kpiIcon} ${styles.kpiIconOrange}`}>🔗</div>
           <div className={styles.kpiInfo}>
             <span className={styles.kpiLabel}>Cuentas Sociales</span>
