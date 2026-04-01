@@ -46,7 +46,7 @@ export async function GET(
       expiresAt = new Date(Date.now() + tokens.expiresIn * 1000);
 
       // Get user's Facebook profile
-      const meRes = await fetch(`https://graph.facebook.com/v24.0/me?fields=id,name&access_token=${accessToken}`);
+      const meRes = await fetch(`https://graph.facebook.com/v25.0/me?fields=id,name&access_token=${accessToken}`);
       const meData = await meRes.json();
       providerAccountId = meData.id;
       accountName = meData.name;

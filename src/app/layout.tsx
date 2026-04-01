@@ -57,7 +57,7 @@ export default function RootLayout({
                 appId      : '${process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || ""}',
                 cookie     : true,
                 xfbml      : true,
-                version    : 'v19.0'
+                version    : 'v25.0'
               });
               if(typeof FB !== 'undefined' && FB.AppEvents) {
                 FB.AppEvents.logPageView();

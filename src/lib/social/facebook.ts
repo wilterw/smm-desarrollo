@@ -6,7 +6,7 @@
  * User must connect their Facebook account via OAuth to get an access token
  */
 
-const FB_GRAPH_URL = "https://graph.facebook.com/v24.0";
+const FB_GRAPH_URL = "https://graph.facebook.com/v25.0";
 
 interface FacebookPublishResult {
   success: boolean;
@@ -30,7 +30,7 @@ export function getFacebookOAuthUrl(redirectUri: string): string {
     "business_management"
   ].join(",");
 
-  return `https://www.facebook.com/v24.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`;
+  return `https://www.facebook.com/v25.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`;
 }
 
 /**
