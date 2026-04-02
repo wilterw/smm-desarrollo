@@ -264,43 +264,41 @@ export default function NewAdPage() {
               <span className={styles.toolBadge}>IA Power</span>
             </div>
             
-            <div className={styles.formGrid2}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Importar desde URL</label>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <input 
-                    className={styles.input} 
-                    placeholder="https://..." 
-                    value={scrapeUrl} 
-                    onChange={(e) => setScrapeUrl(e.target.value)} 
-                    disabled={scrapingLoading}
-                  />
-                  <button type="button" className={styles.btnPrimary} onClick={handleScrapeLink} disabled={scrapingLoading}>
-                    {scrapingLoading ? "..." : "🔗"}
-                  </button>
-                </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Importar desde URL</label>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input 
+                  className={styles.input} 
+                  placeholder="https://..." 
+                  value={scrapeUrl} 
+                  onChange={(e) => setScrapeUrl(e.target.value)} 
+                  disabled={scrapingLoading}
+                />
+                <button type="button" className={styles.btnPrimary} onClick={handleScrapeLink} disabled={scrapingLoading}>
+                  {scrapingLoading ? "..." : "🔗"}
+                </button>
               </div>
-              
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Traducción Automática (Google)</label>
-                <div style={{ display: "flex", gap: "0.4rem" }}>
-                  {[
-                    { code: "es", label: "ESP" },
-                    { code: "en", label: "ENG" },
-                    { code: "sv", label: "SVE" }
-                  ].map(lang => (
-                    <button 
-                      key={lang.code}
-                      type="button" 
-                      onClick={() => handleTranslate(lang.code)} 
-                      disabled={!!isTranslating || !title}
-                      className={styles.btnSecondary}
-                      style={{ flex: 1, padding: "0.5rem 0", fontSize: "0.75rem", background: isTranslating === lang.code ? "var(--meta-accent-blue)" : "" }}
-                    >
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
+            </div>
+            
+            <div className={styles.formGroup} style={{ marginTop: "0.5rem" }}>
+              <label className={styles.label}>Idioma</label>
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                {[
+                  { code: "es", label: "ESP" },
+                  { code: "en", label: "ENG" },
+                  { code: "sv", label: "SVE" }
+                ].map(lang => (
+                  <button 
+                    key={lang.code}
+                    type="button" 
+                    onClick={() => handleTranslate(lang.code)} 
+                    disabled={!!isTranslating || !title}
+                    className={styles.btnSecondary}
+                    style={{ flex: 1, padding: "0.5rem 0", fontSize: "0.75rem", background: isTranslating === lang.code ? "var(--meta-accent-blue)" : "" }}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -365,15 +363,13 @@ export default function NewAdPage() {
               <span className={styles.cardTitle}>🖼️ Multimedia</span>
             </div>
 
-            <div className={styles.formGrid2}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Enlace de Clic (URL)</label>
-                <input className={styles.input} placeholder="https://miweb.com" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
-              </div>
-              <div className={styles.formGroup}>
-                 <label className={styles.label}>Metadatos: Hashtags</label>
-                 <input className={styles.input} placeholder="marketing, ventas" value={hashtagsStr} onChange={(e) => setHashtagsStr(e.target.value)} />
-              </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Enlace de Clic (URL)</label>
+              <input className={styles.input} placeholder="https://miweb.com" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+            </div>
+            <div className={styles.formGroup}>
+               <label className={styles.label}>Metadatos: Hashtags</label>
+               <input className={styles.input} placeholder="marketing, ventas" value={hashtagsStr} onChange={(e) => setHashtagsStr(e.target.value)} />
             </div>
 
             {mediaUrls.length > 0 && (
