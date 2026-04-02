@@ -178,6 +178,17 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     setPublishResults(null);
     setError(null);
     try {
+      // Auto-save ad state (Text, Link, Hashtags) before publishing
+      await fetch(`/api/ads/${ad.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: ad.description,
+          linkUrl: ad.linkUrl,
+          hashtags: ad.campaign?.hashtags
+        })
+      });
+
       const res = await fetch("/api/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -350,13 +361,18 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 </div>
              </div>
              <div className={styles.fbText}>
-                {ad.title} {"\n"}
-                {ad.description || "Welcome to this charming property..."}
+                {ad.title} {"\n\n"}
+                {ad.description || "Welcome to this charming property..."} {"\n\n"}
+                <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>{ad.campaign?.hashtags}</span>
              </div>
              <div className={styles.fbMediaGrid}>
-                {ad.mediaUrls?.slice(0, 4).map((url: string, i: number) => (
-                   <img key={i} src={url} alt="Preview" className={styles.fbMediaItem} />
-                ))}
+                {ad.mediaUrl && (
+                   ad.mediaType === 'video' ? (
+                     <video src={ad.mediaUrl} controls className={styles.fbMediaItem} />
+                   ) : (
+                     <img src={ad.mediaUrl} alt="Preview" className={styles.fbMediaItem} />
+                   )
+                )}
              </div>
              <div className={styles.fbFooter}>
                 <div style={{ fontSize: "0.85rem" }}>
@@ -407,6 +423,24 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
         </div>
 
         <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Contenido Multimedia</span></div>
+           <p style={{ fontSize: "0.85rem", opacity: 0.7, marginBottom: "0.5rem" }}>El contenido gráfico o video principal de tu anuncio.</p>
+           {ad.mediaUrl ? (
+             <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--border-color)", width: "100%", height: "200px", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+               {ad.mediaType === 'video' ? (
+                 <video src={ad.mediaUrl} controls style={{ maxWidth: "100%", maxHeight: "100%" }} />
+               ) : (
+                 <img src={ad.mediaUrl} alt="Ad Media" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+               )}
+             </div>
+           ) : (
+             <div style={{ padding: "2rem", textAlign: "center", background: "var(--bg-primary)", borderRadius: "var(--radius-md)", border: "1px dashed var(--border-color)", opacity: 0.7 }}>
+               No hay contenido multimedia asignado
+             </div>
+           )}
+        </div>
+
+        <div className={styles.metaCard}>
            <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Texto del anuncio</span></div>
            <p style={{ fontSize: "0.85rem", opacity: 0.7 }}>Publica un anuncio con el texto existente o agrega variaciones.</p>
            <textarea 
@@ -415,6 +449,16 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
              value={ad.description || ""}
              onChange={(e) => setAd({...ad, description: e.target.value})}
            />
+           <div style={{ marginTop: "1rem" }}>
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Hashtags de la campaña</p>
+              <input 
+                type="text"
+                className={styles.input} 
+                placeholder="#Housing #RealEstate"
+                value={ad.campaign?.hashtags || ""}
+                onChange={(e) => setAd({...ad, campaign: {...ad.campaign, hashtags: e.target.value}})}
+              />
+           </div>
            
            <div className={styles.advantageCard} style={{ marginTop: "1rem" }}>
               <div style={{ flex: 1 }}>
