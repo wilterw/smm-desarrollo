@@ -59,7 +59,6 @@ export async function GET(
       if (pages && pages.length > 0) {
         // UPSERT ALL PAGES as separate accounts
         for (const page of pages) {
-          // Try to get IG Business Account ID for this specific page
           let igAccountId: string | null = null;
           try {
             igAccountId = await getInstagramAccountId(page.id, page.access_token);
@@ -76,11 +75,11 @@ export async function GET(
             },
             update: {
               userId: session.user.id,
-              accessToken: page.access_token, // PAGE ACCESS TOKEN! (Fixes #200)
+              accessToken: page.access_token, // PAGE TOKEN
               expiresAt,
-              accountName: userName, // Titular (e.g., Ramon)
+              accountName: userName,
               pageId: page.id,
-              pageName: page.name,   // Fanpage (e.g., Prime Business Loan)
+              pageName: page.name,
               igAccountId,
             },
             create: {
@@ -96,16 +95,12 @@ export async function GET(
             },
           });
         }
-        
-        // Success redirect immediately after processing all pages
-        return NextResponse.redirect(new URL("/settings/accounts?success=true", baseUrl));
-      } else {
-        // No pages found, store the User Profile as the fallback account
-        providerAccountId = userId;
-        accountName = userName;
-        // The common upsert at the end of the function will handle this
       }
       
+      // ALWAYS save the User Profile as the primary Titular account (Feed/Muro)
+      providerAccountId = userId;
+      accountName = userName;
+      // This will be handled by the common upsert at the end of the function using the USER ACCESS TOKEN
     } else if (provider === "youtube") {
       const tokens = await exchangeYouTubeToken(code, redirectUri);
       accessToken = tokens.accessToken;
