@@ -87,13 +87,13 @@ export default function AccountsPage() {
     }
   };
 
-  const handleDisconnect = async (accountId: string) => {
-    if (!confirm("¿Desconectar esta cuenta?")) return;
+  const handleDisconnect = async (providerAccountId: string, provider: string) => {
+    if (!confirm("¿Desconectar este titular? Se eliminarán todas las Fanpages asociadas.")) return;
     try {
       await fetch("/api/social/accounts", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId }),
+        body: JSON.stringify({ providerAccountId, provider }),
       });
       await fetchAccounts();
     } catch {
@@ -103,16 +103,26 @@ export default function AccountsPage() {
 
   const getPlatformData = (provider: string) => {
     const platformAccounts = accounts.filter(a => a.provider === provider);
+    
+    // Group by providerAccountId (Titular)
+    const titularsMap = new Map();
+    platformAccounts.forEach(acc => {
+      if (!titularsMap.has(acc.providerAccountId)) {
+        titularsMap.set(acc.providerAccountId, acc);
+      }
+    });
+    const uniqueTitulars = Array.from(titularsMap.values());
+
     let limit = 1;
     if (limits) {
       if (provider === "facebook") limit = limits.maxFacebookAccounts;
-      else if (provider === "instagram") limit = limits.maxInstagramAccounts; // Note: IG uses FB auth but has its own limit now
+      else if (provider === "instagram") limit = limits.maxInstagramAccounts;
       else if (provider === "youtube") limit = limits.maxYouTubeAccounts;
     }
     return {
-      accounts: platformAccounts,
+      accounts: uniqueTitulars,
       limit,
-      remaining: limit - platformAccounts.length
+      remaining: limit - uniqueTitulars.length
     };
   };
 
@@ -138,7 +148,7 @@ export default function AccountsPage() {
 
       <div className={styles.grid}>
         {providers.map(p => {
-          const { accounts: platformAccounts, limit, remaining } = getPlatformData(p.key);
+          const { accounts: platformTitulars, limit, remaining } = getPlatformData(p.key);
           const canConnect = remaining > 0;
 
           return (
@@ -154,12 +164,12 @@ export default function AccountsPage() {
               </div>
 
               <div className={styles.limitInfo}>
-                Capacidad: <strong>{platformAccounts.length} / {limit}</strong>
+                Capacidad: <strong>{platformTitulars.length} / {limit}</strong>
               </div>
 
               <div className={styles.accountsList}>
-                {platformAccounts.length > 0 ? (
-                  platformAccounts.map(acc => (
+                {platformTitulars.length > 0 ? (
+                  platformTitulars.map(acc => (
                     <div key={acc.id} className={styles.accountItem}>
                       <div className={styles.accountMain}>
                         <div className={styles.accountAvatar}>
@@ -167,11 +177,6 @@ export default function AccountsPage() {
                         </div>
                         <div className={styles.accountDetails}>
                           <div className={styles.accountTitle}>{acc.accountName || "Titular"}</div>
-                          {acc.pageName && (
-                            <div className={styles.accountSubtitle} style={{ color: "var(--meta-accent)", fontWeight: 700 }}>
-                              🚩 Pagina: {acc.pageName}
-                            </div>
-                          )}
                           {acc.expiresAt && (
                             <div className={styles.accountSubtitle}>
                               Expira: {new Date(acc.expiresAt).toLocaleDateString()}
@@ -181,7 +186,7 @@ export default function AccountsPage() {
                       </div>
                       <button 
                         className={styles.miniDisconnectBtn}
-                        onClick={() => handleDisconnect(acc.id)}
+                        onClick={() => handleDisconnect(acc.providerAccountId, acc.provider)}
                       >
                         Desconectar
                       </button>

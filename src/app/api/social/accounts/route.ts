@@ -35,16 +35,33 @@ export async function DELETE(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { accountId } = await req.json();
+    const { accountId, providerAccountId, provider } = await req.json();
     
-    const account = await prisma.socialAccount.findUnique({ where: { id: accountId } });
-    if (!account || account.userId !== session.user.id) {
-      return NextResponse.json({ error: "Account not found" }, { status: 404 });
+    if (providerAccountId && provider) {
+      // Bulk disconnect by Titular
+      await prisma.socialAccount.deleteMany({
+        where: {
+          userId: session.user.id,
+          providerAccountId,
+          provider
+        }
+      });
+      return NextResponse.json({ message: "All accounts for this titular disconnected" });
     }
 
-    await prisma.socialAccount.delete({ where: { id: accountId } });
-    return NextResponse.json({ message: "Account disconnected" });
+    if (accountId) {
+      const account = await prisma.socialAccount.findUnique({ where: { id: accountId } });
+      if (!account || account.userId !== session.user.id) {
+        return NextResponse.json({ error: "Account not found" }, { status: 404 });
+      }
+
+      await prisma.socialAccount.delete({ where: { id: accountId } });
+      return NextResponse.json({ message: "Account disconnected" });
+    }
+
+    return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
   } catch (error) {
+    console.error("DELETE /api/social/accounts error:", error);
     return NextResponse.json({ error: "Failed to disconnect account" }, { status: 500 });
   }
 }
