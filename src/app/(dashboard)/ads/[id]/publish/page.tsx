@@ -222,35 +222,50 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       );
     }
 
-    // New nested step for Organic: Feed vs Fanpage
+    // Branching Step for Organic: Decide Feed/Fanpage
     if (publishType === 'organic' && !origin) {
+      // Logic: Meta (Facebook) does NOT allow API posting to Personal Feeds (deprecated #200)
+      // Instagram DOES allow Feed posting for business accounts.
+      const options = [
+        { id: 'feed', name: platform === 'facebook' ? 'Reservado Personal' : 'Perfil (Feed)', icon: '👤', desc: platform === 'facebook' ? 'No permitido por Meta' : 'Muro de la cuenta', disabled: platform === 'facebook' },
+        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: false }
+      ];
+
       return (
-        <div className={styles.destinationGrid}>
-          <button style={{ position: 'absolute', top: -30, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setType(null)}>← Cambiar Tipo</button>
-          {[
-            { id: 'feed', name: 'Muro Personal (Feed)', icon: '👤', desc: 'Publicar en tu perfil' },
-            { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas' }
-          ].map(o => (
-            <div key={o.id} className={`${styles.destinationCard} ${origin === o.id ? styles.destinationCardActive : ''}`} onClick={() => {
-              setOrigin(o.id as any);
-              if (o.id === 'feed') {
-                 // Auto-select the personal profile record
-                 const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
-                 if (personalAcc) {
-                   setSelectedAccountIds([personalAcc.id]);
-                   setStep(4); // Jump to Confirm
-                 } else {
-                   setError("Para publicar en el Muro necesitamos acceder a tu perfil personal. Si no aparece, reconecta tu cuenta.");
-                 }
-              }
-            }}>
-              <div className={styles.destinationIcon}>{o.icon}</div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 700 }}>{o.name}</span>
-                <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{o.desc}</span>
-              </div>
+        <div style={{ position: "relative" }}>
+          <button style={{ position: 'absolute', top: -45, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setType(null)}>← Cambiar Tipo</button>
+          
+          {platform === 'facebook' && (
+            <div style={{ fontSize: "0.75rem", background: "#fff9e6", padding: "0.8rem", borderRadius: "8px", border: "1px solid #ffe58f", marginBottom: "1rem", color: "#856404" }}>
+              ⚠️ <strong>Nota de Meta:</strong> Facebook prohíbe aplicaciones publicar en <strong>Muros Personales</strong> privados. La publicación automática solo está permitida en Fanpages de negocios.
             </div>
-          ))}
+          )}
+
+          <div className={styles.destinationGrid}>
+            {options.map(o => (
+              <div key={o.id} className={`${styles.destinationCard} ${origin === o.id ? styles.destinationCardActive : ''} ${o.disabled ? styles.destinationCardDisabled || '' : ''}`} 
+                style={o.disabled ? { opacity: 0.5, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
+                onClick={() => {
+                  if (o.disabled) return;
+                  setOrigin(o.id as any);
+                  if (o.id === 'feed') {
+                    const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
+                    if (personalAcc) {
+                      setSelectedAccountIds([personalAcc.id]);
+                      setStep(4);
+                    } else {
+                      setError("Para el Muro necesitamos un Perfil Personal conectado.");
+                    }
+                  }
+                }}>
+                <div className={styles.destinationIcon}>{o.icon}</div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontWeight: 700 }}>{o.name}</span>
+                  <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{o.desc}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
@@ -272,7 +287,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 <div className={styles.accountAvatar}>🚩</div>
                 <div className={styles.accountInfo}>
                   <span className={styles.accountName}>{acc.pageName || "Página vinculada"}</span>
-                  <span className={styles.accountHandle}>{acc.accountName} (Titular)</span>
+                  <span className={styles.accountHandle}>{platform === 'facebook' ? 'Fanpage' : 'Instagram Page'} de {acc.accountName}</span>
                 </div>
                 <div style={{ marginLeft: "auto", fontSize: "1.2rem" }}>{selectedAccountIds.includes(acc.id) ? "✅" : "➕"}</div>
               </div>

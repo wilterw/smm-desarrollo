@@ -112,6 +112,55 @@ export async function publishToFacebook(
 }
 
 /**
+ * Publish multiple photos to a Facebook Page (Album/Carousel style)
+ */
+export async function publishMultiPhotoToFacebook(
+  pageId: string,
+  pageAccessToken: string,
+  message: string,
+  imageUrls: string[]
+): Promise<FacebookPublishResult> {
+  try {
+    const photoIds: string[] = [];
+
+    // Step 1: Upload each photo as unpublished
+    for (const url of imageUrls) {
+      const res = await fetch(`${FB_GRAPH_URL}/${pageId}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          published: false,
+          access_token: pageAccessToken,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(`Error subiendo imagen: ${data.error.message}`);
+      photoIds.push(data.id);
+    }
+
+    // Step 2: Create the feed post with attached media
+    const attached_media = photoIds.map(id => ({ media_fbid: id }));
+    const res = await fetch(`${FB_GRAPH_URL}/${pageId}/feed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        attached_media,
+        access_token: pageAccessToken,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(`Error creando post: ${data.error.message}`);
+
+    return { success: true, postId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Publish a post to a User's Personal Feed
  * Note: Facebook restricts this for most apps, but endpoint is /me/feed
  */

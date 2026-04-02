@@ -5,12 +5,18 @@ import { authOptions } from "@/lib/auth";
 import { 
   publishToFacebook, 
   publishToFacebookFeed, 
+  publishMultiPhotoToFacebook,
   createFacebookAdCampaign,
   createFacebookAdSet,
   createFacebookAdCreative,
   createFacebookAd
 } from "@/lib/social/facebook";
-import { publishToInstagram, publishToInstagramReels, publishToInstagramStories } from "@/lib/social/instagram";
+import { 
+  publishToInstagram, 
+  publishToInstagramReels, 
+  publishToInstagramStories,
+  publishCarouselToInstagram 
+} from "@/lib/social/instagram";
 
 /**
  * Automatically appends UTM parameters to any links in the message
@@ -57,11 +63,9 @@ export async function POST(req: NextRequest) {
       rawMessage += `\n\n${tags}`;
     }
     
-    // Resolve media URL (Handle both relative and absolute paths for cloud compatibility)
-    let mediaFullUrl: string | undefined = undefined;
-    if (ad.mediaUrl) {
-      mediaFullUrl = ad.mediaUrl.startsWith("http") ? ad.mediaUrl : `${baseUrl}${ad.mediaUrl}`;
-    }
+    // Multi-media Support (SMM 1.5.12)
+    const mediaUrlsRaw = ad.mediaUrl ? ad.mediaUrl.split(",") : [];
+    const mediaFullUrls = mediaUrlsRaw.map(url => url.startsWith("http") ? url : `${baseUrl}${url}`);
 
     for (const destConfig of destinations) {
       const { platform, destination, adsConfig, socialAccountId } = destConfig;
@@ -129,14 +133,22 @@ export async function POST(req: NextRequest) {
 
         if (platform === "facebook") {
           if (destination === "feed") {
-            const result = await publishToFacebookFeed(account.accessToken, message, mediaFullUrl);
+            const result = await publishToFacebookFeed(account.accessToken, message, mediaFullUrls[0]);
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           } else if (destination === "fanpage") {
             if (!account.pageId) throw new Error("No Facebook Page connected");
-            const result = await publishToFacebook(account.pageId, account.accessToken, message, mediaFullUrl);
-            if (!result.success) throw new Error(result.error);
-            postId = result.postId;
+            
+            // Multiple images logic for Fanpage
+            if (mediaFullUrls.length > 1) {
+              const result = await publishMultiPhotoToFacebook(account.pageId, account.accessToken, message, mediaFullUrls);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            } else {
+              const result = await publishToFacebook(account.pageId, account.accessToken, message, mediaFullUrls[0]);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            }
           } else if (destination === "ads") {
             const adAccountId = process.env.FACEBOOK_AD_ACCOUNT_ID || "act_123456789"; 
             
@@ -165,14 +177,14 @@ export async function POST(req: NextRequest) {
             );
             if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
 
-            // 3. Create Creative
+            // 3. Create Creative (Multiple images handled by API internally)
             const creativeRes = await createFacebookAdCreative(
               account.accessToken,
               adAccountId,
               account.pageId || "",
               ad.title,
               message,
-              mediaFullUrl
+              mediaFullUrls[0]
             );
             if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
 
@@ -191,19 +203,27 @@ export async function POST(req: NextRequest) {
         }
         else if (platform === "instagram") {
           if (!account.igAccountId) throw new Error("No Instagram Business Account linked to the Facebook Page");
-          if (!mediaFullUrl) throw new Error("Instagram requires media");
+          if (mediaFullUrls.length === 0) throw new Error("Instagram requires media");
           
           if (destination === "feed") {
-            const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaFullUrl, message);
-            if (!result.success) throw new Error(result.error);
-            postId = result.postId;
+            if (mediaFullUrls.length > 1) {
+              // Carousel support
+              const items = mediaFullUrls.map(url => ({ url, type: ad.mediaType as any }));
+              const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items, message);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            } else {
+              const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaFullUrls[0], message);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            }
           } else if (destination === "reels") {
             if (ad.mediaType !== "video") throw new Error("Reels require a video file");
-            const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaFullUrl, message);
+            const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaFullUrls[0], message);
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           } else if (destination === "stories") {
-            const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaFullUrl, ad.mediaType as any);
+            const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaFullUrls[0], ad.mediaType as any);
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           } else if (destination === "ads") {
