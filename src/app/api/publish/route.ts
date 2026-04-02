@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
           }
         } 
         else if (platform === "youtube") {
-          if (!mediaFullUrl) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
+          if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
           
           if (destination === "shorts") {
