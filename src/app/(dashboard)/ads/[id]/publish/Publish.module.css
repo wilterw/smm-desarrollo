@@ -4,8 +4,8 @@
   height: calc(100vh - 80px);
   max-width: 100%;
   padding: 0;
-  background: #f0f2f5;
-  color: #1c1e21;
+  background-color: var(--bg-primary); /* Econos Dark */
+  color: var(--text-primary); /* Econos Crema */
   overflow: hidden;
 }
 
@@ -26,15 +26,15 @@
   .leftNav { display: none; }
 }
 
-/* Left Navigation icons */
+/* Left Navigation */
 .leftNav {
-  background: #ffffff;
-  border-right: 1px solid #dddfe2;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 1.5rem;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .navIconWrapper {
@@ -47,16 +47,16 @@
   justify-content: center;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: all 0.2s;
-  color: #65676b;
+  transition: all var(--transition-fast);
+  color: var(--text-muted);
   position: relative;
   margin-bottom: 0.5rem;
 }
 
 .navIconActive {
-  background: rgba(24, 119, 242, 0.1);
-  color: #1877f2;
-  box-shadow: 0 0 0 1px #1877f2;
+  background: var(--selection-bg);
+  color: var(--accent-primary); /* Econos Red */
+  box-shadow: 0 0 0 1px var(--accent-primary);
 }
 
 .navIconLabel {
@@ -64,7 +64,6 @@
   font-weight: 700;
   margin-top: 4px;
   text-transform: uppercase;
-  opacity: 0.8;
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
@@ -72,29 +71,28 @@
 /* Center Area */
 .centerArea {
   overflow-y: auto;
-  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  background: #f0f2f5;
+  background-color: var(--bg-primary);
 }
 
 .configCard {
-  background: #ffffff;
-  border: 1px solid #dddfe2;
-  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #ebedf0;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 1rem;
   margin-bottom: 0.25rem;
 }
@@ -102,13 +100,13 @@
 .cardTitle {
   font-size: 1.125rem;
   font-weight: 700;
-  color: #1c1e21;
+  color: var(--text-primary);
 }
 
-/* Right Sidebar (Audience & Summary) */
+/* Right Sidebar (Global) */
 .rightSidebar {
-  background: #ffffff;
-  border-left: 1px solid #dddfe2;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
   padding: 1.5rem;
   overflow-y: auto;
   display: flex;
@@ -118,26 +116,25 @@
 
 /* Audience Gauge */
 .audienceGaugeCard {
-  background: #f7f8fa;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
   padding: 1.25rem;
-  border: 1px solid #dddfe2;
+  border: 1px solid var(--border-color);
 }
 
 .audienceGaugeTitle {
   font-size: 0.9rem;
   font-weight: 700;
   margin-bottom: 1.25rem;
-  color: #1c1e21;
+  color: var(--text-primary);
 }
 
 .gaugeWrapper {
-  height: 48px;
-  background: linear-gradient(to right, #fbbf24 0%, #10b981 50%, #f3425f 100%);
-  border-radius: 24px;
+  height: 12px;
+  background: linear-gradient(to right, #fbbf24 0%, #10b981 50%, #ef4444 100%);
+  border-radius: 6px;
   position: relative;
-  margin-bottom: 1.5rem;
-  opacity: 0.9;
+  margin-bottom: 1rem;
 }
 
 .gaugeIndicator {
@@ -145,10 +142,10 @@
   top: -4px;
   bottom: -4px;
   width: 4px;
-  background: #ffffff;
-  box-shadow: 0 0 5px rgba(0,0,0,0.2), 0 0 0 2px rgba(255,255,255,0.8);
+  background: var(--text-primary);
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
   border-radius: 2px;
-  transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: left var(--transition-normal);
 }
 
 .gaugeLabels {
@@ -156,14 +153,13 @@
   justify-content: space-between;
   font-size: 0.7rem;
   font-weight: 600;
-  color: #65676b;
-  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-/* Meta Pro Layout (V18) */
+/* Meta Ads Terminal (High Fid Pro) */
 .adsTerminal {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr 420px;
     gap: 2rem;
     height: 100%;
 }
@@ -189,21 +185,21 @@
 }
 
 .metaCard {
-    background: #ffffff;
-    border: 1px solid #dddfe2;
-    border-radius: 8px;
-    padding: 1.25rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-lg);
 }
 
 .metaCardHeader {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    border-bottom: 1px solid #ebedf0;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.75rem;
     margin-bottom: 0.25rem;
 }
@@ -211,63 +207,55 @@
 .metaCardTitle {
     font-size: 1rem;
     font-weight: 700;
-    color: #1c1e21;
+    color: var(--text-primary);
 }
 
 .objectivePill {
-    background: #f0f2f5;
+    background: var(--bg-primary);
     padding: 0.75rem 1rem;
-    border-radius: 50px;
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
     gap: 0.75rem;
     font-weight: 600;
     font-size: 0.9rem;
-    border: 1px solid #dddfe2;
+    border: 1px solid var(--border-color);
 }
 
-.changeBtn {
-    background: #f0f2f5;
-    border: none;
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-
-.changeBtn:hover { background: #e4e6eb; }
-
-/* Ad Preview Component (High Fid) */
+/* Ad Preview (High Fid) */
 .previewContainer {
-    background: #ffffff;
-    border: 1px solid #dddfe2;
-    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
     overflow: hidden;
 }
 
 .previewHeader {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid #dddfe2;
+    border-bottom: 1px solid var(--border-color);
     font-weight: 700;
-    font-size: 0.9rem;
-    color: #65676b;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .fbPost {
-    padding: 0.75rem;
+    padding: 1rem;
+    background: #ffffff; /* We keep the actual post white to simulate real Meta Feed */
+    color: #1c1e21;
 }
 
 .fbPostHeader {
     display: flex;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .fbAvatar {
     width: 40px;
     height: 40px;
-    background: #1877f2;
+    background: var(--accent-primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -276,44 +264,14 @@
     font-weight: 700;
 }
 
-.fbName {
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-
-.fbTime {
-    font-size: 0.75rem;
-    color: #65676b;
-}
-
-.fbText {
-    font-size: 0.95rem;
-    margin-bottom: 0.75rem;
-    line-height: 1.4;
-    white-space: pre-wrap;
-}
-
-.fbMediaGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 2px;
-    aspect-ratio: 1;
-    background: #dddfe2;
-}
-
-.fbMediaItem {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
+/* Call to Action Bar */
 .fbFooter {
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
     background: #f0f2f5;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-top: 1px solid #dddfe2;
 }
 
 .fbCtaBtn {
@@ -323,40 +281,16 @@
     border-radius: 6px;
     font-weight: 600;
     font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    color: #1c1e21;
+    transition: background 0.2s;
 }
 
-/* Estimates Widget */
-.estimatesCard {
-    background: #ffffff;
-    border: 1px solid #dddfe2;
-    border-radius: 8px;
-    padding: 1.25rem;
-}
-
-.estimateValue {
-    font-size: 1.50rem;
-    font-weight: 700;
-    margin: 0.5rem 0;
-}
-
-.paymentSummary {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #ebedf0;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-}
-
-/* Advantage+ Toggle */
+/* Advantage+ Toggle (Custom Styled) */
 .advantageCard {
-    background: #f7f8fa;
-    border: 1px solid #dddfe2;
-    border-radius: 8px;
-    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -365,21 +299,20 @@
 .toggleSwitch {
     width: 48px;
     height: 24px;
-    background: #bcc0c4;
-    border-radius: 20px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
     position: relative;
     cursor: pointer;
-    transition: background 0.3s;
 }
 
 .toggleSwitchActive {
-    background: #1877f2;
+    background: var(--accent-primary);
 }
 
 .toggleKnob {
     width: 20px;
     height: 20px;
-    background: white;
+    background: var(--text-primary);
     border-radius: 50%;
     position: absolute;
     top: 2px;
@@ -391,90 +324,11 @@
     left: 26px;
 }
 
-/* Account Selection */
-.accountSelectionGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.accountCard {
-  background: #ffffff;
-  border: 1px solid #dddfe2;
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.accountCardActive {
-  border-color: #1877f2;
-  background: rgba(24, 119, 242, 0.05);
-  box-shadow: 0 0 0 1px #1877f2;
-}
-
-.accountAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #1877f2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: white;
-}
-
-.accountInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.accountName {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1c1e21;
-}
-
-.accountHandle {
-  font-size: 0.75rem;
-  color: #65676b;
-}
-
-/* Common Parts */
-.destinationGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
-}
-
-.destinationCard {
-    background: #ffffff;
-    border: 1px solid #dddfe2;
-    border-radius: 8px;
-    padding: 1.25rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    cursor: pointer;
-}
-
-.destinationCardActive {
-    border-color: #1877f2;
-    background: rgba(24, 119, 242, 0.05);
-}
-
-.destinationIcon {
-    font-size: 1.75rem;
-}
-
+/* Bottom Actions Bar */
 .bottomBar {
-  background: #ffffff;
-  border-top: 1px solid #dddfe2;
-  padding: 1rem 2rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding: 1.25rem 2.5rem;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
@@ -482,32 +336,68 @@
 }
 
 .btnPrimary {
-    background: #1877f2;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
     color: white;
     border: none;
-    padding: 0.6rem 1.5rem;
-    border-radius: 6px;
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-md);
     font-weight: 700;
     cursor: pointer;
+    box-shadow: 0 4px 15px rgba(183, 6, 6, 0.3);
+    transition: all 0.2s;
+}
+
+.btnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(183, 6, 6, 0.4);
 }
 
 .btnSecondary {
-    background: #e4e6eb;
-    color: #1c1e21;
-    border: none;
-    padding: 0.6rem 1.5rem;
-    border-radius: 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
 }
 
 .input {
   width: 100%;
-  background: #f0f2f5;
-  border: 1px solid #dddfe2;
-  color: #1c1e21;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
   outline: none;
+}
+
+.input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--selection-bg);
+}
+
+/* Destinations & Accounts */
+.accountSelectionGrid, .destinationGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.accountCard, .destinationCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.accountCardActive, .destinationCardActive {
+  border-color: var(--accent-primary);
+  background: var(--selection-bg);
+  box-shadow: var(--selection-glow);
 }

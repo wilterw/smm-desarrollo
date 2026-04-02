@@ -16,6 +16,12 @@ export async function GET(
       where: { id },
       include: {
         campaign: { select: { id: true, name: true, userId: true, hashtags: true, firstComment: true } },
+        publications: {
+          where: { type: "paid" },
+          orderBy: { publishedAt: "desc" },
+          take: 1,
+          include: { adBudget: true }
+        }
       },
     });
 

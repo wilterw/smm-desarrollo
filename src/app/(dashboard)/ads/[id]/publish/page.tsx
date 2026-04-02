@@ -89,12 +89,34 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/ads").then(r => r.json()).then(ads => {
-      const found = ads.find((a: any) => a.id === resolvedParams.id);
-      if (found) setAd(found);
+    // Fetch detailed ad data including previous publication budget
+    fetch(`/api/ads/${resolvedParams.id}`).then(r => r.json()).then(foundAd => {
+      if (foundAd && !foundAd.error) {
+        setAd(foundAd);
+        
+        // Pre-populate adsConfig if there's a previous budget/targeting
+        const lastPaidPub = foundAd.publications?.find((p: any) => p.type === 'paid');
+        if (lastPaidPub && lastPaidPub.adBudget) {
+          const budget = lastPaidPub.adBudget;
+          try {
+            const target = budget.targetAudience ? JSON.parse(budget.targetAudience) : {};
+            setAdsConfig(prev => ({
+              ...prev,
+              ...target,
+              budgetAmount: budget.dailyBudget || budget.totalBudget || prev.budgetAmount,
+              budgetType: budget.dailyBudget ? "daily" : "total",
+              startDate: budget.startDate ? new Date(budget.startDate).toISOString().split('T')[0] : prev.startDate,
+              endDate: budget.endDate ? new Date(budget.endDate).toISOString().split('T')[0] : prev.endDate,
+            }));
+          } catch (e) {
+            console.error("Error parsing saved audience", e);
+          }
+        }
+      }
     });
+
     fetch("/api/social/accounts").then(r => r.json()).then(accounts => {
-      // Dev Mock to allow testing the wizard without real accounts
+      // Dev Mock
       if (accounts.length === 0) {
         setSocialAccounts([{ id: "mock-fb", provider: "facebook", accountName: "SML Pro Account", pageName: "Econos Real Estate", pageId: "123", accessToken: "mock" }]);
       } else {
