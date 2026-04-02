@@ -445,12 +445,63 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
         </div>
 
         <div className={styles.metaCard}>
-           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Segmentación (Housing)</span></div>
-           <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>📍 Ubicaciones (Radio min 25km por ley)</p>
-           <input type="text" className={styles.input} placeholder="Buscar ciudad..." onChange={(e) => handleSearch(e.target.value, "location")} />
-           <div style={{ marginTop: "1rem" }}>
-              <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>🔥 Intereses</p>
-              <input type="text" className={styles.input} placeholder="Añadir intereses..." onChange={(e) => handleSearch(e.target.value, "interest")} />
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Demografía (Housing)</span></div>
+           <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "0.5rem" }}>Por política antidiscriminación de Meta, la demografía está bloqueada para anuncios inmobiliarios.</p>
+           <div style={{ display: "flex", gap: "1rem", flexDirection: "row", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 120px" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Edad</p>
+                <input type="text" className={styles.input} value="18 - 65+" disabled title="Bloqueado por Meta" style={{ opacity: 0.7, cursor: "not-allowed" }} />
+              </div>
+              <div style={{ flex: "1 1 120px" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Género</p>
+                <input type="text" className={styles.input} value="Todos" disabled title="Bloqueado por Meta" style={{ opacity: 0.7, cursor: "not-allowed" }} />
+              </div>
+           </div>
+        </div>
+
+        <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Segmentación Geográfica y Detallada</span></div>
+           <div style={{ marginBottom: "1.5rem" }}>
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>📍 Ubicaciones (Radio min 25km por ley)</p>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input type="text" className={styles.input} placeholder="Buscar ciudad (Ej. Miami, FL)..." onChange={(e) => handleSearch(e.target.value, "location")} style={{ flex: 1 }} />
+                <div style={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-primary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", opacity: 0.8, fontSize: "0.85rem", fontWeight: 600 }}>
+                  +25 km
+                </div>
+              </div>
+           </div>
+           
+           <div>
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>🔥 Intereses (Comportamientos)</p>
+              <p style={{ fontSize: "0.75rem", opacity: 0.6, marginBottom: "0.5rem" }}>Sugeridos: Zillow, Real estate investing, Realtor, Mortgage.</p>
+              <input type="text" className={styles.input} placeholder="Buscar intereses..." onChange={(e) => handleSearch(e.target.value, "interest")} />
+           </div>
+        </div>
+
+        <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Presupuesto y Calendario</span></div>
+           <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 140px" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Tipo de presupuesto</p>
+                <select className={styles.input} value={adsConfig.budgetType} onChange={(e) => setAdsConfig({...adsConfig, budgetType: e.target.value as any})}>
+                  <option value="daily">Presupuesto Diario</option>
+                  <option value="total">Presupuesto Total</option>
+                </select>
+              </div>
+              <div style={{ flex: "1 1 100px" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Monto (USD)</p>
+                <input type="number" className={styles.input} value={adsConfig.budgetAmount} onChange={(e) => setAdsConfig({...adsConfig, budgetAmount: Number(e.target.value)})} min={1} />
+              </div>
+           </div>
+           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 140px" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Fecha de inicio</p>
+                <input type="date" className={styles.input} value={adsConfig.startDate} onChange={(e) => setAdsConfig({...adsConfig, startDate: e.target.value})} />
+              </div>
+              <div style={{ flex: "1 1 140px" }}>
+                <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>Fecha de fin (Opcional)</p>
+                <input type="date" className={styles.input} value={adsConfig.endDate} onChange={(e) => setAdsConfig({...adsConfig, endDate: e.target.value})} />
+              </div>
            </div>
         </div>
       </div>
@@ -464,7 +515,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
 
   return (
     <div className={styles.container}>
-      <div className={styles.mainLayout}>
+      <div className={styles.mainLayout} style={{ gridTemplateColumns: (step === 5 && publishType === 'ads' && platform === 'facebook') ? '64px 1fr' : undefined }}>
         <div className={styles.leftNav}>
           <div className={`${styles.navIconWrapper} ${step >= 1 ? styles.navIconActive : ''}`} onClick={() => setStep(1)}>
             <span>📱</span>

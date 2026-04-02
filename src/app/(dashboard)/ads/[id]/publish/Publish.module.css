@@ -17,13 +17,14 @@
 }
 
 @media (max-width: 1200px) {
-  .mainLayout { grid-template-columns: 64px 1fr; }
+  .mainLayout { grid-template-columns: 64px 1fr !important; }
   .rightSidebar { display: none; }
 }
 
 @media (max-width: 768px) {
-  .mainLayout { grid-template-columns: 1fr; }
+  .mainLayout { grid-template-columns: 1fr !important; }
   .leftNav { display: none; }
+  .centerArea { padding: 1rem !important; }
 }
 
 /* Left Navigation */
@@ -165,7 +166,14 @@
 }
 
 @media (max-width: 1100px) {
-  .adsTerminal { grid-template-columns: 1fr; }
+  .adsTerminal { 
+    grid-template-columns: 1fr; 
+    display: flex;
+    flex-direction: column;
+  }
+  .previewColumn {
+    position: static;
+  }
 }
 
 .configColumn {
