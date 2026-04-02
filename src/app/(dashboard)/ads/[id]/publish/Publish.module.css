@@ -4,8 +4,8 @@
   height: calc(100vh - 80px);
   max-width: 100%;
   padding: 0;
-  background: var(--meta-bg);
-  color: var(--meta-text-primary);
+  background: #f0f2f5;
+  color: #1c1e21;
   overflow: hidden;
 }
 
@@ -28,8 +28,8 @@
 
 /* Left Navigation icons */
 .leftNav {
-  background: var(--meta-sidebar);
-  border-right: 1px solid var(--meta-border);
+  background: #ffffff;
+  border-right: 1px solid #dddfe2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,9 +38,9 @@
 }
 
 .navIconWrapper {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,22 +48,25 @@
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.2s;
-  color: var(--meta-text-secondary);
+  color: #65676b;
   position: relative;
+  margin-bottom: 0.5rem;
 }
 
 .navIconActive {
-  background: rgba(46, 137, 255, 0.15);
-  color: var(--meta-accent-blue);
-  box-shadow: 0 0 0 1px var(--meta-accent-blue);
+  background: rgba(24, 119, 242, 0.1);
+  color: #1877f2;
+  box-shadow: 0 0 0 1px #1877f2;
 }
 
 .navIconLabel {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  margin-top: 2px;
+  margin-top: 4px;
   text-transform: uppercase;
   opacity: 0.8;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 /* Center Area */
@@ -73,25 +76,25 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  background: var(--meta-bg);
+  background: #f0f2f5;
 }
 
 .configCard {
-  background: var(--meta-card);
-  border: 1px solid var(--meta-border);
+  background: #ffffff;
+  border: 1px solid #dddfe2;
   border-radius: 8px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  box-shadow: var(--meta-shadow);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--meta-border);
+  border-bottom: 1px solid #ebedf0;
   padding-bottom: 1rem;
   margin-bottom: 0.25rem;
 }
@@ -99,13 +102,13 @@
 .cardTitle {
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--meta-text-primary);
+  color: #1c1e21;
 }
 
 /* Right Sidebar (Audience & Summary) */
 .rightSidebar {
-  background: var(--meta-sidebar);
-  border-left: 1px solid var(--meta-border);
+  background: #ffffff;
+  border-left: 1px solid #dddfe2;
   padding: 1.5rem;
   overflow-y: auto;
   display: flex;
@@ -113,19 +116,19 @@
   gap: 1.5rem;
 }
 
-/* Audience Gauge Overhaul */
+/* Audience Gauge */
 .audienceGaugeCard {
-  background: #242526;
+  background: #f7f8fa;
   border-radius: 8px;
   padding: 1.25rem;
-  border: 1px solid var(--meta-border);
+  border: 1px solid #dddfe2;
 }
 
 .audienceGaugeTitle {
   font-size: 0.9rem;
   font-weight: 700;
   margin-bottom: 1.25rem;
-  color: #e4e6eb;
+  color: #1c1e21;
 }
 
 .gaugeWrapper {
@@ -143,7 +146,7 @@
   bottom: -4px;
   width: 4px;
   background: #ffffff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.3);
+  box-shadow: 0 0 5px rgba(0,0,0,0.2), 0 0 0 2px rgba(255,255,255,0.8);
   border-radius: 2px;
   transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -153,11 +156,242 @@
   justify-content: space-between;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--meta-text-secondary);
+  color: #65676b;
   text-transform: uppercase;
 }
 
-/* Account Cards */
+/* Meta Pro Layout (V18) */
+.adsTerminal {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    height: 100%;
+}
+
+@media (max-width: 1100px) {
+  .adsTerminal { grid-template-columns: 1fr; }
+}
+
+.configColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 5rem;
+}
+
+.previewColumn {
+    position: sticky;
+    top: 0;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.metaCard {
+    background: #ffffff;
+    border: 1px solid #dddfe2;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.metaCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #ebedf0;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.metaCardTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1c1e21;
+}
+
+.objectivePill {
+    background: #f0f2f5;
+    padding: 0.75rem 1rem;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid #dddfe2;
+}
+
+.changeBtn {
+    background: #f0f2f5;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.changeBtn:hover { background: #e4e6eb; }
+
+/* Ad Preview Component (High Fid) */
+.previewContainer {
+    background: #ffffff;
+    border: 1px solid #dddfe2;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.previewHeader {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dddfe2;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #65676b;
+}
+
+.fbPost {
+    padding: 0.75rem;
+}
+
+.fbPostHeader {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.fbAvatar {
+    width: 40px;
+    height: 40px;
+    background: #1877f2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+}
+
+.fbName {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.fbTime {
+    font-size: 0.75rem;
+    color: #65676b;
+}
+
+.fbText {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.fbMediaGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    aspect-ratio: 1;
+    background: #dddfe2;
+}
+
+.fbMediaItem {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fbFooter {
+    padding: 0.75rem;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fbCtaBtn {
+    background: #ffffff;
+    border: 1px solid #dddfe2;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Estimates Widget */
+.estimatesCard {
+    background: #ffffff;
+    border: 1px solid #dddfe2;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+.estimateValue {
+    font-size: 1.50rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.paymentSummary {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ebedf0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+/* Advantage+ Toggle */
+.advantageCard {
+    background: #f7f8fa;
+    border: 1px solid #dddfe2;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toggleSwitch {
+    width: 48px;
+    height: 24px;
+    background: #bcc0c4;
+    border-radius: 20px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.toggleSwitchActive {
+    background: #1877f2;
+}
+
+.toggleKnob {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.3s;
+}
+
+.toggleKnobActive {
+    left: 26px;
+}
+
+/* Account Selection */
 .accountSelectionGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -165,8 +399,8 @@
 }
 
 .accountCard {
-  background: #3a3b3c;
-  border: 1px solid var(--meta-border);
+  background: #ffffff;
+  border: 1px solid #dddfe2;
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -176,14 +410,10 @@
   transition: all 0.2s;
 }
 
-.accountCard:hover {
-  background: #4e4f50;
-}
-
 .accountCardActive {
-  border-color: var(--meta-accent-blue);
-  background: rgba(46, 137, 255, 0.1);
-  box-shadow: 0 0 0 1px var(--meta-accent-blue);
+  border-color: #1877f2;
+  background: rgba(24, 119, 242, 0.05);
+  box-shadow: 0 0 0 1px #1877f2;
 }
 
 .accountAvatar {
@@ -206,72 +436,15 @@
 .accountName {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #e4e6eb;
+  color: #1c1e21;
 }
 
 .accountHandle {
   font-size: 0.75rem;
-  color: #b0b3b8;
+  color: #65676b;
 }
 
-/* Accordion (Targeting) */
-.accordion {
-  border: 1px solid var(--meta-border);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 0.75rem;
-}
-
-.accordionHeader {
-  background: #3a3b3c;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.accordionBody {
-  background: #242526;
-  padding: 1.25rem;
-  border-top: 1px solid var(--meta-border);
-}
-
-/* Bottom Bar */
-.bottomBar {
-  background: var(--meta-sidebar);
-  border-top: 1px solid var(--meta-border);
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  align-items: center;
-}
-
-/* Re-using buttons from creator */
-.btnPrimary {
-    background: var(--meta-accent-blue);
-    color: white;
-    border: none;
-    padding: 0.6rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.btnSecondary {
-    background: #4e4f50;
-    color: white;
-    border: none;
-    padding: 0.6rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-/* Destination Cards */
+/* Common Parts */
 .destinationGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -279,8 +452,8 @@
 }
 
 .destinationCard {
-    background: #3a3b3c;
-    border: 1px solid var(--meta-border);
+    background: #ffffff;
+    border: 1px solid #dddfe2;
     border-radius: 8px;
     padding: 1.25rem;
     display: flex;
@@ -290,104 +463,51 @@
 }
 
 .destinationCardActive {
-    border-color: var(--meta-accent-blue);
-    background: rgba(46, 137, 255, 0.1);
+    border-color: #1877f2;
+    background: rgba(24, 119, 242, 0.05);
 }
 
 .destinationIcon {
     font-size: 1.75rem;
 }
 
-/* Results */
-.resultCard {
-    background: #242526;
-    border: 1px solid var(--meta-border);
-    border-radius: 8px;
-    padding: 1rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+.bottomBar {
+  background: #ffffff;
+  border-top: 1px solid #dddfe2;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  align-items: center;
 }
 
-.resultSuccess { border-left: 4px solid #10b981; }
-.resultError { border-left: 4px solid #f3425f; }
+.btnPrimary {
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+}
 
-/* Form Elements */
-.fieldLabel {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #b0b3b8;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+.btnSecondary {
+    background: #e4e6eb;
+    color: #1c1e21;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .input {
   width: 100%;
-  background: #3a3b3c;
-  border: 1px solid var(--meta-border);
-  color: white;
+  background: #f0f2f5;
+  border: 1px solid #dddfe2;
+  color: #1c1e21;
   padding: 0.75rem;
   border-radius: 6px;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s;
-}
-
-.input:focus {
-  border-color: var(--meta-accent-blue);
-}
-
-.slider {
-  width: 100%;
-  margin: 1rem 0;
-  accent-color: var(--meta-accent-blue);
-}
-
-/* Search results dropdown for targeting */
-.searchResults {
-  background: #3a3b3c;
-  border: 1px solid var(--meta-border);
-  border-top: none;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  position: absolute;
-  z-index: 10;
-  width: calc(100% - 2.5rem);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.searchItem {
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-size: 0.85rem;
-}
-
-.searchItem:hover {
-  background: rgba(255,255,255,0.05);
-  color: var(--meta-accent-blue);
-}
-
-/* Tags for selected interests */
-.tag {
-  background: rgba(46, 137, 255, 0.15);
-  color: var(--meta-accent-blue);
-  border: 1px solid rgba(46, 137, 255, 0.3);
-  padding: 0.35rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tag:hover {
-  background: rgba(46, 137, 255, 0.25);
-  transform: translateY(-1px);
 }

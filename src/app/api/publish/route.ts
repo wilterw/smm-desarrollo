@@ -157,7 +157,8 @@ export async function POST(req: NextRequest) {
               account.accessToken, 
               adAccountId, 
               `SMM - ${ad.campaign.name}`, 
-              adsConfig?.budgetAmount || 10
+              adsConfig?.budgetAmount || 10,
+              adsConfig?.campaignObjective
             );
             if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
 
@@ -188,7 +189,9 @@ export async function POST(req: NextRequest) {
               account.pageId || "",
               ad.title,
               message,
-              mediaFullUrls[0]
+              mediaFullUrls[0],
+              undefined,
+              adsConfig
             );
             if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
 

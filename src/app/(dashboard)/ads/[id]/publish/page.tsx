@@ -7,6 +7,8 @@ import styles from "./Publish.module.css";
 
 type AdsConfig = {
   campaignObjective: string;
+  ctaLabel: string;
+  advantageContent: boolean;
   country: string;
   state: string;
   city: string;
@@ -44,11 +46,13 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const [origin, setOrigin] = useState<"feed" | "fanpage" | null>(null);
   const [destination, setDestination] = useState<Destination | null>(null);
   const [adsConfig, setAdsConfig] = useState<AdsConfig>({
-    campaignObjective: "engagement",
+    campaignObjective: "MESSAGES",
+    ctaLabel: "SEND_MESSAGE",
+    advantageContent: true,
     country: "US",
     state: "",
     city: "",
-    radiusKm: 20,
+    radiusKm: 25,
     ageMin: 18,
     ageMax: 65,
     gender: "all",
@@ -89,7 +93,14 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       const found = ads.find((a: any) => a.id === resolvedParams.id);
       if (found) setAd(found);
     });
-    fetch("/api/social/accounts").then(r => r.json()).then(setSocialAccounts);
+    fetch("/api/social/accounts").then(r => r.json()).then(accounts => {
+      // Dev Mock to allow testing the wizard without real accounts
+      if (accounts.length === 0) {
+        setSocialAccounts([{ id: "mock-fb", provider: "facebook", accountName: "SML Pro Account", pageName: "Econos Real Estate", pageId: "123", accessToken: "mock" }]);
+      } else {
+        setSocialAccounts(accounts);
+      }
+    });
   }, [resolvedParams.id]);
 
   const toggleSection = (section: keyof typeof openSections) => {
@@ -114,25 +125,21 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     setError(null);
     if (step === 1 && !platform) return setError("Selecciona una plataforma");
     if (step === 2 && !selectedTitular) return setError("Selecciona la cuenta titular");
+    if (step === 3 && !publishType) return setError("Selecciona si es Orgánico o Ads");
     
-    if (step === 3) {
-      if (!publishType) return setError("Selecciona si es Orgánico o Ads");
-      if (publishType === 'organic') {
-        if (!origin) return setError("Selecciona si es Feed o Fanpage");
-        if (origin === 'fanpage' && selectedAccountIds.length === 0) return setError("Selecciona al menos una Fanpage");
-      } else if (publishType === 'ads') {
-        if (selectedAccountIds.length === 0) return setError("Selecciona la Fanpage para el anuncio");
-      }
+    if (step === 4) {
+      if (publishType === 'organic' && !origin) return setError("Selecciona el origen");
+      if (selectedAccountIds.length === 0) return setError("Selecciona al menos una Fanpage/Cuenta");
     }
 
-    // Housing Category Enforcement (SMM 2.0)
-    if (publishType === 'ads' && platform === 'facebook') {
+    // Housing Category Enforcement
+    if (step === 4 && publishType === 'ads' && platform === 'facebook') {
       setAdsConfig(prev => ({
         ...prev,
         ageMin: 18,
         ageMax: 65,
-        gender: 'all', // Mandatory for Housing
-        radiusKm: Math.max(prev.radiusKm, 25) // Min 25km for Housing
+        gender: 'all',
+        radiusKm: Math.max(prev.radiusKm, 25)
       }));
     }
 
@@ -221,18 +228,48 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   };
 
   const renderConfigSection = () => {
-    if (!publishType) {
+    return (
+      <div className={styles.destinationGrid}>
+        {[
+          { id: 'organic', name: 'Orgánico', icon: '🌱', desc: 'Muro o Fanpage' },
+          { id: 'ads', name: 'Anuncio (Ads)', icon: '📈', desc: 'Campaña pagada' }
+        ].map(t => (
+          <div key={t.id} className={`${styles.destinationCard} ${publishType === t.id ? styles.destinationCardActive : ''}`} onClick={() => { setType(t.id as any); setError(null); setStep(4); }}>
+            <div className={styles.destinationIcon}>{t.icon}</div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontWeight: 700 }}>{t.name}</span>
+              <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{t.desc}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderIdentitySelection = () => {
+    if (publishType === 'organic' && !origin) {
+      const options = [
+        { id: 'feed', name: platform === 'facebook' ? 'Reservado Personal' : 'Perfil (Feed)', icon: '👤', desc: platform === 'facebook' ? 'No permitido por Meta' : 'Muro de la cuenta', disabled: platform === 'facebook' },
+        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: false }
+      ];
+
       return (
         <div className={styles.destinationGrid}>
-          {[
-            { id: 'organic', name: 'Orgánico', icon: '🌱', desc: 'Muro o Fanpage' },
-            { id: 'ads', name: 'Anuncio (Ads)', icon: '📈', desc: 'Campaña pagada' }
-          ].map(t => (
-            <div key={t.id} className={`${styles.destinationCard} ${publishType === t.id ? styles.destinationCardActive : ''}`} onClick={() => { setType(t.id as any); setError(null); }}>
-              <div className={styles.destinationIcon}>{t.icon}</div>
+          {options.map(o => (
+            <div key={o.id} className={`${styles.destinationCard} ${origin === o.id ? styles.destinationCardActive : ''}`} 
+              style={o.disabled ? { opacity: 0.5, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
+              onClick={() => {
+                if (o.disabled) return;
+                setOrigin(o.id as any);
+                if (o.id === 'feed') {
+                  const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
+                  if (personalAcc) setSelectedAccountIds([personalAcc.id]);
+                }
+              }}>
+              <div className={styles.destinationIcon}>{o.icon}</div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 700 }}>{t.name}</span>
-                <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{t.desc}</span>
+                <span style={{ fontWeight: 700 }}>{o.name}</span>
+                <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{o.desc}</span>
               </div>
             </div>
           ))}
@@ -240,83 +277,26 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       );
     }
 
-    // Branching Step for Organic: Decide Feed/Fanpage
-    if (publishType === 'organic' && !origin) {
-      // Logic: Meta (Facebook) does NOT allow API posting to Personal Feeds (deprecated #200)
-      // Instagram DOES allow Feed posting for business accounts.
-      const options = [
-        { id: 'feed', name: platform === 'facebook' ? 'Reservado Personal' : 'Perfil (Feed)', icon: '👤', desc: platform === 'facebook' ? 'No permitido por Meta' : 'Muro de la cuenta', disabled: platform === 'facebook' },
-        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: false }
-      ];
+    const filteredFanpages = socialAccounts.filter(acc => 
+      acc.provider === platform && 
+      acc.accountName === selectedTitular && 
+      acc.pageId
+    );
 
-      return (
-        <div style={{ position: "relative" }}>
-          <button style={{ position: 'absolute', top: -45, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setType(null)}>← Cambiar Tipo</button>
-          
-          {platform === 'facebook' && (
-            <div style={{ fontSize: "0.75rem", background: "#fff9e6", padding: "0.8rem", borderRadius: "8px", border: "1px solid #ffe58f", marginBottom: "1rem", color: "#856404" }}>
-              ⚠️ <strong>Nota de Meta:</strong> Facebook prohíbe aplicaciones publicar en <strong>Muros Personales</strong> privados. La publicación automática solo está permitida en Fanpages de negocios.
+    return (
+      <div className={styles.accountSelectionGrid}>
+        {filteredFanpages.map(acc => (
+          <div key={acc.id} className={`${styles.accountCard} ${selectedAccountIds.includes(acc.id) ? styles.accountCardActive : ''}`} onClick={() => toggleAccountSelection(acc.id)}>
+            <div className={styles.accountAvatar}>🚩</div>
+            <div className={styles.accountInfo}>
+              <span className={styles.accountName}>{acc.pageName || "Página vinculada"}</span>
+              <span className={styles.accountHandle}>{platform === 'facebook' ? 'Fanpage' : 'Instagram Page'} de {acc.accountName}</span>
             </div>
-          )}
-
-          <div className={styles.destinationGrid}>
-            {options.map(o => (
-              <div key={o.id} className={`${styles.destinationCard} ${origin === o.id ? styles.destinationCardActive : ''} ${o.disabled ? styles.destinationCardDisabled || '' : ''}`} 
-                style={o.disabled ? { opacity: 0.5, cursor: "not-allowed", filter: "grayscale(1)" } : {}}
-                onClick={() => {
-                  if (o.disabled) return;
-                  setOrigin(o.id as any);
-                  if (o.id === 'feed') {
-                    const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
-                    if (personalAcc) {
-                      setSelectedAccountIds([personalAcc.id]);
-                      setStep(4);
-                    } else {
-                      setError("Para el Muro necesitamos un Perfil Personal conectado.");
-                    }
-                  }
-                }}>
-                <div className={styles.destinationIcon}>{o.icon}</div>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span style={{ fontWeight: 700 }}>{o.name}</span>
-                  <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{o.desc}</span>
-                </div>
-              </div>
-            ))}
+            <div style={{ marginLeft: "auto", fontSize: "1.2rem" }}>{selectedAccountIds.includes(acc.id) ? "✅" : "➕"}</div>
           </div>
-        </div>
-      );
-    }
-
-    // Final choice for Fanpage or Ads: The Page List
-    if (publishType === 'ads' || (publishType === 'organic' && origin === 'fanpage')) {
-      const filteredFanpages = socialAccounts.filter(acc => 
-        acc.provider === platform && 
-        acc.accountName === selectedTitular && 
-        acc.pageId
-      );
-
-      return (
-        <div className={styles.accountSelectionGrid}>
-          <button style={{ position: 'absolute', top: -30, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => { if (publishType === 'ads') setType(null); else setOrigin(null); }}>← Volver</button>
-          {filteredFanpages.length > 0 ? (
-            filteredFanpages.map(acc => (
-              <div key={acc.id} className={`${styles.accountCard} ${selectedAccountIds.includes(acc.id) ? styles.accountCardActive : ''}`} onClick={() => toggleAccountSelection(acc.id)}>
-                <div className={styles.accountAvatar}>🚩</div>
-                <div className={styles.accountInfo}>
-                  <span className={styles.accountName}>{acc.pageName || "Página vinculada"}</span>
-                  <span className={styles.accountHandle}>{platform === 'facebook' ? 'Fanpage' : 'Instagram Page'} de {acc.accountName}</span>
-                </div>
-                <div style={{ marginLeft: "auto", fontSize: "1.2rem" }}>{selectedAccountIds.includes(acc.id) ? "✅" : "➕"}</div>
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: "center", width: "100%", padding: "2rem", opacity: 0.6 }}>No se encontraron Fanpages para {selectedTitular}.</div>
-          )}
-        </div>
-      );
-    }
-    return null;
+        ))}
+      </div>
+    );
   };
 
   const handleSearch = async (term: string, type: "interest" | "location") => {
@@ -335,89 +315,125 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     }
   };
 
+  const renderAdPreview = () => (
+    <div className={styles.previewColumn}>
+       <div className={styles.previewContainer}>
+          <div className={styles.previewHeader}>Vista previa del anuncio</div>
+          <div className={styles.fbPost}>
+             <div className={styles.fbPostHeader}>
+                <div className={styles.fbAvatar}>S</div>
+                <div>
+                   <div className={styles.fbName}>{selectedAccountIds.length > 0 ? socialAccounts.find(a => a.id === selectedAccountIds[0])?.pageName : "Tu Página"}</div>
+                   <div className={styles.fbTime}>Publicidad · 🌐</div>
+                </div>
+             </div>
+             <div className={styles.fbText}>
+                {ad.title} {"\n"}
+                {ad.content || "Welcome to this charming property..."}
+             </div>
+             <div className={styles.fbMediaGrid}>
+                {ad.mediaUrls?.slice(0, 4).map((url: string, i: number) => (
+                   <img key={i} src={url} alt="Preview" className={styles.fbMediaItem} />
+                ))}
+             </div>
+             <div className={styles.fbFooter}>
+                <div style={{ fontSize: "0.85rem" }}>
+                   <div style={{ fontWeight: 700 }}>{selectedAccountIds.length > 0 ? socialAccounts.find(a => a.id === selectedAccountIds[0])?.pageName : "Tu Página"}</div>
+                   <div style={{ opacity: 0.7 }}>SML BSP es un innovador s...</div>
+                </div>
+                <button className={styles.fbCtaBtn}>
+                   {adsConfig.ctaLabel === 'SEND_MESSAGE' && <span>💬 Mensaje</span>}
+                   {adsConfig.ctaLabel === 'WHATSAPP' && <span>🟢 WhatsApp</span>}
+                   {adsConfig.ctaLabel === 'LEARN_MORE' && <span>🔗 Ver más</span>}
+                </button>
+             </div>
+          </div>
+       </div>
+
+       <div className={styles.estimatesCard}>
+          <p className={styles.fieldLabel} style={{ marginBottom: "0.25rem" }}>Resultados diarios estimados</p>
+          <p style={{ opacity: 0.6, fontSize: "0.8rem" }}>Impresiones estimadas</p>
+          <p className={styles.estimateValue}>4.3 mil - 8 mil</p>
+          <div className={styles.paymentSummary}>
+             <span>Presupuesto</span>
+             <span>${adsConfig.budgetAmount}.00 USD</span>
+          </div>
+          <div className={styles.paymentSummary} style={{ fontWeight: 700, border: "none", marginTop: 0 }}>
+             <span>Total diario</span>
+             <span>${adsConfig.budgetAmount}.00 USD</span>
+          </div>
+       </div>
+    </div>
+  );
+
   const renderFacebookAdsPro = () => (
-    <div className={styles.configCard}>
-      <div className={styles.cardHeader}><span className={styles.cardTitle}>⚙️ Configuración Meta Ads (Réplica Pro)</span></div>
-      
-      <div style={{ padding: "1rem", border: "1px solid #ffe58f", background: "#fffbe6", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.85rem" }}>
-        🏠 <b>Categoría Especial: VIVIENDA Activa</b>. SMM ha ajustado automáticamente tu segmentación para cumplir con las leyes antidiscriminación de Meta (Edad fija y radio mínimo de 25km).
-      </div>
-
-      <div className={styles.accordion}>
-        <div className={styles.accordionHeader} onClick={() => toggleSection("location")}>
-          <span>📍 Ubicaciones: {adsConfig.city ? `Ciudad ID: ${adsConfig.city}` : "País (Sugerido: US/Manual)"}</span>
-          <span>{openSections.location ? "▲" : "▼"}</span>
+    <div className={styles.adsTerminal}>
+      <div className={styles.configColumn}>
+        <div className={styles.metaCard}>
+          <div className={styles.metaCardHeader}>
+             <span className={styles.metaCardTitle}>Objetivo</span>
+             <button className={styles.changeBtn}>Cambiar</button>
+          </div>
+          <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>¿Qué resultados te gustaría obtener con este anuncio?</p>
+          <div className={styles.objectivePill}>
+             <span>⚡</span>
+             <div>
+                <div>Automático - Recibir más mensajes</div>
+                <div style={{ fontSize: "0.75rem", fontWeight: 400, opacity: 0.6 }}>Seleccionamos el objetivo en función de tu actividad.</div>
+             </div>
+          </div>
         </div>
-        {openSections.location && (
-          <div className={styles.accordionBody}>
-            <p className={styles.fieldLabel}>Buscar Ciudad</p>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input type="text" className={styles.input} placeholder="Escribe una ciudad..." onChange={(e) => handleSearch(e.target.value, "location")} />
-            </div>
-            {searchType === "location" && searchResults.length > 0 && (
-              <div className={styles.searchResults}>
-                {searchResults.map(r => (
-                  <div key={r.key} className={styles.searchItem} onClick={() => { setAdsConfig({...adsConfig, city: r.key}); setSearchResults([]); }}>
-                    {r.name} ({r.region}, {r.country_name})
-                  </div>
-                ))}
+
+        <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Texto del anuncio</span></div>
+           <p style={{ fontSize: "0.85rem", opacity: 0.7 }}>Publica un anuncio con el texto existente o agrega variaciones.</p>
+           <textarea 
+             className={styles.input} 
+             style={{ minHeight: "120px", resize: "vertical" }}
+             value={ad.content}
+             onChange={(e) => setAd({...ad, content: e.target.value})}
+           />
+           
+           <div className={styles.advantageCard} style={{ marginTop: "1rem" }}>
+              <div style={{ flex: 1 }}>
+                 <p style={{ fontWeight: 700, fontSize: "0.9rem" }}>Generación de texto Advantage+ ✨</p>
+                 <p style={{ fontSize: "0.75rem", opacity: 0.6 }}>Nuestras herramientas de IA simplifican la generación de variaciones.</p>
               </div>
-            )}
-            <p className={styles.fieldLabel} style={{ marginTop: "1rem" }}>Radio de acción (Km)</p>
-            <input type="range" min="25" max="80" step="1" className={styles.slider} value={adsConfig.radiusKm} onChange={(e) => setAdsConfig({...adsConfig, radiusKm: Number(e.target.value)})} />
-            <span style={{ fontSize: "0.85rem" }}>{adsConfig.radiusKm} Km (Mínimo legal 25km)</span>
-          </div>
-        )}
-      </div>
-
-      <div className={styles.accordion}>
-        <div className={styles.accordionHeader} onClick={() => toggleSection("interests")}>
-          <span>🔥 Segmentación Detallada ({adsConfig.interests.length} elegidos)</span>
-          <span>{openSections.interests ? "▲" : "▼"}</span>
-        </div>
-        {openSections.interests && (
-          <div className={styles.accordionBody}>
-            <p className={styles.fieldLabel}>Intereses, Datos y Comportamientos</p>
-            <input type="text" className={styles.input} placeholder="Ej: Real Estate, Inversiones..." onChange={(e) => handleSearch(e.target.value, "interest")} />
-            {searchType === "interest" && searchResults.length > 0 && (
-              <div className={styles.searchResults}>
-                {searchResults.map(r => (
-                  <div key={r.id} className={styles.searchItem} onClick={() => { 
-                    if (!adsConfig.interests.includes(r.id)) {
-                      setAdsConfig({...adsConfig, interests: [...adsConfig.interests, r.id]});
-                    }
-                    setSearchResults([]);
-                  }}>
-                    {r.name} <span style={{ opacity: 0.6, fontSize: "0.7rem" }}>({r.topic})</span>
-                  </div>
-                ))}
+              <div 
+                className={`${styles.toggleSwitch} ${adsConfig.advantageContent ? styles.toggleSwitchActive : ''}`}
+                onClick={() => setAdsConfig({...adsConfig, advantageContent: !adsConfig.advantageContent})}
+              >
+                <div className={`${styles.toggleKnob} ${adsConfig.advantageContent ? styles.toggleKnobActive : ''}`} />
               </div>
-            )}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
-              {adsConfig.interests.map(id => (
-                <span key={id} className={styles.tag} onClick={() => setAdsConfig({...adsConfig, interests: adsConfig.interests.filter(i => i !== id)})}>
-                  {id} ✖
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+           </div>
+        </div>
+
+        <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Botón</span></div>
+           <select 
+             className={styles.input} 
+             value={adsConfig.ctaLabel}
+             onChange={(e) => setAdsConfig({...adsConfig, ctaLabel: e.target.value})}
+           >
+              <option value="SEND_MESSAGE">Enviar mensaje</option>
+              <option value="WHATSAPP">Enviar mensaje de WhatsApp</option>
+              <option value="LEARN_MORE">Más información</option>
+              <option value="BOOK_NOW">Reservar</option>
+           </select>
+        </div>
+
+        <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Segmentación (Housing)</span></div>
+           <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>📍 Ubicaciones (Radio min 25km por ley)</p>
+           <input type="text" className={styles.input} placeholder="Buscar ciudad..." onChange={(e) => handleSearch(e.target.value, "location")} />
+           <div style={{ marginTop: "1rem" }}>
+              <p style={{ fontSize: "0.85rem", opacity: 0.6 }}>🔥 Intereses</p>
+              <input type="text" className={styles.input} placeholder="Añadir intereses..." onChange={(e) => handleSearch(e.target.value, "interest")} />
+           </div>
+        </div>
       </div>
 
-      <div className={styles.accordion}>
-        <div className={styles.accordionHeader} onClick={() => toggleSection("budget")}>
-          <span>💰 Presupuesto y Calendario</span>
-          <span>{openSections.budget ? "▲" : "▼"}</span>
-        </div>
-        {openSections.budget && (
-          <div className={styles.accordionBody}>
-            <p className={styles.fieldLabel}>Monto Diario (USD Sugerido)</p>
-            <input type="number" className={styles.input} value={adsConfig.budgetAmount} onChange={(e) => setAdsConfig({...adsConfig, budgetAmount: Number(e.target.value)})} />
-            <p className={styles.fieldLabel} style={{ marginTop: "1rem" }}>Fecha de Inicio</p>
-            <input type="date" className={styles.input} value={adsConfig.startDate} onChange={(e) => setAdsConfig({...adsConfig, startDate: e.target.value})} />
-          </div>
-        )}
-      </div>
+      {renderAdPreview()}
     </div>
   );
 
@@ -430,7 +446,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
         <div className={styles.leftNav}>
           <div className={`${styles.navIconWrapper} ${step >= 1 ? styles.navIconActive : ''}`} onClick={() => setStep(1)}>
             <span>📱</span>
-            <span className={styles.navIconLabel}>Plataforma</span>
+            <span className={styles.navIconLabel}>Red</span>
           </div>
           <div className={`${styles.navIconWrapper} ${step >= 2 ? styles.navIconActive : ''}`} onClick={() => setStep(2)}>
             <span>👤</span>
@@ -440,21 +456,30 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             <span>📁</span>
             <span className={styles.navIconLabel}>Tipo</span>
           </div>
+          <div className={`${styles.navIconWrapper} ${step >= 4 ? styles.navIconActive : ''}`} onClick={() => setStep(4)}>
+            <span>🚩</span>
+            <span className={styles.navIconLabel}>Cuenta</span>
+          </div>
           {publishType === 'ads' && platform === 'facebook' && (
-            <div className={`${styles.navIconWrapper} ${step >= 4 ? styles.navIconActive : ''}`} onClick={() => setStep(4)}>
+            <div className={`${styles.navIconWrapper} ${step >= 5 ? styles.navIconActive : ''}`} onClick={() => setStep(5)}>
               <span>⚙️</span>
-              <span className={styles.navIconLabel}>Ads Pro</span>
+              <span className={styles.navIconLabel}>Segmentar</span>
             </div>
           )}
-          <div className={`${styles.navIconWrapper} ${step === (publishType === 'ads' && platform === 'facebook' ? 5 : 4) ? styles.navIconActive : ''}`} onClick={() => setStep(publishType === 'ads' && platform === 'facebook' ? 5 : 4)}>
+          <div className={`${styles.navIconWrapper} ${step === (publishType === 'ads' && platform === 'facebook' ? 6 : 5) ? styles.navIconActive : ''}`} onClick={() => setStep(publishType === 'ads' && platform === 'facebook' ? 6 : 5)}>
             <span>🚀</span>
             <span className={styles.navIconLabel}>Publicar</span>
           </div>
         </div>
 
-        <div className={styles.centerArea}>
+        <div className={styles.centerArea} style={{ 
+          maxWidth: (step === 5 && publishType === 'ads' && platform === 'facebook') ? '100%' : '1200px',
+          padding: (step === 5 && publishType === 'ads' && platform === 'facebook') ? '2rem 1.5rem' : '2rem'
+        }}>
           <div className={styles.cardHeader} style={{ background: "transparent", border: "none" }}>
-             <h2 className={styles.cardTitle} style={{ fontSize: "1.5rem" }}>Publicar Creativo</h2>
+             <h2 className={styles.cardTitle} style={{ fontSize: "1.5rem" }}>
+                {step === 5 && publishType === 'ads' && platform === 'facebook' ? "Configuración de Anuncio Pro" : "Publicar Creativo"}
+             </h2>
              <Link href="/ads" className={styles.btnSecondary} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>← Volver</Link>
           </div>
 
@@ -496,13 +521,20 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
               )}
 
               {step === 3 && (
-                <div className={styles.configCard} style={{ position: 'relative' }}>
-                  <div className={styles.cardHeader}><span className={styles.cardTitle}>3. Configura el Destino</span></div>
-                  {renderConfigSection()}
+                <div className={styles.configCard}>
+                   <div className={styles.cardHeader}><span className={styles.cardTitle}>3. Elige el Tipo de Publicación</span></div>
+                   {renderConfigSection()}
                 </div>
               )}
 
               {step === 4 && (
+                <div className={styles.configCard}>
+                   <div className={styles.cardHeader}><span className={styles.cardTitle}>4. Selecciona el Destino (Identidad)</span></div>
+                   {renderIdentitySelection()}
+                </div>
+              )}
+
+              {step === 5 && (
                 publishType === 'ads' && platform === 'facebook' ? renderFacebookAdsPro() : (
                   <div className={styles.configCard}>
                     <div className={styles.cardHeader}><span className={styles.cardTitle}>Resumen de Publicación</span></div>
@@ -510,27 +542,20 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                        <p>Anuncio: <b>{ad.title}</b></p>
                        <p>Plataforma: <b style={{ textTransform: "capitalize" }}>{platform}</b></p>
                        <p>Titular: <b>{selectedTitular}</b></p>
-                       <p>Config: <b style={{ textTransform: "capitalize" }}>{publishType} ({origin})</b></p>
+                       <p>Config: <b style={{ textTransform: "capitalize" }}>{publishType} ({origin || 'ads'})</b></p>
                        <p>Cuentas: <b>{selectedAccountIds.length} seleccionada(s)</b></p>
-                       <div className={styles.accountSelectionGrid} style={{ marginTop: "0.5rem", background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "8px" }}>
-                         {selectedAccountIds.map(id => {
-                           const acc = socialAccounts.find(a => a.id === id);
-                           return <div key={id} style={{ fontSize: "0.85rem" }}>✅ {acc.pageName || acc.accountName}</div>;
-                         })}
-                       </div>
                     </div>
                   </div>
                 )
               )}
 
-              {step === 5 && (
+              {step === 6 && (
                 <div className={styles.configCard}>
                    <div className={styles.cardHeader}><span className={styles.cardTitle}>Confirmación Final</span></div>
                    <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem", marginTop: "0.5rem" }}>
                       <p>Anuncio: <b>{ad.title}</b></p>
                       <p>Presupuesto: <b>${adsConfig.budgetAmount} USD / día</b></p>
-                      <p>Destino: <b>{selectedAccountIds.length} Fanpage(s) de Facebook</b></p>
-                      <p>Segmentación: <b>Configurada (Réplica Meta)</b></p>
+                      <p>Segmentación: <b>Configurada</b></p>
                    </div>
                 </div>
               )}
@@ -538,23 +563,25 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
           )}
         </div>
 
-        <div className={styles.rightSidebar}>
-          <div className={styles.audienceGaugeCard}>
-            <h3 className={styles.audienceGaugeTitle}>AUDIENCIA ESTIMADA</h3>
-            <div className={styles.gaugeWrapper}><div className={styles.gaugeIndicator} style={{ left: `${getAudienceEstimate()}%` }} /></div>
-            <div className={styles.gaugeLabels}><span>Específico</span><span>Óptimo</span><span>Amplio</span></div>
+        {!(step === 5 && publishType === 'ads' && platform === 'facebook') && (
+          <div className={styles.rightSidebar}>
+            <div className={styles.audienceGaugeCard}>
+              <h3 className={styles.audienceGaugeTitle}>AUDIENCIA ESTIMADA</h3>
+              <div className={styles.gaugeWrapper}><div className={styles.gaugeIndicator} style={{ left: `${getAudienceEstimate()}%` }} /></div>
+              <div className={styles.gaugeLabels}><span>Específico</span><span>Óptimo</span><span>Amplio</span></div>
+            </div>
+            <div className={styles.configCard} style={{ background: "transparent", borderStyle: "dashed", padding: "1rem" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, opacity: 0.6 }}>RESUMEN DE COSTO</span>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>Gratis (API Directa)</div>
+            </div>
           </div>
-          <div className={styles.configCard} style={{ background: "transparent", borderStyle: "dashed" }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: 700, opacity: 0.6 }}>RESUMEN DE COSTO</span>
-            <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>Gratis (API Directa)</div>
-          </div>
-        </div>
+        )}
       </div>
 
       {!publishResults && (
-        <div className={styles.bottomBar}>
+        <div className={styles.bottomBar} style={{ position: 'sticky', bottom: 0, zIndex: 100 }}>
           <button type="button" className={styles.btnSecondary} onClick={() => step === 1 ? router.push("/ads") : handlePrevious()}>{step === 1 ? "Cancelar" : "Anterior"}</button>
-          {(step < (publishType === 'ads' && platform === 'facebook' ? 5 : 4)) ? (
+          {(step < (publishType === 'ads' && platform === 'facebook' ? 6 : 5)) ? (
             <button type="button" className={styles.btnPrimary} onClick={handleNext}>Siguiente →</button>
           ) : (
             <button type="button" className={styles.btnPrimary} onClick={handlePublish} disabled={publishing || selectedAccountIds.length === 0}>

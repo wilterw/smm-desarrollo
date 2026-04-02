@@ -220,10 +220,10 @@ export async function createFacebookAdCampaign(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        objective,
+        objective: objective || "OUTCOME_TRAFFIC",
         status: "PAUSED",
-        special_ad_categories: ["HOUSING"], // Required for Real Estate
-        special_ad_category_country: ["US"], // Default to US, can be dynamic
+        special_ad_categories: ["HOUSING"],
+        special_ad_category_country: ["US"],
         access_token: userAccessToken,
       }),
     });
@@ -369,7 +369,8 @@ export async function createFacebookAdCreative(
   name: string,
   message: string,
   imageUrl?: string,
-  videoUrl?: string
+  videoUrl?: string,
+  adsConfig?: any
 ): Promise<FacebookPublishResult> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
@@ -378,9 +379,15 @@ export async function createFacebookAdCreative(
       page_id: pageId,
       link_data: {
         message,
-        link: imageUrl || "https://econos.es", // Placeholder link if none provided
-        image_hash: "", // In a real scenario, you'd upload and get an image hash
+        link: imageUrl || "https://econos.es",
+        image_hash: "",
         caption: name,
+        call_to_action: {
+          type: adsConfig?.ctaLabel || "LEARN_MORE",
+          value: {
+             link: imageUrl || "https://econos.es"
+          }
+        }
       }
     };
 
