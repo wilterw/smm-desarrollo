@@ -57,7 +57,11 @@ export async function POST(req: NextRequest) {
       rawMessage += `\n\n${tags}`;
     }
     
-    const mediaFullUrl = ad.mediaUrl ? `${baseUrl}${ad.mediaUrl}` : undefined;
+    // Resolve media URL (Handle both relative and absolute paths for cloud compatibility)
+    let mediaFullUrl: string | undefined = undefined;
+    if (ad.mediaUrl) {
+      mediaFullUrl = ad.mediaUrl.startsWith("http") ? ad.mediaUrl : `${baseUrl}${ad.mediaUrl}`;
+    }
 
     for (const destConfig of destinations) {
       const { platform, destination, adsConfig, socialAccountId } = destConfig;
@@ -207,12 +211,13 @@ export async function POST(req: NextRequest) {
           }
         } 
         else if (platform === "youtube") {
-          // Placeholder for YouTube since it requires a Buffer upload
-          // We would fetch the mediaUrl, convert to Buffer, and call publishToYouTubeShorts
+          if (!mediaFullUrl) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
+          if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
+          
           if (destination === "shorts") {
-            throw new Error("YouTube Shorts publishing requires server-side file access (coming soon)");
+            throw new Error("La publicación en YouTube Shorts requiere acceso al sistema de archivos del servidor (próximamente)");
           } else {
-            throw new Error("YouTube publishing requires server-side file access (coming soon)");
+            throw new Error("La publicación en YouTube requiere acceso al sistema de archivos del servidor (próximamente)");
           }
         }
 
@@ -246,6 +251,7 @@ export async function POST(req: NextRequest) {
 
         results.push({ platform, destination, status: "published", postId });
       } catch (err: any) {
+        console.error(`[Publish Error] ${platform}/${destination}:`, err.message);
         await prisma.publication.update({
           where: { id: publication.id },
           data: { status: "failed", errorLog: err.message },

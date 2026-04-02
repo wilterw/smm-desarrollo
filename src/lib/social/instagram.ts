@@ -53,7 +53,10 @@ export async function publishToInstagram(
       }
     );
     const containerData = await containerRes.json();
-    if (containerData.error) return { success: false, error: containerData.error.message };
+    if (containerData.error) {
+      const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating container";
+      return { success: false, error: errorMsg };
+    }
 
     const containerId = containerData.id;
 
@@ -70,7 +73,10 @@ export async function publishToInstagram(
       }
     );
     const data = await publishRes.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error publishing";
+      return { success: false, error: errorMsg };
+    }
 
     return { success: true, postId: data.id };
   } catch (error: any) {
@@ -102,7 +108,10 @@ export async function publishToInstagramReels(
       }
     );
     const containerData = await containerRes.json();
-    if (containerData.error) return { success: false, error: containerData.error.message };
+    if (containerData.error) {
+      const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating reels container";
+      return { success: false, error: errorMsg };
+    }
 
     const publishRes = await fetch(
       `${FB_GRAPH_URL}/${igAccountId}/media_publish`,
@@ -116,7 +125,10 @@ export async function publishToInstagramReels(
       }
     );
     const publishData = await publishRes.json();
-    if (publishData.error) return { success: false, error: publishData.error.message };
+    if (publishData.error) {
+      const errorMsg = publishData.error.error_user_msg || publishData.error.message || "Unknown error publishing reel";
+      return { success: false, error: errorMsg };
+    }
 
     return { success: true, postId: publishData.id };
   } catch (error: any) {
@@ -150,7 +162,10 @@ export async function publishToInstagramStories(
       }
     );
     const containerData = await containerRes.json();
-    if (containerData.error) return { success: false, error: containerData.error.message };
+    if (containerData.error) {
+      const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating story container";
+      return { success: false, error: errorMsg };
+    }
 
     const publishRes = await fetch(
       `${FB_GRAPH_URL}/${igAccountId}/media_publish`,
@@ -164,7 +179,10 @@ export async function publishToInstagramStories(
       }
     );
     const publishData = await publishRes.json();
-    if (publishData.error) return { success: false, error: publishData.error.message };
+    if (publishData.error) {
+      const errorMsg = publishData.error.error_user_msg || publishData.error.message || "Unknown error publishing story";
+      return { success: false, error: errorMsg };
+    }
 
     return { success: true, postId: publishData.id };
   } catch (error: any) {

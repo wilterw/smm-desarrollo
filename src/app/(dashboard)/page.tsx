@@ -23,6 +23,9 @@ type DashboardData = {
     campaigns: number;
     ads: number;
     publications: number;
+    paidPublications: number;
+    organicPublications: number;
+    draftAds: number;
     socialAccounts: number;
   };
   campaignStatuses: Record<string, number>;
@@ -226,21 +229,41 @@ export default function DashboardHome() {
         </div>
         <div 
           className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
-          onClick={() => router.push("/ads")}
+          onClick={() => router.push("/ads?filter=ads")}
         >
-          <div className={`${styles.kpiIcon} ${styles.kpiIconPurple}`}>🖼️</div>
+          <div className={`${styles.kpiIcon} ${styles.kpiIconPurple}`}>🎯</div>
           <div className={styles.kpiInfo}>
-            <span className={styles.kpiLabel}>Anuncios</span>
-            <span className={styles.kpiValue}>{data.counts.ads}</span>
+            <span className={styles.kpiLabel}>Anuncios (Ads)</span>
+            <span className={styles.kpiValue}>{data.counts.paidPublications}</span>
           </div>
         </div>
         <div 
           className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
-          onClick={() => router.push("/ads")}
+          onClick={() => router.push("/ads?filter=organic")}
         >
-          <div className={`${styles.kpiIcon} ${styles.kpiIconGreen}`}>📢</div>
+          <div className={`${styles.kpiIcon} ${styles.kpiIconGreen}`}>🍃</div>
           <div className={styles.kpiInfo}>
-            <span className={styles.kpiLabel}>Publicaciones</span>
+            <span className={styles.kpiLabel}>Pub. Orgánicas</span>
+            <span className={styles.kpiValue}>{data.counts.organicPublications}</span>
+          </div>
+        </div>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
+          onClick={() => router.push("/ads?filter=drafts")}
+        >
+          <div className={`${styles.kpiIcon} ${styles.kpiIconOrange}`}>📝</div>
+          <div className={styles.kpiInfo}>
+            <span className={styles.kpiLabel}>Borradores</span>
+            <span className={styles.kpiValue}>{data.counts.draftAds}</span>
+          </div>
+        </div>
+        <div 
+          className={`glass-panel ${styles.kpiCard} ${styles.clickableCard}`}
+          onClick={() => router.push("/ads?filter=all")}
+        >
+          <div className={`${styles.kpiIcon} ${styles.kpiIconBlue}`}>📢</div>
+          <div className={styles.kpiInfo}>
+            <span className={styles.kpiLabel}>Todas las Pubs</span>
             <span className={styles.kpiValue}>{data.counts.publications}</span>
           </div>
         </div>

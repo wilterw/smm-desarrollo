@@ -43,8 +43,13 @@ export async function POST(req: NextRequest) {
     // Determine media type
     const mediaType = file.type.startsWith("video/") ? "video" : "image";
 
+    // Generate absolute URL for Meta API compatibility
+    const baseUrl = process.env.NEXTAUTH_URL || `https://${req.headers.get("host")}`;
+    const absoluteUrl = `${baseUrl}/uploads/${filename}`;
+
     return NextResponse.json({
-      url: `/uploads/${filename}`,
+      url: absoluteUrl,
+      relativeUrl: `/uploads/${filename}`,
       mediaType,
       originalName: file.name,
       size: file.size,

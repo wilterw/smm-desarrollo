@@ -101,7 +101,10 @@ export async function publishToFacebook(
     });
 
     const data = await res.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
     return { success: true, postId: data.id || data.post_id };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -135,7 +138,10 @@ export async function publishToFacebookFeed(
     });
 
     const data = await res.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
     return { success: true, postId: data.id || data.post_id };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -173,7 +179,10 @@ export async function createFacebookAdCampaign(
     });
 
     const data = await res.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
     
     // In a real implementation, you would also create an AdSet and an Ad Creative here.
     // For this module, returning the campaign ID as success.
@@ -264,7 +273,10 @@ export async function createFacebookAdSet(
     });
 
     const data = await res.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
     return { success: true, postId: data.id };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -311,7 +323,10 @@ export async function createFacebookAdCreative(
     });
 
     const data = await res.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
     return { success: true, postId: data.id };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -346,7 +361,10 @@ export async function createFacebookAd(
     });
 
     const data = await res.json();
-    if (data.error) return { success: false, error: data.error.message };
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
     return { success: true, postId: data.id };
   } catch (error: any) {
     return { success: false, error: error.message };

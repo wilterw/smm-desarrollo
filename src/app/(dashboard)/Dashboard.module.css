@@ -23,9 +23,16 @@
   margin-top: 0.5rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  flex-direction: column;
   gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .greetingSub {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .accountFilter {
@@ -33,12 +40,20 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
   color: var(--text-primary);
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
   font-size: 0.9rem;
   outline: none;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-width: 200px;
+  min-width: 180px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .accountFilter {
+    width: auto;
+    min-width: 200px;
+  }
 }
 
 .accountFilter:focus {
@@ -231,6 +246,12 @@
 .activityCard {
   padding: 1.5rem;
   animation: cardIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
+  overflow-x: auto; /* Enable horizontal scroll for table on mobile */
+  scrollbar-width: thin;
+}
+
+.activityCard::-webkit-scrollbar {
+  height: 6px;
 }
 
 .sectionTitle {
@@ -243,6 +264,7 @@
 .activityTable {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Force minimum width to prevent squashing */
 }
 
 .activityTable th {
@@ -397,6 +419,15 @@
   }
   .platformGrid {
     grid-template-columns: 1fr;
+  }
+  .greeting {
+    font-size: 1.25rem;
+  }
+  .kpiValue {
+    font-size: 1.5rem;
+  }
+  .metricBar {
+    width: 40px;
   }
 }
 

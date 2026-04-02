@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "./Ads.module.css";
-import React from "react";
+import React, { Suspense } from "react";
 
 type Ad = {
   id: string;
@@ -16,15 +16,28 @@ type Ad = {
   linkUrl?: string;
   createdAt: string;
   campaign: { name: string };
+  publications: {
+    id: string;
+    type: string; // "paid", "organic"
+    status: string;
+  }[];
 };
 
-export default function AdsPage() {
+function AdsList() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialFilter = searchParams.get("filter") || "all";
+  
   const [ads, setAds] = useState<Ad[]>([]);
+  const [filter, setFilter] = useState(initialFilter);
   const [loading, setLoading] = useState(true);
   const [viewingAd, setViewingAd] = useState<Ad | null>(null);
   const [viewingIndex, setViewingIndex] = useState(0);
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFilter(searchParams.get("filter") || "all");
+  }, [searchParams]);
 
   const fetchAds = async () => {
     setLoading(true);
@@ -56,7 +69,14 @@ export default function AdsPage() {
     }
   };
 
-  if (loading) return <div>Cargando anuncios...</div>;
+  if (loading) return <div className={styles.container}>Cargando anuncios...</div>;
+
+  const filteredAds = ads.filter(ad => {
+    if (filter === "ads") return ad.publications.some(p => p.type === "paid");
+    if (filter === "organic") return ad.publications.some(p => p.type === "organic");
+    if (filter === "drafts") return ad.publications.length === 0;
+    return true; // "all"
+  });
 
   return (
     <div className={styles.container}>
@@ -67,14 +87,41 @@ export default function AdsPage() {
         </Link>
       </div>
 
-      {ads.length === 0 ? (
+      <div className={styles.tabs}>
+        <button 
+          className={`${styles.tab} ${filter === "ads" ? styles.activeTab : ""}`}
+          onClick={() => router.push("/ads?filter=ads")}
+        >
+          🎯 Anuncios (Ads)
+        </button>
+        <button 
+          className={`${styles.tab} ${filter === "organic" ? styles.activeTab : ""}`}
+          onClick={() => router.push("/ads?filter=organic")}
+        >
+          🍃 Publicaciones Orgánicas
+        </button>
+        <button 
+          className={`${styles.tab} ${filter === "drafts" ? styles.activeTab : ""}`}
+          onClick={() => router.push("/ads?filter=drafts")}
+        >
+          📝 Borradores
+        </button>
+        <button 
+          className={`${styles.tab} ${filter === "all" ? styles.activeTab : ""}`}
+          onClick={() => router.push("/ads?filter=all")}
+        >
+          📢 Todas las Pubs
+        </button>
+      </div>
+
+      {filteredAds.length === 0 ? (
         <div className={`glass-panel ${styles.empty}`}>
-          <div className={styles.emptyIcon}>🖼️</div>
-          <p>No tienes anuncios aún. ¡Crea el primero!</p>
+          <div className={styles.emptyIcon}>🔍</div>
+          <p>No se encontraron creativos en esta categoría.</p>
         </div>
       ) : (
         <div className={styles.grid}>
-          {ads.map(ad => (
+          {filteredAds.map(ad => (
             <div 
               key={ad.id} 
               className={`glass-panel ${styles.card}`}
@@ -183,5 +230,13 @@ export default function AdsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdsPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AdsList />
+    </Suspense>
   );
 }

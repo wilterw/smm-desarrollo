@@ -15,6 +15,8 @@ export async function GET() {
       totalCampaigns,
       totalAds,
       totalPublications,
+      totalPaidPublications,
+      totalOrganicPublications,
       totalSocialAccounts,
       campaignsByStatus,
       publicationsByStatus,
@@ -24,11 +26,14 @@ export async function GET() {
       recentPublications,
       budgetSum,
       publicationStats,
+      totalDraftAds,
     ] = (await Promise.all([
       // Counts
       prisma.campaign.count({ where: { userId } }),
       prisma.ad.count({ where: { campaign: { userId } } }),
       prisma.publication.count({ where: { ad: { campaign: { userId } } } }),
+      prisma.publication.count({ where: { ad: { campaign: { userId } }, type: "paid" } }),
+      prisma.publication.count({ where: { ad: { campaign: { userId } }, type: "organic" } }),
       prisma.socialAccount.count({ where: { userId } }),
 
       // Campaigns by status
@@ -100,6 +105,7 @@ export async function GET() {
           spend: true
         }
       }),
+      prisma.ad.count({ where: { campaign: { userId }, publications: { none: {} } } }),
     ])) as any[];
 
     // Format campaign statuses
@@ -161,6 +167,9 @@ export async function GET() {
         campaigns: totalCampaigns,
         ads: totalAds,
         publications: totalPublications,
+        paidPublications: totalPaidPublications,
+        organicPublications: totalOrganicPublications,
+        draftAds: totalDraftAds,
         socialAccounts: totalSocialAccounts,
       },
       stats: {

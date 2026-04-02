@@ -160,13 +160,16 @@
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
+    box-shadow: none;
+    width: 280px; /* Slightly wider on mobile for better readability */
   }
 
   .sidebarOpen {
     transform: translateX(0);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
   }
 
   .closeBtn {

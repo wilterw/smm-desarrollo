@@ -3,6 +3,7 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { useState } from "react";
+import styles from "./DashboardLayout.module.css";
 
 export default function DashboardLayoutClient({
   children,
@@ -12,7 +13,7 @@ export default function DashboardLayoutClient({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className={styles.container}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -21,10 +22,12 @@ export default function DashboardLayoutClient({
           aria-hidden="true"
         />
       )}
+      
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div style={{ flex: 1, marginLeft: "260px", display: "flex", flexDirection: "column" }} className="main-content">
+      
+      <div className={`${styles.mainContent} main-content`}>
         <Header onMenuToggle={() => setSidebarOpen((p) => !p)} />
-        <main className="p-6" style={{ flex: 1 }}>
+        <main className={styles.pageContainer}>
           {children}
         </main>
       </div>

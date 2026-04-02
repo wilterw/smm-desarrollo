@@ -41,4 +41,30 @@
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Fluid Typography */
+  --font-xs: clamp(0.75rem, 0.6rem + 0.5vw, 0.8rem);
+  --font-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+  --font-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+  --font-lg: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+  --font-xl: clamp(1.1rem, 1rem + 1vw, 1.5rem);
+  --font-2xl: clamp(1.4rem, 1.2rem + 1.5vw, 2rem);
+  --font-3xl: clamp(1.75rem, 1.5rem + 2vw, 2.5rem);
+
+  /* Selection States */
+  --selection-border: var(--accent-primary);
+  --selection-bg: rgba(183, 6, 6, 0.25);
+  --selection-glow: 0 0 10px rgba(183, 6, 6, 0.4);
+  --accent-blue: #3b82f6;
+  
+  /* [META UI] Design System Tokens */
+  --meta-bg: #18191a;         /* Facebook Dark Mode BG */
+  --meta-sidebar: #242526;    /* Facebook Dark Mode Sidebar */
+  --meta-card: #242526;       /* Facebook Dark Mode Card */
+  --meta-border: #3e4042;     /* Facebook Dark Mode Border */
+  --meta-text-primary: #e4e6eb;
+  --meta-text-secondary: #b0b3b8;
+  --meta-accent-blue: #2e89ff; /* Meta Blue */
+  --meta-accent-red: #f3425f;  /* Meta Red / SMM Hybrid */
+  --meta-shadow: 0 12px 28px 0 rgba(0, 0, 0, 0.2), 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }

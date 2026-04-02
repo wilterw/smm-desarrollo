@@ -44,6 +44,10 @@
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
 .actions {
@@ -53,14 +57,20 @@
 }
 
 .centerLogo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
+  flex: 1; /* Allow it to take available space */
+}
+
+@media (min-width: 769px) {
+  .centerLogo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .econosLogo {
@@ -106,11 +116,44 @@
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .header {
-    padding: 0 1rem;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .left {
+    flex: 0 0 auto;
+    gap: 0.5rem;
+  }
+
+  .title {
+    display: none; /* Hide title on very small screens if logo is present */
+  }
+
+  /* Show title only if there's enough space or if we are in desktop-ish mobile */
+  @media (min-width: 480px) {
+    .title {
+      display: block;
+      max-width: 100px;
+    }
   }
 
   .menuBtn {
     display: flex;
+  }
+
+  .centerLogo {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .econosLogo {
+    width: 100px;
+    height: auto;
+  }
+
+  .actions {
+    flex: 0 0 auto;
+    gap: 0.5rem;
   }
 
   .logoutText {
@@ -119,10 +162,6 @@
 
   .profileBtn {
     padding: 0.4rem;
-  }
-
-  .econosLogo {
-    width: 90px;
-    height: auto;
+    background: transparent; /* Cleaner on mobile */
   }
 }
