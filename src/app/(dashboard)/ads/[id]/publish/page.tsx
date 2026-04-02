@@ -351,7 +351,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
              </div>
              <div className={styles.fbText}>
                 {ad.title} {"\n"}
-                {ad.content || "Welcome to this charming property..."}
+                {ad.description || "Welcome to this charming property..."}
              </div>
              <div className={styles.fbMediaGrid}>
                 {ad.mediaUrls?.slice(0, 4).map((url: string, i: number) => (
@@ -412,8 +412,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
            <textarea 
              className={styles.input} 
              style={{ minHeight: "120px", resize: "vertical" }}
-             value={ad.content}
-             onChange={(e) => setAd({...ad, content: e.target.value})}
+             value={ad.description || ""}
+             onChange={(e) => setAd({...ad, description: e.target.value})}
            />
            
            <div className={styles.advantageCard} style={{ marginTop: "1rem" }}>
@@ -442,6 +442,18 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
               <option value="LEARN_MORE">Más información</option>
               <option value="BOOK_NOW">Reservar</option>
            </select>
+        </div>
+
+        <div className={styles.metaCard}>
+           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Destino del Anuncio</span></div>
+           <p style={{ fontSize: "0.85rem", opacity: 0.7, marginBottom: "0.5rem" }}>A dónde quieres enviar a las personas cuando hagan clic en el anuncio.</p>
+           <input 
+             type="url"
+             className={styles.input} 
+             placeholder="https://mi-inmobiliaria.com/propiedad"
+             value={ad.linkUrl || ""}
+             onChange={(e) => setAd({...ad, linkUrl: e.target.value})}
+           />
         </div>
 
         <div className={styles.metaCard}>

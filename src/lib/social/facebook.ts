@@ -370,6 +370,7 @@ export async function createFacebookAdCreative(
   message: string,
   imageUrl?: string,
   videoUrl?: string,
+  linkUrl?: string,
   adsConfig?: any
 ): Promise<FacebookPublishResult> {
   try {
@@ -379,13 +380,13 @@ export async function createFacebookAdCreative(
       page_id: pageId,
       link_data: {
         message,
-        link: imageUrl || "https://econos.es",
+        link: linkUrl || "https://econos.es",
         image_hash: "",
         caption: name,
         call_to_action: {
           type: adsConfig?.ctaLabel || "LEARN_MORE",
           value: {
-             link: imageUrl || "https://econos.es"
+             link: linkUrl || "https://econos.es"
           }
         }
       }

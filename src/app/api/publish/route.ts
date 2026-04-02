@@ -191,6 +191,7 @@ export async function POST(req: NextRequest) {
               message,
               mediaFullUrls[0],
               undefined,
+              ad.linkUrl || undefined,
               adsConfig
             );
             if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
