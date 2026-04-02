@@ -16,18 +16,19 @@ export async function GET(
 ) {
   const { provider } = await context.params;
   const session = await getServerSession(authOptions);
+
+  // Stable redirectUri using NEXTAUTH_URL as priority - Defined at the top to avoid TDZ
+  const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
+  const redirectUri = `${baseUrl}/api/social/callback/${provider}`;
+
   if (!session) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/login", baseUrl));
   }
 
   const code = req.nextUrl.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(new URL("/settings/accounts?error=missing_code", req.url));
+    return NextResponse.redirect(new URL("/settings/accounts?error=missing_code", baseUrl));
   }
-
-  // Stable redirectUri using NEXTAUTH_URL as priority
-  const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
-  const redirectUri = `${baseUrl}/api/social/callback/${provider}`;
 
   try {
     let accessToken = "";
@@ -77,9 +78,9 @@ export async function GET(
               userId: session.user.id,
               accessToken: page.access_token, // PAGE ACCESS TOKEN! (Fixes #200)
               expiresAt,
-              accountName: page.name,
+              accountName: userName, // Titular (e.g., Ramon)
               pageId: page.id,
-              pageName: page.name,
+              pageName: page.name,   // Fanpage (e.g., Prime Business Loan)
               igAccountId,
             },
             create: {
@@ -88,7 +89,7 @@ export async function GET(
               providerAccountId: page.id,
               accessToken: page.access_token,
               expiresAt,
-              accountName: page.name,
+              accountName: userName,
               pageId: page.id,
               pageName: page.name,
               igAccountId,
@@ -97,7 +98,7 @@ export async function GET(
         }
         
         // Success redirect immediately after processing all pages
-        return NextResponse.redirect(new URL("/settings/accounts?success=true", req.url));
+        return NextResponse.redirect(new URL("/settings/accounts?success=true", baseUrl));
       } else {
         // No pages found, store the User Profile as the fallback account
         providerAccountId = userId;
@@ -118,7 +119,7 @@ export async function GET(
       accountName = meData.name || null;
       
     } else {
-      return NextResponse.redirect(new URL("/settings/accounts?error=invalid_provider", req.url));
+      return NextResponse.redirect(new URL("/settings/accounts?error=invalid_provider", baseUrl));
     }
 
     // 1. Fetch user to check limits
@@ -134,7 +135,7 @@ export async function GET(
     }) as any;
 
     if (!user) {
-      return NextResponse.redirect(new URL("/settings/accounts?error=user_not_found", req.url));
+      return NextResponse.redirect(new URL("/settings/accounts?error=user_not_found", baseUrl));
     }
 
     // 2. Enforce limits per platform
@@ -148,13 +149,13 @@ export async function GET(
         const fbCount = (user.socialAccounts || []).filter((a: any) => a.provider === "facebook").length;
         const fbLimit = user.maxFacebookAccounts || 1;
         if (fbCount >= fbLimit) {
-          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${fbLimit} cuentas de Facebook.`, req.url));
+          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${fbLimit} cuentas de Facebook.`, baseUrl));
         }
       } else if (provider === "youtube") {
         const ytCount = (user.socialAccounts || []).filter((a: any) => a.provider === "youtube").length;
         const ytLimit = user.maxYouTubeAccounts || 1;
         if (ytCount >= ytLimit) {
-          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${ytLimit} cuentas de YouTube.`, req.url));
+          return NextResponse.redirect(new URL(`/settings/accounts?error=Has alcanzado el límite de ${ytLimit} cuentas de YouTube.`, baseUrl));
         }
       }
     }
@@ -195,10 +196,10 @@ export async function GET(
   } catch (error: any) {
     console.error(`OAuth callback error (${provider}):`, error.message);
     return NextResponse.redirect(
-      new URL(`/settings/accounts?error=${encodeURIComponent(error.message)}`, req.url)
+      new URL(`/settings/accounts?error=${encodeURIComponent(error.message)}`, baseUrl)
     );
   } finally {
     // Standard finally if needed, usually we redirect in try/catch
-    return NextResponse.redirect(new URL("/settings/accounts?success=true", req.url));
+    return NextResponse.redirect(new URL("/settings/accounts?success=true", baseUrl));
   }
 }

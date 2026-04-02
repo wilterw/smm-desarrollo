@@ -9,6 +9,7 @@ type SocialAccount = {
   provider: string;
   providerAccountId: string;
   accountName: string | null;
+  pageName: string | null;
   expiresAt: string | null;
 };
 
@@ -165,7 +166,12 @@ export default function AccountsPage() {
                           {acc.accountName?.charAt(0) || "A"}
                         </div>
                         <div className={styles.accountDetails}>
-                          <div className={styles.accountTitle}>{acc.accountName || "Cuenta conectada"}</div>
+                          <div className={styles.accountTitle}>{acc.accountName || "Titular"}</div>
+                          {acc.pageName && (
+                            <div className={styles.accountSubtitle} style={{ color: "var(--meta-accent)", fontWeight: 700 }}>
+                              🚩 Pagina: {acc.pageName}
+                            </div>
+                          )}
                           {acc.expiresAt && (
                             <div className={styles.accountSubtitle}>
                               Expira: {new Date(acc.expiresAt).toLocaleDateString()}
