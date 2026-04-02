@@ -161,19 +161,23 @@ export async function POST(req: NextRequest) {
             );
             if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
 
-            // 2. Create AdSet (Targeting)
+            // 2. Create AdSet (Professional Targeting)
             const adSetRes = await createFacebookAdSet(
               account.accessToken,
               adAccountId,
               campRes.postId!,
               `AdSet - ${ad.title}`,
-              adsConfig?.budgetAmount || 10,
               {
                 country: adsConfig?.country || "US",
+                city: adsConfig?.city,
+                radiusKm: adsConfig?.radiusKm,
                 ageMin: adsConfig?.ageMin || 18,
                 ageMax: adsConfig?.ageMax || 65,
-                gender: adsConfig?.gender || "all"
-              }
+                gender: adsConfig?.gender || "all",
+                interests: adsConfig?.interests,
+                customAudiences: adsConfig?.customAudiences // SMM 2.0 Feature
+              },
+              adsConfig?.budgetAmount || 10
             );
             if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
 

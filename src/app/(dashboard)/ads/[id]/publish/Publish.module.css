@@ -311,3 +311,83 @@
 
 .resultSuccess { border-left: 4px solid #10b981; }
 .resultError { border-left: 4px solid #f3425f; }
+
+/* Form Elements */
+.fieldLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #b0b3b8;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.input {
+  width: 100%;
+  background: #3a3b3c;
+  border: 1px solid var(--meta-border);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: var(--meta-accent-blue);
+}
+
+.slider {
+  width: 100%;
+  margin: 1rem 0;
+  accent-color: var(--meta-accent-blue);
+}
+
+/* Search results dropdown for targeting */
+.searchResults {
+  background: #3a3b3c;
+  border: 1px solid var(--meta-border);
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  position: absolute;
+  z-index: 10;
+  width: calc(100% - 2.5rem);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.searchItem {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.85rem;
+}
+
+.searchItem:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--meta-accent-blue);
+}
+
+/* Tags for selected interests */
+.tag {
+  background: rgba(46, 137, 255, 0.15);
+  color: var(--meta-accent-blue);
+  border: 1px solid rgba(46, 137, 255, 0.3);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag:hover {
+  background: rgba(46, 137, 255, 0.25);
+  transform: translateY(-1px);
+}

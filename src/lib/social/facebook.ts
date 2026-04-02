@@ -222,7 +222,8 @@ export async function createFacebookAdCampaign(
         name,
         objective,
         status: "PAUSED",
-        special_ad_categories: [],
+        special_ad_categories: ["HOUSING"], // Required for Real Estate
+        special_ad_category_country: ["US"], // Default to US, can be dynamic
         access_token: userAccessToken,
       }),
     });
@@ -279,38 +280,64 @@ export async function createFacebookAdSet(
   adAccountId: string,
   campaignId: string,
   name: string,
-  dailyBudget: number,
   targeting: {
     country: string;
+    city?: string;
+    radiusKm?: number;
     ageMin: number;
     ageMax: number;
-    gender: string; // "all", "male", "female"
+    gender: string; 
     interests?: string[];
-  }
+    customAudiences?: string[];
+  },
+  dailyBudget?: number
 ): Promise<FacebookPublishResult> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adsets`;
     
-    // Process gender to Facebook's numeric format (0=all, 1=male, 2=female)
-    const genderMap: Record<string, number[]> = {
-      "all": [1, 2],
-      "male": [1],
-      "female": [2]
+    // Budget handling
+    const budgetParam = dailyBudget ? { daily_budget: Math.round(dailyBudget * 100) } : { lifetime_budget: 10000 };
+
+    const targeting_spec: any = {
+      geo_locations: {},
     };
+
+    // Locations (City + Radius for Housing)
+    if (targeting.city) {
+      targeting_spec.geo_locations.cities = [{
+        key: targeting.city, // City ID from Search API
+        radius: Math.max(targeting.radiusKm || 25, 25), // Housing requires 15 miles (25km)
+        distance_unit: "kilometer"
+      }];
+    } else {
+      targeting_spec.geo_locations.countries = [targeting.country || "US"];
+    }
+
+    // Age & Gender (Fixed for Housing)
+    targeting_spec.age_min = 18;
+    targeting_spec.age_max = 65;
+    // Genders must be all [1, 2] for Housing
+
+    // Interests (Detailed Targeting)
+    if (targeting.interests && targeting.interests.length > 0) {
+      targeting_spec.flexible_spec = [{
+        interests: targeting.interests.map(id => ({ id, name: id }))
+      }];
+    }
+
+    // Custom Audiences (Retargeting)
+    if (targeting.customAudiences && targeting.customAudiences.length > 0) {
+      targeting_spec.custom_audiences = targeting.customAudiences.map(id => ({ id }));
+    }
 
     const body: any = {
       name,
       campaign_id: campaignId,
-      daily_budget: Math.round(dailyBudget * 100), // Meta expects cents
+      ...budgetParam,
       billing_event: "IMPRESSIONS",
-      optimization_goal: "REACH",
-      bid_strategy: "LOWEST_COST_WITHOUT_CAP",
-      targeting: {
-        geo_locations: { countries: [targeting.country] },
-        age_min: targeting.ageMin,
-        age_max: targeting.ageMax,
-        genders: genderMap[targeting.gender] || [1, 2],
-      },
+      optimization_goal: "LINK_CLICKS",
+      billing_event_type: "IMPRESSIONS",
+      targeting: targeting_spec,
       status: "PAUSED",
       access_token: userAccessToken,
     };
