@@ -17,7 +17,6 @@ export async function GET() {
       totalPublications,
       totalPaidPublications,
       totalOrganicPublications,
-      totalSocialAccounts,
       campaignsByStatus,
       publicationsByStatus,
       publicationsByPlatform,
@@ -27,6 +26,7 @@ export async function GET() {
       budgetSum,
       publicationStats,
       totalDraftAds,
+      socialAccountsListFull,
     ] = (await Promise.all([
       // Counts
       prisma.campaign.count({ where: { userId } }),
@@ -34,7 +34,6 @@ export async function GET() {
       prisma.publication.count({ where: { ad: { campaign: { userId } } } }),
       prisma.publication.count({ where: { ad: { campaign: { userId } }, type: "paid" } }),
       prisma.publication.count({ where: { ad: { campaign: { userId } }, type: "organic" } }),
-      prisma.socialAccount.count({ where: { userId } }),
 
       // Campaigns by status
       prisma.campaign.groupBy({
@@ -94,8 +93,6 @@ export async function GET() {
         where: { publication: { ad: { campaign: { userId } } } },
         _sum: { totalBudget: true, dailyBudget: true },
       }),
-
-      // Total Performance Stats
       prisma.publication.aggregate({
         where: { ad: { campaign: { userId } } },
         _sum: {
@@ -106,7 +103,16 @@ export async function GET() {
         }
       }),
       prisma.ad.count({ where: { campaign: { userId }, publications: { none: {} } } }),
+      // Fetch full accounts to count unique titulares
+      prisma.socialAccount.findMany({
+        where: { userId },
+        select: { provider: true, accountName: true }
+      }),
     ])) as any[];
+
+    // Calculate unique titulares (SMM V1.5.9 Fix)
+    const uniqueTitularsMap = new Set(socialAccountsListFull.map((acc: any) => `${acc.provider}-${acc.accountName}`));
+    const totalSocialAccounts = uniqueTitularsMap.size;
 
     // Format campaign statuses
     const campaignStatuses: Record<string, number> = {};

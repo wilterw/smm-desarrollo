@@ -207,8 +207,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       return (
         <div className={styles.destinationGrid}>
           {[
-            { id: 'organic', name: 'Orgánico', icon: '🌱', desc: 'Contenido gratuito' },
-            { id: 'ads', name: 'Anuncio (Ads)', icon: '📈', desc: 'Campañas pagadas' }
+            { id: 'organic', name: 'Orgánico', icon: '🌱', desc: 'Muro o Fanpage' },
+            { id: 'ads', name: 'Anuncio (Ads)', icon: '📈', desc: 'Campaña pagada' }
           ].map(t => (
             <div key={t.id} className={`${styles.destinationCard} ${publishType === t.id ? styles.destinationCardActive : ''}`} onClick={() => { setType(t.id as any); setError(null); }}>
               <div className={styles.destinationIcon}>{t.icon}</div>
@@ -222,24 +222,26 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       );
     }
 
+    // New nested step for Organic: Feed vs Fanpage
     if (publishType === 'organic' && !origin) {
       return (
         <div className={styles.destinationGrid}>
-          <button style={{ position: 'absolute', top: 10, left: 10, background: 'none', border: 'none', color: 'gray', cursor: 'pointer' }} onClick={() => setType(null)}>← Atrás</button>
+          <button style={{ position: 'absolute', top: -30, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setType(null)}>← Cambiar Tipo</button>
           {[
-            { id: 'feed', name: 'Muro Personal', icon: '👤', desc: 'Publicar en tu perfil' },
-            { id: 'fanpage', name: 'Fanpage', icon: '🚩', desc: 'Publicar en tu negocio' }
+            { id: 'feed', name: 'Muro Personal (Feed)', icon: '👤', desc: 'Publicar en tu perfil' },
+            { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas' }
           ].map(o => (
             <div key={o.id} className={`${styles.destinationCard} ${origin === o.id ? styles.destinationCardActive : ''}`} onClick={() => {
               setOrigin(o.id as any);
               if (o.id === 'feed') {
-                const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
-                if (personalAcc) {
-                  setSelectedAccountIds([personalAcc.id]);
-                  setStep(4);
-                } else {
-                  setError("No se encontró el perfil personal para este titular.");
-                }
+                 // Auto-select the personal profile record
+                 const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
+                 if (personalAcc) {
+                   setSelectedAccountIds([personalAcc.id]);
+                   setStep(4); // Jump to Confirm
+                 } else {
+                   setError("Para publicar en el Muro necesitamos acceder a tu perfil personal. Si no aparece, reconecta tu cuenta.");
+                 }
               }
             }}>
               <div className={styles.destinationIcon}>{o.icon}</div>
@@ -253,7 +255,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       );
     }
 
-    if (publishType === 'ads' || origin === 'fanpage') {
+    // Final choice for Fanpage or Ads: The Page List
+    if (publishType === 'ads' || (publishType === 'organic' && origin === 'fanpage')) {
       const filteredFanpages = socialAccounts.filter(acc => 
         acc.provider === platform && 
         acc.accountName === selectedTitular && 
@@ -262,20 +265,20 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
 
       return (
         <div className={styles.accountSelectionGrid}>
-          <button style={{ position: 'absolute', top: -30, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer' }} onClick={() => { if (publishType === 'ads') setType(null); else setOrigin(null); }}>← Volver</button>
+          <button style={{ position: 'absolute', top: -30, left: 0, background: 'none', border: 'none', color: 'gray', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => { if (publishType === 'ads') setType(null); else setOrigin(null); }}>← Volver</button>
           {filteredFanpages.length > 0 ? (
             filteredFanpages.map(acc => (
               <div key={acc.id} className={`${styles.accountCard} ${selectedAccountIds.includes(acc.id) ? styles.accountCardActive : ''}`} onClick={() => toggleAccountSelection(acc.id)}>
                 <div className={styles.accountAvatar}>🚩</div>
                 <div className={styles.accountInfo}>
-                  <span className={styles.accountName}>{acc.pageName || "Página de FB"}</span>
-                  <span className={styles.accountHandle}>Vincular para {publishType}</span>
+                  <span className={styles.accountName}>{acc.pageName || "Página vinculada"}</span>
+                  <span className={styles.accountHandle}>{acc.accountName} (Titular)</span>
                 </div>
                 <div style={{ marginLeft: "auto", fontSize: "1.2rem" }}>{selectedAccountIds.includes(acc.id) ? "✅" : "➕"}</div>
               </div>
             ))
           ) : (
-            <div style={{ textAlign: "center", width: "100%", padding: "1rem", opacity: 0.6 }}>No hay pages para este titular.</div>
+            <div style={{ textAlign: "center", width: "100%", padding: "2rem", opacity: 0.6 }}>No se encontraron Fanpages para {selectedTitular}.</div>
           )}
         </div>
       );
