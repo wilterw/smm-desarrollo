@@ -169,8 +169,9 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     let options: { id: Destination, name: string, icon: string, desc: string }[] = [];
     if (platform === "facebook") {
       options = [
-        { id: "feed", name: "Feed", icon: "👤", desc: "Muro personal o Página" },
-        { id: "ads", name: "Facebook Ads", icon: "📈", desc: "Campaña de pago" }
+        { id: "feed", name: "Muro Personal", icon: "👤", desc: "Tu perfil personal" },
+        { id: "fanpage", name: "Fanpage", icon: "🚩", desc: "Muro de la Página" },
+        { id: "ads", name: "Facebook Ads", icon: "📈", desc: "Anuncio de pago" }
       ];
     } else if (platform === "instagram") {
       options = [
@@ -335,7 +336,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       {!publishResults && (
         <div className={styles.bottomBar}>
           <button type="button" className={styles.btnSecondary} onClick={() => step === 1 ? router.push("/ads") : setStep(s => s - 1)}>{step === 1 ? "Cancelar" : "Anterior"}</button>
-          {(destination === "ads" && step < 4) || (destination !== "ads" && step < 3) ? (
+          {((destination === "ads" && step < 4) || (destination !== "ads" && step < 3)) ? (
             <button type="button" className={styles.btnPrimary} onClick={handleNext}>Siguiente →</button>
           ) : (
             <button type="button" className={styles.btnPrimary} onClick={handlePublish} disabled={publishing || selectedAccountIds.length === 0}>

@@ -176,9 +176,8 @@ export default function AccountsPage() {
                       <button 
                         className={styles.miniDisconnectBtn}
                         onClick={() => handleDisconnect(acc.id)}
-                        title="Desconectar"
                       >
-                        ✕
+                        Desconectar
                       </button>
                     </div>
                   ))
