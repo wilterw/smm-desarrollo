@@ -14,9 +14,9 @@ export async function GET(req: NextRequest) {
 
   const provider = req.nextUrl.searchParams.get("provider");
   
-  // Use current request origin to build the redirectUri (more robust than env var fallback)
-  const origin = req.nextUrl.origin;
-  const redirectUri = `${origin}/api/social/callback/${provider}`;
+  // Use NEXTAUTH_URL as priority for stable redirects in production
+  const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
+  const redirectUri = `${baseUrl}/api/social/callback/${provider}`;
 
   try {
     let oauthUrl: string;

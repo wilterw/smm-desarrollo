@@ -25,9 +25,9 @@ export async function GET(
     return NextResponse.redirect(new URL("/settings/accounts?error=missing_code", req.url));
   }
 
-  // Use dynamically from request origin
-  const origin = req.nextUrl.origin;
-  const redirectUri = `${origin}/api/social/callback/${provider}`;
+  // Stable redirectUri using NEXTAUTH_URL as priority
+  const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
+  const redirectUri = `${baseUrl}/api/social/callback/${provider}`;
 
   try {
     let accessToken = "";
