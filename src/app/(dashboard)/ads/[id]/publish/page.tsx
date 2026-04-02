@@ -38,6 +38,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [platform, setPlatform] = useState<"facebook" | "instagram" | "youtube" | null>(null);
+  const [selectedTitular, setSelectedTitular] = useState<string | null>(null);
   const [publishType, setPublishType] = useState<"organic" | "ads" | null>(null);
   const [origin, setOrigin] = useState<"feed" | "fanpage" | null>(null);
   const [destination, setDestination] = useState<Destination | null>(null);
@@ -91,7 +92,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const toggleAccountSelection = (accountId: string) => {
     setSelectedAccountIds(prev => {
       if (prev.includes(accountId)) return prev.filter(id => id !== accountId);
-      return [accountId]; // Single selection for now as per destination logic
+      return [...prev, accountId]; // Multiple selection allowed
     });
   };
 
@@ -106,41 +107,32 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const handleNext = () => {
     setError(null);
     if (step === 1 && !platform) return setError("Selecciona una plataforma");
-    if (step === 2 && !publishType) return setError("Selecciona el tipo de publicación");
-    if (step === 2 && platform === 'youtube' && publishType === 'ads') return setError("YouTube Ads no está disponible en esta versión.");
+    if (step === 2 && !selectedTitular) return setError("Selecciona la cuenta titular");
     
     if (step === 3) {
-      if (publishType === 'organic' && !origin) return setError("Selecciona si es Feed o Fanpage");
-      if (publishType === 'ads') {
-        // Ads always go to account selection step
-        if (selectedAccountIds.length === 0) return setError("Selecciona la Fanpage para el anuncio");
+      if (!origin) return setError("Selecciona si es Feed o Fanpage");
+      if (origin === 'feed') {
+        const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
+        if (personalAcc) {
+          setSelectedAccountIds([personalAcc.id]);
+          setStep(5); // Confirm
+          return;
+        } else {
+          return setError("No se encontró una cuenta de perfil personal para este titular.");
+        }
       }
     }
 
-    if (step === 4) {
-      if (publishType === 'organic' && origin === 'fanpage' && selectedAccountIds.length === 0) return setError("Selecciona una Fanpage");
+    if (step === 4 && selectedAccountIds.length === 0) {
+      return setError("Selecciona al menos una Fanpage");
     }
 
-    // Branching logic for steps
-    if (step === 3 && publishType === 'organic' && origin === 'feed') {
-      // Auto-select personal profile if on Feed
-      const personalAcc = socialAccounts.find(a => a.provider === platform && !a.pageId);
-      if (personalAcc) {
-        setSelectedAccountIds([personalAcc.id]);
-        setDestination('feed');
-      }
-      setStep(5); // Go to confirm
-    } else if (step === 3 && publishType === 'ads') {
-      setDestination('ads');
-      setStep(4);
-    } else {
-      setStep(s => s + 1);
-    }
+    setStep(s => s + 1);
   };
 
   const handlePrevious = () => {
     setError(null);
-    if (step === 5 && publishType === 'organic' && origin === 'feed') {
+    if (step === 5 && origin === 'feed') {
       setStep(3);
     } else {
       setStep(s => s - 1);
@@ -162,8 +154,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             return {
               platform: acc.provider,
               socialAccountId: acc.id,
-              destination: publishType === 'ads' ? 'ads' : (origin === 'feed' ? 'feed' : 'fanpage'),
-              adsConfig: publishType === 'ads' ? { ...adsConfig, linkUrl: ad.linkUrl } : null
+              destination: origin === 'feed' ? 'feed' : 'fanpage',
+              adsConfig: null // Ads logic separated for simplicity in this flow V3
             };
           })
         })
@@ -189,7 +181,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
         { id: 'instagram', name: 'Instagram', icon: '📸', desc: 'Reels y Stories' },
         { id: 'youtube', name: 'YouTube', icon: '🔴', desc: 'Canal de Video' }
       ].map(p => (
-        <div key={p.id} className={`${styles.destinationCard} ${platform === p.id ? styles.destinationCardActive : ''}`} onClick={() => setPlatform(p.id as any)}>
+        <div key={p.id} className={`${styles.destinationCard} ${platform === p.id ? styles.destinationCardActive : ''}`} onClick={() => { setPlatform(p.id as any); setError(null); setStep(2); }}>
           <div className={styles.destinationIcon}>{p.icon}</div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span style={{ fontWeight: 700 }}>{p.name}</span>
@@ -200,22 +192,27 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     </div>
   );
 
-  const renderTypeSelection = () => (
-    <div className={styles.destinationGrid}>
-      {[
-        { id: 'organic', name: 'Publicación Orgánica', icon: '🌱', desc: 'Post gratuito a tu comunidad' },
-        { id: 'ads', name: 'Anuncio Pagado (Ads)', icon: '📈', desc: 'Campaña con segmentación' }
-      ].map(t => (
-        <div key={t.id} className={`${styles.destinationCard} ${publishType === t.id ? styles.destinationCardActive : ''}`} onClick={() => setPublishType(t.id as any)}>
-          <div className={styles.destinationIcon}>{t.icon}</div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontWeight: 700 }}>{t.name}</span>
-            <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{t.desc}</span>
+  const renderTitularSelection = () => {
+    const platformAccounts = socialAccounts.filter(a => a.provider === platform);
+    const uniqueTitulars = Array.from(new Set(platformAccounts.map(a => a.accountName))).filter(Boolean);
+
+    return (
+      <div className={styles.destinationGrid}>
+        {uniqueTitulars.map(name => (
+          <div key={name} className={`${styles.destinationCard} ${selectedTitular === name ? styles.destinationCardActive : ''}`} onClick={() => setSelectedTitular(name)}>
+            <div className={styles.destinationIcon}>👤</div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontWeight: 700 }}>{name}</span>
+              <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>Titular de Cuenta</span>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+        {uniqueTitulars.length === 0 && (
+          <div style={{ textAlign: "center", width: "100%", padding: "2rem", opacity: 0.6 }}>No hay cuentas conectadas de {platform}.</div>
+        )}
+      </div>
+    );
+  };
 
   const renderOriginSelection = () => (
     <div className={styles.destinationGrid}>
@@ -235,64 +232,34 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   );
 
   const renderAccountSelection = () => {
-    // Filter accounts by platform AND presence of pageId based on branching
-    const filteredAccounts = socialAccounts.filter(acc => {
-      const isPlatformMatch = acc.provider === platform;
-      if (publishType === 'ads') return isPlatformMatch && acc.pageId; // Ads always need a page
-      if (origin === 'fanpage') return isPlatformMatch && acc.pageId; // Fanpage choice needs a page
-      return isPlatformMatch && !acc.pageId; // Feed needs personal profile
-    });
+    // Filter accounts by platform, titular, and insisting on pageId
+    const filteredAccounts = socialAccounts.filter(acc => 
+      acc.provider === platform && 
+      acc.accountName === selectedTitular && 
+      acc.pageId
+    );
 
     return (
       <div className={styles.accountSelectionGrid}>
         {filteredAccounts.length > 0 ? (
           filteredAccounts.map(acc => (
             <div key={acc.id} className={`${styles.accountCard} ${selectedAccountIds.includes(acc.id) ? styles.accountCardActive : ''}`} onClick={() => toggleAccountSelection(acc.id)}>
-              <div className={styles.accountAvatar}>{acc.provider[0].toUpperCase()}</div>
+              <div className={styles.accountAvatar}>🚩</div>
               <div className={styles.accountInfo}>
-                <span className={styles.accountName}>{acc.pageName || acc.accountName}</span>
-                <span className={styles.accountHandle}>{acc.provider}</span>
+                <span className={styles.accountName}>{acc.pageName || "Sin nombre"}</span>
+                <span className={styles.accountHandle}>Página de Facebook</span>
+              </div>
+              <div style={{ marginLeft: "auto", fontSize: "1.2rem" }}>
+                {selectedAccountIds.includes(acc.id) ? "✅" : "➕"}
               </div>
             </div>
           ))
         ) : (
-          <div style={{ textAlign: "center", width: "100%", padding: "2rem", opacity: 0.6 }}>No se encontraron cuentas para este destino.</div>
+          <div style={{ textAlign: "center", width: "100%", padding: "2rem", opacity: 0.6 }}>No se encontraron Fanpages para este titular.</div>
         )}
       </div>
     );
   };
-
-  const renderAdsConfig = () => (
-    <div className={styles.configCard}>
-      <div className={styles.cardHeader}><span className={styles.cardTitle}>Segmentación Meta Ads</span></div>
-      <div className={styles.accordion}>
-        <div className={styles.accordionHeader} onClick={() => toggleSection("objective")}>
-          <span>🎯 Objetivo: {adsConfig.campaignObjective}</span>
-          <span>{openSections.objective ? "▲" : "▼"}</span>
-        </div>
-        {openSections.objective && (
-          <div className={styles.accordionBody}>
-            <select className={styles.select} value={adsConfig.campaignObjective} onChange={(e) => setAdsConfig({...adsConfig, campaignObjective: e.target.value})}>
-              <option value="engagement">Interacción</option>
-              <option value="traffic">Tráfico</option>
-              <option value="leads">Clientes Potenciales</option>
-            </select>
-          </div>
-        )}
-      </div>
-      <div className={styles.accordion}>
-        <div className={styles.accordionHeader} onClick={() => toggleSection("budget")}>
-          <span>💰 Presupuesto: ${adsConfig.budgetAmount}</span>
-          <span>{openSections.budget ? "▲" : "▼"}</span>
-        </div>
-        {openSections.budget && (
-          <div className={styles.accordionBody}>
-             <input type="number" className={styles.input} value={adsConfig.budgetAmount} onChange={(e) => setAdsConfig({...adsConfig, budgetAmount: Number(e.target.value)})} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   if (!ad) return <div className={styles.container}>Cargando...</div>;
 
@@ -305,20 +272,20 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             <span className={styles.navIconLabel}>Plataforma</span>
           </div>
           <div className={`${styles.navIconWrapper} ${step >= 2 ? styles.navIconActive : ''}`} onClick={() => setStep(2)}>
-            <span>📁</span>
-            <span className={styles.navIconLabel}>Tipo</span>
-          </div>
-          <div className={`${styles.navIconWrapper} ${step >= 3 ? styles.navIconActive : ''}`} onClick={() => setStep(3)}>
-            <span>📍</span>
-            <span className={styles.navIconLabel}>Destino</span>
-          </div>
-          <div className={`${styles.navIconWrapper} ${step >= 4 ? styles.navIconActive : ''}`} onClick={() => setStep(4)}>
             <span>👤</span>
             <span className={styles.navIconLabel}>Cuenta</span>
           </div>
+          <div className={`${styles.navIconWrapper} ${step >= 3 ? styles.navIconActive : ''}`} onClick={() => setStep(3)}>
+            <span>📍</span>
+            <span className={styles.navIconLabel}>Ubicación</span>
+          </div>
+          <div className={`${styles.navIconWrapper} ${step >= 4 ? styles.navIconActive : ''}`} onClick={() => setStep(4)}>
+            <span>🚩</span>
+            <span className={styles.navIconLabel}>Fanpages</span>
+          </div>
           <div className={`${styles.navIconWrapper} ${step >= 5 ? styles.navIconActive : ''}`} onClick={() => setStep(5)}>
-            <span>✅</span>
-            <span className={styles.navIconLabel}>Confirmar</span>
+            <span>🚀</span>
+            <span className={styles.navIconLabel}>Publicar</span>
           </div>
         </div>
 
@@ -340,8 +307,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                     <div key={i} className={`${styles.resultCard} ${res.status === 'published' ? styles.resultSuccess : styles.resultError}`}>
                       <div style={{ fontSize: "1.5rem" }}>{res.status === 'published' ? "✅" : "❌"}</div>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontWeight: 700 }}>{acc?.accountName || res.platform}</span>
-                        <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>{res.status === 'published' ? "Publicado" : `Error: ${res.error}`}</span>
+                        <span style={{ fontWeight: 700 }}>{acc?.pageName || acc?.accountName || res.platform}</span>
+                        <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>{res.status === 'published' ? "Publicado correctamente" : `Error: ${res.error}`}</span>
                       </div>
                     </div>
                   );
@@ -353,45 +320,48 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             <>
               {step === 1 && (
                 <div className={styles.configCard}>
-                  <div className={styles.cardHeader}><span className={styles.cardTitle}>1. Selecciona la Plataforma</span></div>
+                  <div className={styles.cardHeader}><span className={styles.cardTitle}>1. Elige la Red Social</span></div>
                   {renderPlatformSelection()}
                 </div>
               )}
 
               {step === 2 && (
                 <div className={styles.configCard}>
-                  <div className={styles.cardHeader}><span className={styles.cardTitle}>2. Tipo de Publicación</span></div>
-                  {renderTypeSelection()}
+                  <div className={styles.cardHeader}><span className={styles.cardTitle}>2. Selecciona la Cuenta Titular</span></div>
+                  {renderTitularSelection()}
                 </div>
               )}
 
-              {step === 3 && publishType === 'organic' && (
+              {step === 3 && (
                 <div className={styles.configCard}>
-                  <div className={styles.cardHeader}><span className={styles.cardTitle}>3. Ubicación del Post</span></div>
+                  <div className={styles.cardHeader}><span className={styles.cardTitle}>3. ¿Dónde quieres publicar?</span></div>
                   {renderOriginSelection()}
                 </div>
               )}
 
-              {(step === 4 || (step === 3 && publishType === 'ads')) && (
+              {step === 4 && (
                  <div className={styles.configCard}>
-                   <div className={styles.cardHeader}><span className={styles.cardTitle}>{publishType === 'ads' ? '3' : '4'}. Selecciona la Página</span></div>
+                   <div className={styles.cardHeader}><span className={styles.cardTitle}>4. Selecciona las Fanpages</span></div>
+                   <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1rem" }}>Puedes seleccionar una o más páginas de este titular.</p>
                    {renderAccountSelection()}
                  </div>
               )}
 
-              {step === 5 && publishType === 'ads' && renderAdsConfig()}
-              
-              {((step === 5 && publishType === 'organic') || (step === 6 && publishType === 'ads')) && (
+              {step === 5 && (
                 <div className={styles.configCard}>
                    <div className={styles.cardHeader}><span className={styles.cardTitle}>Confirmar Publicación</span></div>
-                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                      <p>Anuncio: <b>{ad.title}</b></p>
+                   <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem", marginTop: "0.5rem" }}>
+                      <p>Contenido: <b>{ad.title}</b></p>
                       <p>Plataforma: <b style={{ textTransform: "capitalize" }}>{platform}</b></p>
-                      <p>Tipo: <b>{publishType === 'ads' ? 'Anuncio Pagado' : 'Post Orgánico'}</b></p>
-                      <p>Ubicación: <b>{publishType === 'ads' ? 'Ads Manager' : (origin === 'feed' ? 'Muro Personal' : 'Fanpage')}</b></p>
-                      {selectedAccountIds.length > 0 && (
-                        <p>Cuenta: <b>{socialAccounts.find(a => a.id === selectedAccountIds[0])?.pageName || socialAccounts.find(a => a.id === selectedAccountIds[0])?.accountName}</b></p>
-                      )}
+                      <p>Titular: <b>{selectedTitular}</b></p>
+                      <p>Ubicación: <b>{origin === 'feed' ? 'Muro Personal' : 'Fanpage'}</b></p>
+                      <p>Destinos: <b>{selectedAccountIds.length} cuenta(s)</b></p>
+                      <div className={styles.accountSelectionGrid} style={{ marginTop: "0.5rem", background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "8px" }}>
+                        {selectedAccountIds.map(id => {
+                          const acc = socialAccounts.find(a => a.id === id);
+                          return <div key={id} style={{ fontSize: "0.85rem" }}>✅ {acc.pageName || acc.accountName}</div>;
+                        })}
+                      </div>
                    </div>
                 </div>
               )}
@@ -415,7 +385,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       {!publishResults && (
         <div className={styles.bottomBar}>
           <button type="button" className={styles.btnSecondary} onClick={() => step === 1 ? router.push("/ads") : handlePrevious()}>{step === 1 ? "Cancelar" : "Anterior"}</button>
-          {((publishType === "ads" && step < 6) || (publishType === "organic" && step < 5)) ? (
+          {(step < 5) ? (
             <button type="button" className={styles.btnPrimary} onClick={handleNext}>Siguiente →</button>
           ) : (
             <button type="button" className={styles.btnPrimary} onClick={handlePublish} disabled={publishing || selectedAccountIds.length === 0}>
