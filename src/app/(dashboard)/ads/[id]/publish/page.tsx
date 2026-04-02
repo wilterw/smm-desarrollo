@@ -201,7 +201,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
         { id: 'organic', name: 'Publicación Orgánica', icon: '🌱', desc: 'Muro Personal o Fanpage' },
         { id: 'ads', name: 'Anuncio Pagado (Ads)', icon: '📈', desc: 'Campaña publicitaria' }
       ].map(t => (
-        <div key={t.id} className={`${styles.destinationCard} ${publishType === t.id ? styles.destinationCardActive : ''}`} onClick={() => { setPublishType(t.id as any); handleNext(); }}>
+        <div key={t.id} className={`${styles.destinationCard} ${publishType === t.id ? styles.destinationCardActive : ''}`} onClick={() => { setPublishType(t.id as any); setError(null); setStep(3); }}>
           <div className={styles.destinationIcon}>{t.icon}</div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span style={{ fontWeight: 700 }}>{t.name}</span>
@@ -219,7 +219,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     return (
       <div className={styles.destinationGrid}>
         {uniqueTitulars.map(name => (
-          <div key={name} className={`${styles.destinationCard} ${selectedTitular === name ? styles.destinationCardActive : ''}`} onClick={() => { setSelectedTitular(name); handleNext(); }}>
+          <div key={name} className={`${styles.destinationCard} ${selectedTitular === name ? styles.destinationCardActive : ''}`} onClick={() => { setSelectedTitular(name); setError(null); setStep(4); }}>
             <div className={styles.destinationIcon}>👤</div>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span style={{ fontWeight: 700 }}>{name}</span>
