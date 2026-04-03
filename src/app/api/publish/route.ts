@@ -8,6 +8,7 @@ import {
   publishMultiPhotoToFacebook,
   createFacebookAdCampaign,
   createFacebookAdSet,
+  uploadFacebookAdImage,
   createFacebookAdCreative,
   createFacebookAd
 } from "@/lib/social/facebook";
@@ -182,21 +183,28 @@ export async function POST(req: NextRequest) {
             );
             if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
 
-            // 3. Create Creative (Multiple images handled by API internally)
+            // 3. Upload Image to Ad Library to get Hash
+            const uploadRes = await uploadFacebookAdImage(
+              account.accessToken,
+              adAccountId,
+              mediaFullUrls[0]
+            );
+            if (!uploadRes.success) throw new Error(`Media upload error: ${uploadRes.error}`);
+
+            // 4. Create Creative using Hash
             const creativeRes = await createFacebookAdCreative(
               account.accessToken,
               adAccountId,
               account.pageId || "",
               ad.title,
               message,
-              mediaFullUrls[0],
-              undefined,
+              uploadRes.hash!,
               ad.linkUrl || undefined,
               adsConfig
             );
             if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
 
-            // 4. Create Ad
+            // 5. Create Ad
             const adRes = await createFacebookAd(
               account.accessToken,
               adAccountId,

@@ -239,7 +239,10 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   );
 
   const renderTitularSelection = () => {
-    const platformAccounts = socialAccounts.filter(a => a.provider === platform);
+    const platformAccounts = socialAccounts.filter(a => {
+      if (platform === 'instagram') return a.provider === 'facebook' && a.igAccountId;
+      return a.provider === platform;
+    });
     const uniqueTitulars = Array.from(new Set(platformAccounts.map(a => a.accountName))).filter(Boolean);
 
     return (
@@ -312,11 +315,13 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       );
     }
 
-    const filteredFanpages = socialAccounts.filter(acc => 
-      acc.provider === platform && 
-      acc.accountName === selectedTitular && 
-      acc.pageId
-    );
+    const filteredFanpages = socialAccounts.filter(acc => {
+      const isCorrectPlatform = platform === 'instagram' ? 
+        (acc.provider === 'facebook' && acc.igAccountId) : 
+        (acc.provider === platform);
+      
+      return isCorrectPlatform && acc.accountName === selectedTitular && acc.pageId;
+    });
 
     return (
       <div className={styles.accountSelectionGrid}>

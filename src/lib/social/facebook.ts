@@ -235,7 +235,7 @@ export async function createFacebookAdCampaign(
         objective: objective || "OUTCOME_TRAFFIC",
         status: "PAUSED",
         special_ad_categories: ["HOUSING"],
-        special_ad_category_country: ["US"],
+        special_ad_category_country: ["ES", "US"],
         access_token: userAccessToken,
       }),
     });
@@ -372,6 +372,37 @@ export async function createFacebookAdSet(
 }
 
 /**
+ * Uploads an image to the Ad Account's image library to get an image_hash
+ */
+export async function uploadFacebookAdImage(
+  userAccessToken: string,
+  adAccountId: string,
+  imageUrl: string
+): Promise<{ success: boolean; hash?: string; error?: string }> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adimages`;
+    // Meta requires the image via URL or multipart. URL is easier here.
+    const res = await fetch(`${endpoint}?url=${encodeURIComponent(imageUrl)}&access_token=${userAccessToken}`, {
+      method: "POST"
+    });
+    const data = await res.json();
+    
+    if (data.error || !data.images) {
+      return { success: false, error: data.error?.message || "Failed to upload image to Ad Account" };
+    }
+    
+    // The library returns an object where keys are the filenames. 
+    // Since we used a URL, we look at the first key.
+    const firstKey = Object.keys(data.images)[0];
+    const hash = data.images[firstKey].hash;
+    
+    return { success: true, hash };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Creates an Ad Creative
  */
 export async function createFacebookAdCreative(
@@ -380,8 +411,7 @@ export async function createFacebookAdCreative(
   pageId: string,
   name: string,
   message: string,
-  imageUrl?: string,
-  videoUrl?: string,
+  imageHash: string,
   linkUrl?: string,
   adsConfig?: any
 ): Promise<FacebookPublishResult> {
@@ -393,7 +423,7 @@ export async function createFacebookAdCreative(
       link_data: {
         message,
         link: linkUrl || "https://econos.es",
-        image_hash: "",
+        image_hash: imageHash,
         caption: name,
         call_to_action: {
           type: adsConfig?.ctaLabel || "LEARN_MORE",
@@ -404,8 +434,6 @@ export async function createFacebookAdCreative(
       }
     };
 
-    // Note: This is a simplified version. Real ads often require uploading media 
-    // to get hashes before creating the creative.
     const body: any = {
       name,
       object_story_spec,

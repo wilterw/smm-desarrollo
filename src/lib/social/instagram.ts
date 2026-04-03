@@ -5,7 +5,7 @@
  * Flow: Upload media container → Publish container
  */
 
-const FB_GRAPH_URL = "https://graph.facebook.com/v19.0";
+const FB_GRAPH_URL = "https://graph.facebook.com/v25.0";
 
 interface InstagramPublishResult {
   success: boolean;
