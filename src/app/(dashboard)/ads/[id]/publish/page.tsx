@@ -574,6 +574,25 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   );
 
 
+  const getPostUrl = (res: any) => {
+    if (res.status !== 'published' || !res.postId) return null;
+    
+    if (res.platform === 'facebook') {
+      if (res.destination === 'ads') {
+        const acc = socialAccounts.find(a => a.id === res.socialAccountId);
+        return `https://adsmanager.facebook.com/adsmanager/manage/ads?act=${acc?.adAccountId || ''}`;
+      }
+      return `https://facebook.com/${res.postId}`;
+    }
+    
+    if (res.platform === 'instagram') {
+      if (res.destination === 'reels') return `https://instagram.com/reels/${res.postId}/`;
+      return `https://instagram.com/p/${res.postId}/`;
+    }
+    
+    return null;
+  };
+
   if (!ad) return <div className={styles.container}>Cargando...</div>;
 
   return (
@@ -627,13 +646,22 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {publishResults.map((res, i) => {
                   const acc = socialAccounts.find(a => a.id === res.socialAccountId);
+                  const postUrl = getPostUrl(res);
                   return (
                     <div key={i} className={`${styles.resultCard} ${res.status === 'published' ? styles.resultSuccess : styles.resultError}`}>
-                      <div style={{ fontSize: "1.5rem" }}>{res.status === 'published' ? "✅" : "❌"}</div>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontWeight: 700 }}>{acc?.pageName || acc?.accountName || res.platform}</span>
-                        <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>{res.status === 'published' ? "¡Éxito!" : `Error: ${res.error}`}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <div style={{ fontSize: "1.5rem" }}>{res.status === 'published' ? "✅" : "❌"}</div>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontWeight: 700 }}>{acc?.pageName || acc?.accountName || res.platform}</span>
+                          <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>{res.status === 'published' ? "¡Éxito!" : `Error: ${res.error}`}</span>
+                        </div>
                       </div>
+                      
+                      {postUrl && (
+                        <a href={postUrl} target="_blank" rel="noopener noreferrer" className={styles.btnView}>
+                          Ver {res.destination === 'ads' ? 'en Ads Manager' : 'en Red Social'} 🔗
+                        </a>
+                      )}
                     </div>
                   );
                 })}

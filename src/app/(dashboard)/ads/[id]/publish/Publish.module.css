@@ -427,3 +427,47 @@
   background: var(--selection-bg);
   box-shadow: var(--selection-glow);
 }
+
+/* Result Cards & View Button */
+.resultCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  justify-content: space-between;
+}
+
+.resultSuccess {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.resultError {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.btnView {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btnView:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(183, 6, 6, 0.2);
+}
