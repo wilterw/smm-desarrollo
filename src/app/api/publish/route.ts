@@ -10,6 +10,7 @@ import {
   createFacebookAdSet,
   uploadFacebookAdImage,
   createFacebookAdCreative,
+  createFacebookAdCarouselCreative,
   createFacebookAd
 } from "@/lib/social/facebook";
 import { 
@@ -150,9 +151,12 @@ export async function POST(req: NextRequest) {
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
             }
-          } else if (destination === "ads") {
-            const adAccountId = account.adAccountId || process.env.FACEBOOK_AD_ACCOUNT_ID || "act_123456789"; 
-            
+            // 3. Check for adAccountId and instruct re-sync if missing
+            if (!account.adAccountId) {
+              throw new Error("No se encontró una Cuenta Publicitaria vinculada. Por favor, DESCONECTA Y RE-CONECTA tu cuenta de Facebook en 'Cuentas Sociales' para sincronizar tus Ads.");
+            }
+            const adAccountId = account.adAccountId;
+
             // 1. Create Campaign
             const campRes = await createFacebookAdCampaign(
               account.accessToken, 
@@ -170,41 +174,57 @@ export async function POST(req: NextRequest) {
               campRes.postId!,
               `AdSet - ${ad.title}`,
               {
-                country: adsConfig?.country || "US",
+                country: adsConfig?.country || "ES",
                 city: adsConfig?.city,
                 radiusKm: adsConfig?.radiusKm,
                 ageMin: adsConfig?.ageMin || 18,
                 ageMax: adsConfig?.ageMax || 65,
                 gender: adsConfig?.gender || "all",
                 interests: adsConfig?.interests,
-                customAudiences: adsConfig?.customAudiences // SMM 2.0 Feature
+                customAudiences: adsConfig?.customAudiences 
               },
               adsConfig?.budgetAmount || 10
             );
             if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
 
-            // 3. Upload Image to Ad Library to get Hash
-            const uploadRes = await uploadFacebookAdImage(
-              account.accessToken,
-              adAccountId,
-              mediaFullUrls[0]
-            );
-            if (!uploadRes.success) throw new Error(`Media upload error: ${uploadRes.error}`);
+            // 3. Upload Images to Ad Library to get Hashes (Parallel)
+            const uploadPromises = mediaFullUrls.map(url => uploadFacebookAdImage(account.accessToken, adAccountId, url));
+            const uploadResults = await Promise.all(uploadPromises);
+            
+            const hashes = uploadResults.filter(r => r.success).map(r => r.hash!);
+            if (hashes.length === 0) {
+              throw new Error(`Media upload error: ${uploadResults[0]?.error || "No se pudo subir ninguna imagen"}`);
+            }
 
-            // 4. Create Creative using Hash
-            const creativeRes = await createFacebookAdCreative(
-              account.accessToken,
-              adAccountId,
-              account.pageId || "",
-              ad.title,
-              message,
-              uploadRes.hash!,
-              ad.linkUrl || undefined,
-              adsConfig
-            );
+            // 5. Create Creative (Single vs Carousel)
+            let creativeRes;
+            if (hashes.length > 1) {
+              creativeRes = await createFacebookAdCarouselCreative(
+                account.accessToken,
+                adAccountId,
+                account.pageId || "",
+                ad.title,
+                message,
+                hashes,
+                ad.linkUrl || undefined,
+                adsConfig
+              );
+            } else {
+              creativeRes = await createFacebookAdCreative(
+                account.accessToken,
+                adAccountId,
+                account.pageId || "",
+                ad.title,
+                message,
+                hashes[0],
+                ad.linkUrl || undefined,
+                adsConfig
+              );
+            }
+            
             if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
 
-            // 5. Create Ad
+            // 6. Create Ad
             const adRes = await createFacebookAd(
               account.accessToken,
               adAccountId,

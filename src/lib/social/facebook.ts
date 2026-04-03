@@ -458,6 +458,68 @@ export async function createFacebookAdCreative(
 }
 
 /**
+ * Creates a Carousel Ad Creative with multiple child attachments
+ */
+export async function createFacebookAdCarouselCreative(
+  userAccessToken: string,
+  adAccountId: string,
+  pageId: string,
+  name: string,
+  message: string,
+  imageHashes: string[],
+  linkUrl?: string,
+  adsConfig?: any
+): Promise<FacebookPublishResult> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
+    const finalLink = linkUrl || "https://econos.es";
+
+    // Create child attachments for each hash
+    const child_attachments = imageHashes.slice(0, 10).map((hash, index) => ({
+      link: finalLink,
+      image_hash: hash,
+      name: `${name} ${index + 1}`,
+      call_to_action: {
+        type: adsConfig?.ctaLabel || "LEARN_MORE",
+        value: { link: finalLink }
+      }
+    }));
+
+    const object_story_spec = {
+      page_id: pageId,
+      link_data: {
+        message,
+        link: finalLink,
+        child_attachments,
+        multi_share_optimized: true,
+        multi_share_end_card: false
+      }
+    };
+
+    const body = {
+      name: `Carousel - ${name}`,
+      object_story_spec,
+      access_token: userAccessToken,
+    };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+      return { success: false, error: errorMsg };
+    }
+    return { success: true, postId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Creates the final Ad connecting AdSet and Creative
  */
 export async function createFacebookAd(
