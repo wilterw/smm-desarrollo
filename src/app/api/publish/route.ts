@@ -135,13 +135,19 @@ export async function POST(req: NextRequest) {
 
         if (platform === "facebook") {
           if (destination === "feed") {
-            const result = await publishToFacebookFeed(account.accessToken, message, mediaFullUrls[0]);
-            if (!result.success) throw new Error(result.error);
-            postId = result.postId;
+            // Multi-photo for Personal Feed
+            if (mediaFullUrls.length > 1) {
+              const result = await publishMultiPhotoToFacebook("me", account.accessToken, message, mediaFullUrls);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            } else {
+              const result = await publishToFacebookFeed(account.accessToken, message, mediaFullUrls[0]);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            }
           } else if (destination === "fanpage") {
             if (!account.pageId) throw new Error("No Facebook Page connected");
-            
-            // Multiple images logic for Fanpage
+            // Multi-photo for Fanpage
             if (mediaFullUrls.length > 1) {
               const result = await publishMultiPhotoToFacebook(account.pageId, account.accessToken, message, mediaFullUrls);
               if (!result.success) throw new Error(result.error);
@@ -151,6 +157,7 @@ export async function POST(req: NextRequest) {
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
             }
+          } else if (destination === "ads") {
             // 3. Check for adAccountId and instruct re-sync if missing
             if (!account.adAccountId) {
               throw new Error("No se encontró una Cuenta Publicitaria vinculada. Por favor, DESCONECTA Y RE-CONECTA tu cuenta de Facebook en 'Cuentas Sociales' para sincronizar tus Ads.");
