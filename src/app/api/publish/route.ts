@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
               postId = result.postId;
             }
           } else if (destination === "ads") {
-            const adAccountId = process.env.FACEBOOK_AD_ACCOUNT_ID || "act_123456789"; 
+            const adAccountId = account.adAccountId || process.env.FACEBOOK_AD_ACCOUNT_ID || "act_123456789"; 
             
             // 1. Create Campaign
             const campRes = await createFacebookAdCampaign(

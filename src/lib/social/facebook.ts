@@ -27,6 +27,8 @@ export function getFacebookOAuthUrl(redirectUri: string): string {
     "instagram_basic",
     "instagram_content_publish",
     "ads_management",
+    "ads_read",
+    "read_insights",
     "business_management"
   ].join(",");
 
@@ -72,6 +74,16 @@ export async function getFacebookPages(accessToken: string) {
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   return data.data as { id: string; name: string; access_token: string }[];
+}
+
+/**
+ * Get the user's Ad Accounts
+ */
+export async function getFacebookAdAccounts(accessToken: string) {
+  const res = await fetch(`${FB_GRAPH_URL}/me/adaccounts?fields=name,account_id,id,account_status&access_token=${accessToken}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.data as { id: string; name: string; account_id: string; account_status: number }[];
 }
 
 /**

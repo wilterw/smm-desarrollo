@@ -102,6 +102,7 @@ model SocialAccount {
   pageId            String?  // Facebook Page ID (for fanpage publishing)
   pageName          String?  // Facebook Page display name
   igAccountId       String?  // Instagram Business Account ID
+  adAccountId       String?  // Meta Ad Account ID (act_...)
   
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   publications      Publication[]

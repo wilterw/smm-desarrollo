@@ -199,7 +199,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             return {
               platform: acc.provider,
               socialAccountId: acc.id,
-              destination: origin === 'feed' ? 'feed' : 'fanpage',
+              destination: origin || 'feed', 
               publishType,
               adsConfig: publishType === 'ads' ? { ...adsConfig, linkUrl: ad.linkUrl } : null
             };
@@ -283,7 +283,9 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     if (publishType === 'organic' && !origin) {
       const options = [
         { id: 'feed', name: platform === 'facebook' ? 'Reservado Personal' : 'Perfil (Feed)', icon: '👤', desc: platform === 'facebook' ? 'No permitido por Meta' : 'Muro de la cuenta', disabled: platform === 'facebook' },
-        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: false }
+        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: false },
+        { id: 'reels', name: 'Instagram Reels', icon: '🎬', desc: 'Video vertical 9:16', disabled: platform !== 'instagram' },
+        { id: 'stories', name: 'Instagram Stories', icon: '✨', desc: 'Contenido 24h', disabled: platform !== 'instagram' }
       ];
 
       return (
@@ -365,12 +367,12 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 {ad.description || "Welcome to this charming property..."} {"\n\n"}
                 <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>{ad.campaign?.hashtags}</span>
              </div>
-             <div className={styles.fbMediaGrid}>
+             <div className={styles.fbMediaGrid} style={(origin === 'reels' || origin === 'stories') ? { aspectRatio: "9/16", maxHeight: "600px" } : {}}>
                 {ad.mediaUrl && (
                    ad.mediaType === 'video' ? (
-                     <video src={ad.mediaUrl} controls className={styles.fbMediaItem} />
+                     <video src={ad.mediaUrl} controls className={styles.fbMediaItem} style={(origin === 'reels' || origin === 'stories') ? { objectFit: "cover", height: "100%" } : {}} />
                    ) : (
-                     <img src={ad.mediaUrl} alt="Preview" className={styles.fbMediaItem} />
+                     <img src={ad.mediaUrl} alt="Preview" className={styles.fbMediaItem} style={(origin === 'reels' || origin === 'stories') ? { objectFit: "cover", height: "100%" } : {}} />
                    )
                 )}
              </div>

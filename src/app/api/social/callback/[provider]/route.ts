@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { exchangeFacebookToken, getFacebookPages } from "@/lib/social/facebook";
+import { exchangeFacebookToken, getFacebookPages, getFacebookAdAccounts } from "@/lib/social/facebook";
 import { getInstagramAccountId } from "@/lib/social/instagram";
 import { exchangeYouTubeToken } from "@/lib/social/youtube";
 
@@ -41,6 +41,7 @@ export async function GET(
     let pageId: string | null = null;
     let pageName: string | null = null;
     let igAccountId: string | null = null;
+    let adAccountId: string | null = null;
 
     if (provider === "facebook") {
       const tokens = await exchangeFacebookToken(code, redirectUri);
@@ -52,6 +53,17 @@ export async function GET(
       const meData = await meRes.json();
       const userId = meData.id;
       const userName = meData.name;
+
+      // 0. Fetch Ad Accounts (User level)
+      try {
+        const adAccounts = await getFacebookAdAccounts(accessToken);
+        const activeAdAccount = adAccounts.find(a => a.account_status === 1); // 1 = ACTIVE
+        if (activeAdAccount) {
+          adAccountId = activeAdAccount.id; // Store "act_xxxx"
+        }
+      } catch (e) {
+        console.error("No Ad Accounts found or permissions missing", e);
+      }
 
       // 1. Fetch ALL Facebook Pages
       const pages = await getFacebookPages(accessToken);
@@ -81,6 +93,7 @@ export async function GET(
               pageId: page.id,
               pageName: page.name,
               igAccountId,
+              adAccountId,
             },
             create: {
               userId: session.user.id,
@@ -92,6 +105,7 @@ export async function GET(
               pageId: page.id,
               pageName: page.name,
               igAccountId,
+              adAccountId,
             },
           });
         }
@@ -172,6 +186,7 @@ export async function GET(
         pageId,
         pageName,
         igAccountId,
+        adAccountId,
       },
       create: {
         userId: session.user.id,
@@ -184,6 +199,7 @@ export async function GET(
         pageId,
         pageName,
         igAccountId,
+        adAccountId,
       },
     });
 

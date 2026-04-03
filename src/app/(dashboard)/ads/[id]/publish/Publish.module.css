@@ -254,6 +254,24 @@
     color: #1c1e21;
 }
 
+.fbMediaGrid {
+    width: 100%;
+    margin: 1rem 0;
+    max-height: 450px;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.fbMediaItem {
+    width: 100%;
+    max-height: 450px;
+    object-fit: contain;
+    display: block;
+}
+
 .fbPostHeader {
     display: flex;
     gap: 0.75rem;
