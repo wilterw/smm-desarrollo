@@ -65,9 +65,14 @@ export async function POST(req: NextRequest) {
       rawMessage += `\n\n${tags}`;
     }
     
-    // Multi-media Support (SMM 1.5.12)
+    // Multi-media Support (SMM 2.6 Tuning)
     const mediaUrlsRaw = ad.mediaUrl ? ad.mediaUrl.split(",") : [];
-    const mediaFullUrls = mediaUrlsRaw.map(url => url.startsWith("http") ? url : `${baseUrl}${url}`);
+    const mediaFullUrls = mediaUrlsRaw
+      .map(url => url.trim())
+      .filter(url => url.length > 0)
+      .map(url => url.startsWith("http") ? url : `${baseUrl}${url}`);
+
+    console.log(`[PUBLISH] Ad ID: ${adId}. Found ${mediaFullUrls.length} media items:`, mediaFullUrls);
 
     for (const destConfig of destinations) {
       const { platform, destination, adsConfig, socialAccountId } = destConfig;
@@ -173,6 +178,7 @@ export async function POST(req: NextRequest) {
               adsConfig?.campaignObjective
             );
             if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
+            console.log(`[PUBLISH_ADS] Campaign created: ${campRes.postId}`);
 
             // 2. Create AdSet (Professional Targeting)
             const adSetRes = await createFacebookAdSet(
@@ -199,6 +205,8 @@ export async function POST(req: NextRequest) {
             const uploadResults = await Promise.all(uploadPromises);
             
             const hashes = uploadResults.filter(r => r.success).map(r => r.hash!);
+            console.log(`[PUBLISH_ADS] Upload results: ${hashes.length} success, ${uploadResults.length - hashes.length} fails.`);
+            
             if (hashes.length === 0) {
               throw new Error(`Media upload error: ${uploadResults[0]?.error || "No se pudo subir ninguna imagen"}`);
             }

@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    console.log(`[AD_CREATE] Creating ad "${title}" with ${mediaUrl?.split(",").length || 0} media items. Raw:`, mediaUrl);
+    
     const ad = await prisma.ad.create({
       data: {
         campaignId,

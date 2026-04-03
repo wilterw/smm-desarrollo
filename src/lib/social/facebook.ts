@@ -153,6 +153,8 @@ export async function publishMultiPhotoToFacebook(
 
     // Step 2: Create the feed post with attached media
     const attached_media = photoIds.map(id => ({ media_fbid: id }));
+    console.log(`[FB_GRAPH] Attaching ${attached_media.length} photos to ${pageId}/feed`);
+
     const res = await fetch(`${FB_GRAPH_URL}/${pageId}/feed`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
