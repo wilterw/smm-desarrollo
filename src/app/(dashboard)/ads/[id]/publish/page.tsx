@@ -43,7 +43,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const [platform, setPlatform] = useState<"facebook" | "instagram" | "youtube" | null>(null);
   const [publishType, setType] = useState<"organic" | "ads" | null>(null);
   const [selectedTitular, setSelectedTitular] = useState<string | null>(null);
-  const [origin, setOrigin] = useState<"feed" | "fanpage" | null>(null);
+  const [origin, setOrigin] = useState<"feed" | "fanpage" | "reels" | "stories" | null>(null);
   const [destination, setDestination] = useState<Destination | null>(null);
   const [adsConfig, setAdsConfig] = useState<AdsConfig>({
     campaignObjective: "MESSAGES",
