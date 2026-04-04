@@ -203,7 +203,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
             return {
               platform: acc.provider,
               socialAccountId: acc.id,
-              destination: origin || 'feed', 
+              destination: publishType === 'ads' ? 'ads' : (origin || 'feed'), 
               publishType,
               adsConfig: publishType === 'ads' ? { ...adsConfig, linkUrl: ad.linkUrl } : null
             };

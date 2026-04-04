@@ -138,9 +138,94 @@ export async function POST(req: NextRequest) {
       try {
         let postId: string | undefined;
 
-        if (platform === "facebook") {
+        // 1. Meta Ads Flow (Unified FB/IG)
+        if (destination === "ads") {
+          if (!account.adAccountId) {
+            throw new Error("No se encontró una Cuenta Publicitaria vinculada. Por favor, DESCONECTA Y RE-CONECTA tu cuenta de Facebook en 'Cuentas Sociales' para sincronizar tus Ads.");
+          }
+          const adAccountId = account.adAccountId;
+
+          // A. Campaign
+          const campRes = await createFacebookAdCampaign(
+            account.accessToken, 
+            adAccountId, 
+            `SMM - ${ad.campaign.name}`, 
+            adsConfig?.budgetAmount || 10,
+            adsConfig?.campaignObjective
+          );
+          if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
+
+          // B. AdSet
+          const adSetRes = await createFacebookAdSet(
+            account.accessToken,
+            adAccountId,
+            campRes.postId!,
+            `AdSet - ${ad.title}`,
+            {
+              country: adsConfig?.country || "ES",
+              locations: adsConfig?.locations,
+              radiusKm: adsConfig?.radiusKm,
+              ageMin: adsConfig?.ageMin || 18,
+              ageMax: adsConfig?.ageMax || 65,
+              gender: adsConfig?.gender || "all",
+              interests: adsConfig?.interests,
+              customAudiences: adsConfig?.customAudiences,
+              publisherPlatforms: platform === 'instagram' ? ['instagram'] : undefined
+            },
+            adsConfig?.budgetAmount || 10
+          );
+          if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
+
+          // C. Image Hashes
+          const uploadPromises = mediaFullUrls.map(url => uploadFacebookAdImage(account.accessToken, adAccountId, url));
+          const uploadResults = await Promise.all(uploadPromises);
+          const hashes = uploadResults.filter(r => r.success).map(r => r.hash!);
+          if (hashes.length === 0) {
+            throw new Error(`Media upload error: ${uploadResults[0]?.error || "No se pudo subir ninguna imagen"}`);
+          }
+
+          // D. Creative
+          let creativeRes;
+          if (hashes.length > 1) {
+            creativeRes = await createFacebookAdCarouselCreative(
+              account.accessToken,
+              adAccountId,
+              account.pageId || "",
+              ad.title,
+              message,
+              hashes,
+              ad.linkUrl || undefined,
+              adsConfig
+            );
+          } else {
+            creativeRes = await createFacebookAdCreative(
+              account.accessToken,
+              adAccountId,
+              account.pageId || "",
+              ad.title,
+              message,
+              hashes[0],
+              ad.linkUrl || undefined,
+              adsConfig
+            );
+          }
+          if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
+
+          // E. Final Ad
+          const adRes = await createFacebookAd(
+            account.accessToken,
+            adAccountId,
+            adSetRes.postId!,
+            creativeRes.postId!,
+            `Ad - ${ad.title}`
+          );
+          if (!adRes.success) throw new Error(`Final Ad error: ${adRes.error}`);
+          postId = adRes.postId;
+
+        } 
+        // 2. Facebook Organic Flow
+        else if (platform === "facebook") {
           if (destination === "feed") {
-            // Multi-photo for Personal Feed
             if (mediaFullUrls.length > 1) {
               const result = await publishMultiPhotoToFacebook("me", account.accessToken, message, mediaFullUrls);
               if (!result.success) throw new Error(result.error);
@@ -152,7 +237,6 @@ export async function POST(req: NextRequest) {
             }
           } else if (destination === "fanpage") {
             if (!account.pageId) throw new Error("No Facebook Page connected");
-            // Multi-photo for Fanpage
             if (mediaFullUrls.length > 1) {
               const result = await publishMultiPhotoToFacebook(account.pageId, account.accessToken, message, mediaFullUrls);
               if (!result.success) throw new Error(result.error);
@@ -162,104 +246,15 @@ export async function POST(req: NextRequest) {
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
             }
-          } else if (destination === "ads") {
-            // 3. Check for adAccountId and instruct re-sync if missing
-            if (!account.adAccountId) {
-              throw new Error("No se encontró una Cuenta Publicitaria vinculada. Por favor, DESCONECTA Y RE-CONECTA tu cuenta de Facebook en 'Cuentas Sociales' para sincronizar tus Ads.");
-            }
-            const adAccountId = account.adAccountId;
-
-            // 1. Create Campaign
-            const campRes = await createFacebookAdCampaign(
-              account.accessToken, 
-              adAccountId, 
-              `SMM - ${ad.campaign.name}`, 
-              adsConfig?.budgetAmount || 10,
-              adsConfig?.campaignObjective
-            );
-            if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
-            console.log(`[PUBLISH_ADS] Campaign created: ${campRes.postId}`);
-
-            // 2. Create AdSet (Professional Targeting)
-            const adSetRes = await createFacebookAdSet(
-              account.accessToken,
-              adAccountId,
-              campRes.postId!,
-              `AdSet - ${ad.title}`,
-              {
-                country: adsConfig?.country || "ES",
-                locations: adsConfig?.locations,
-                radiusKm: adsConfig?.radiusKm,
-                ageMin: adsConfig?.ageMin || 18,
-                ageMax: adsConfig?.ageMax || 65,
-                gender: adsConfig?.gender || "all",
-                interests: adsConfig?.interests,
-                customAudiences: adsConfig?.customAudiences,
-                publisherPlatforms: platform === 'instagram' ? ['instagram'] : undefined
-              },
-              adsConfig?.budgetAmount || 10
-            );
-            if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
-
-            // 3. Upload Images to Ad Library to get Hashes (Parallel)
-            const uploadPromises = mediaFullUrls.map(url => uploadFacebookAdImage(account.accessToken, adAccountId, url));
-            const uploadResults = await Promise.all(uploadPromises);
-            
-            const hashes = uploadResults.filter(r => r.success).map(r => r.hash!);
-            console.log(`[PUBLISH_ADS] Upload results: ${hashes.length} success, ${uploadResults.length - hashes.length} fails.`);
-            
-            if (hashes.length === 0) {
-              throw new Error(`Media upload error: ${uploadResults[0]?.error || "No se pudo subir ninguna imagen"}`);
-            }
-
-            // 5. Create Creative (Single vs Carousel)
-            let creativeRes;
-            if (hashes.length > 1) {
-              creativeRes = await createFacebookAdCarouselCreative(
-                account.accessToken,
-                adAccountId,
-                account.pageId || "",
-                ad.title,
-                message,
-                hashes,
-                ad.linkUrl || undefined,
-                adsConfig
-              );
-            } else {
-              creativeRes = await createFacebookAdCreative(
-                account.accessToken,
-                adAccountId,
-                account.pageId || "",
-                ad.title,
-                message,
-                hashes[0],
-                ad.linkUrl || undefined,
-                adsConfig
-              );
-            }
-            
-            if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
-
-            // 6. Create Ad
-            const adRes = await createFacebookAd(
-              account.accessToken,
-              adAccountId,
-              adSetRes.postId!,
-              creativeRes.postId!,
-              `Ad - ${ad.title}`
-            );
-            if (!adRes.success) throw new Error(`Final Ad error: ${adRes.error}`);
-            
-            postId = adRes.postId;
           }
         }
+        // 3. Instagram Organic Flow
         else if (platform === "instagram") {
           if (!account.igAccountId) throw new Error("No Instagram Business Account linked to the Facebook Page");
           if (mediaFullUrls.length === 0) throw new Error("Instagram requires media");
           
           if (destination === "feed") {
             if (mediaFullUrls.length > 1) {
-              // Carousel support
               const items = mediaFullUrls.map(url => ({ url, type: ad.mediaType as any }));
               const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items, message);
               if (!result.success) throw new Error(result.error);
@@ -278,10 +273,9 @@ export async function POST(req: NextRequest) {
             const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaFullUrls[0], ad.mediaType as any);
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
-          } else if (destination === "ads") {
-            throw new Error("Instagram Ads configuration must be managed through Facebook Ads Manager API");
           }
         } 
+        // 4. YouTube Flow
         else if (platform === "youtube") {
           if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
@@ -293,6 +287,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Finalize Publication status in DB
         await prisma.publication.update({
           where: { id: publication.id },
           data: {
@@ -302,23 +297,25 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // Publish first comment if configured and supported
-        if (ad.campaign.firstComment && postId && platform === "facebook" && destination === "fanpage") {
-          try {
-            await fetch(`https://graph.facebook.com/v19.0/${postId}/comments`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message: ad.campaign.firstComment, access_token: account.accessToken })
-            });
-          } catch (e) { console.error("Could not post first comment", e); }
-        } else if (ad.campaign.firstComment && postId && platform === "instagram" && ["feed", "reels"].includes(destination)) {
-          try {
-            await fetch(`https://graph.facebook.com/v19.0/${postId}/comments`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ message: ad.campaign.firstComment, access_token: account.accessToken })
-            });
-          } catch (e) { console.error("Could not post first comment", e); }
+        // First comment logic
+        if (ad.campaign.firstComment && postId) {
+          if (platform === "facebook" && destination === "fanpage") {
+            try {
+              await fetch(`https://graph.facebook.com/v19.0/${postId}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: ad.campaign.firstComment, access_token: account.accessToken })
+              });
+            } catch (e) { console.error("Comment failed", e); }
+          } else if (platform === "instagram" && ["feed", "reels"].includes(destination)) {
+            try {
+              await fetch(`https://graph.facebook.com/v19.0/${postId}/comments`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: ad.campaign.firstComment, access_token: account.accessToken })
+              });
+            } catch (e) { console.error("Comment failed", e); }
+          }
         }
 
         results.push({ platform, destination, status: "published", postId });
