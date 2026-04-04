@@ -471,3 +471,141 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(183, 6, 6, 0.2);
 }
+
+/* Targeting Search & Badges (V2.8) */
+.searchWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.searchDropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.searchItem {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.2s;
+}
+
+.searchItem:last-child { border-bottom: none; }
+
+.searchItem:hover {
+  background: var(--bg-tertiary);
+}
+
+.searchItemName {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.searchItemDetail {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.badgeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.targetingBadge {
+  background: var(--selection-bg);
+  border: 1px solid var(--accent-primary);
+  color: var(--text-primary);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badgeRemove {
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.badgeRemove:hover { opacity: 1; color: var(--accent-primary); }
+
+/* Objective Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1.5rem;
+}
+
+.modalContent {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-2xl);
+}
+
+.objectiveGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.objectiveItem {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.objectiveItemSelected {
+  border-color: var(--accent-primary);
+  background: var(--selection-bg);
+}
+
+.objectiveName { font-weight: 700; margin-bottom: 0.25rem; }
+.objectiveDesc { font-size: 0.8rem; opacity: 0.6; }
+
+@media (max-width: 600px) {
+  .modalContent { padding: 1.25rem; max-width: 100%; }
+  .targetingBadge { padding: 0.5rem 1rem; font-size: 0.9rem; } /* Finger friendly */
+}

@@ -19,7 +19,8 @@ type AdsConfig = {
   languages: string[];
   maritalStatus: string;
   education: string;
-  interests: string[];
+  interests: { id: string, name: string }[];
+  locations: { key: string, name: string, type: string }[];
   behaviors: string[];
   customAudiences: string[];
   placements: string[];
@@ -60,6 +61,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     maritalStatus: "all",
     education: "all",
     interests: [],
+    locations: [],
     behaviors: [],
     customAudiences: [],
     placements: ["facebook_feed", "facebook_stories", "instagram_feed", "instagram_stories"],
@@ -69,6 +71,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
     startDate: new Date().toISOString().split('T')[0],
     endDate: ""
   });
+
+  const [showObjectiveModal, setShowObjectiveModal] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -340,11 +344,16 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   };
 
   const handleSearch = async (term: string, type: "interest" | "location") => {
-    if (term.length < 3) return;
+    if (term.length < 3) {
+      setSearchResults([]);
+      return;
+    }
     setIsSearching(true);
     setSearchType(type);
     try {
       const acc = socialAccounts.find(a => a.id === selectedAccountIds[0]) || socialAccounts.find(a => a.accountName === selectedTitular);
+      if (!acc?.accessToken) return;
+      
       const res = await fetch(`/api/social/facebook/search?q=${encodeURIComponent(term)}&type=${type === 'interest' ? 'adinterest' : 'adgeolocation'}&accessToken=${acc.accessToken}`);
       const data = await res.json();
       setSearchResults(data || []);
@@ -352,6 +361,27 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       console.error("Search error", e);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const selectTargetingItem = (item: any) => {
+    if (searchType === 'interest') {
+      if (!adsConfig.interests.find(i => i.id === item.id)) {
+        setAdsConfig(prev => ({ ...prev, interests: [...prev.interests, { id: item.id, name: item.name }] }));
+      }
+    } else {
+      if (!adsConfig.locations.find(l => l.key === item.key)) {
+        setAdsConfig(prev => ({ ...prev, locations: [...prev.locations, { key: item.key, name: item.name, type: item.type }] }));
+      }
+    }
+    setSearchResults([]);
+  };
+
+  const removeTargetingItem = (id: string, type: 'interest' | 'location') => {
+    if (type === 'interest') {
+      setAdsConfig(prev => ({ ...prev, interests: prev.interests.filter(i => i.id !== id) }));
+    } else {
+      setAdsConfig(prev => ({ ...prev, locations: prev.locations.filter(l => l.key !== id) }));
     }
   };
 
@@ -417,17 +447,47 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
         <div className={styles.metaCard}>
           <div className={styles.metaCardHeader}>
              <span className={styles.metaCardTitle}>Objetivo</span>
-             <button className={styles.changeBtn}>Cambiar</button>
+             <button className={styles.btnSecondary} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }} onClick={() => setShowObjectiveModal(true)}>Cambiar</button>
           </div>
           <p style={{ fontSize: "0.85rem", opacity: 0.8 }}>¿Qué resultados te gustaría obtener con este anuncio?</p>
           <div className={styles.objectivePill}>
              <span>⚡</span>
              <div>
-                <div>Automático - Recibir más mensajes</div>
-                <div style={{ fontSize: "0.75rem", fontWeight: 400, opacity: 0.6 }}>Seleccionamos el objetivo en función de tu actividad.</div>
+                <div style={{ fontWeight: 700 }}>
+                  {adsConfig.campaignObjective === 'OUTCOME_TRAFFIC' && "Tráfico - Clics e Visitas"}
+                  {adsConfig.campaignObjective === 'MESSAGES' && "Interacción - Recibir más mensajes"}
+                  {adsConfig.campaignObjective === 'OUTCOME_AWARENESS' && "Reconocimiento - Alcance de marca"}
+                </div>
+                <div style={{ fontSize: "0.75rem", fontWeight: 400, opacity: 0.6 }}>Optimizado para obtener los mejores resultados al menor costo.</div>
              </div>
           </div>
         </div>
+
+        {showObjectiveModal && (
+          <div className={styles.modalOverlay} onClick={() => setShowObjectiveModal(false)}>
+            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+              <h3 style={{ margin: 0 }}>Elige un Objetivo</h3>
+              <div className={styles.objectiveGrid}>
+                {[
+                  { id: 'MESSAGES', name: 'Interacción (Mensajes)', desc: 'Ideal para WhatsApp o Messenger.', icon: '💬' },
+                  { id: 'OUTCOME_TRAFFIC', name: 'Tráfico', desc: 'Envía personas a tu sitio web.', icon: '🔗' },
+                  { id: 'OUTCOME_AWARENESS', name: 'Reconocimiento', desc: 'Llega a la mayor cantidad de personas.', icon: '📢' }
+                ].map(obj => (
+                  <div key={obj.id} className={`${styles.objectiveItem} ${adsConfig.campaignObjective === obj.id ? styles.objectiveItemSelected : ''}`} onClick={() => { setAdsConfig({...adsConfig, campaignObjective: obj.id}); setShowObjectiveModal(false); }}>
+                    <div style={{ display: "flex", gap: "1rem" }}>
+                      <span style={{ fontSize: "1.2rem" }}>{obj.icon}</span>
+                      <div>
+                        <div className={styles.objectiveName}>{obj.name}</div>
+                        <div className={styles.objectiveDesc}>{obj.desc}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button className={styles.btnSecondary} onClick={() => setShowObjectiveModal(false)}>Cerrar</button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.metaCard}>
            <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Contenido Multimedia</span></div>
@@ -526,18 +586,60 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
            <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Segmentación Geográfica y Detallada</span></div>
            <div style={{ marginBottom: "1.5rem" }}>
               <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>📍 Ubicaciones (Radio min 25km por ley)</p>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input type="text" className={styles.input} placeholder="Buscar ciudad (Ej. Miami, FL)..." onChange={(e) => handleSearch(e.target.value, "location")} style={{ flex: 1 }} />
-                <div style={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-primary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", opacity: 0.8, fontSize: "0.85rem", fontWeight: 600 }}>
-                  +25 km
+              <div className={styles.searchWrapper}>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <input type="text" className={styles.input} placeholder="Buscar ciudad (Ej. Miami, FL)..." onChange={(e) => handleSearch(e.target.value, "location")} style={{ flex: 1 }} />
+                  <div style={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-primary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", opacity: 0.8, fontSize: "0.85rem", fontWeight: 600 }}>
+                    +25 km
+                  </div>
                 </div>
+                {(isSearching && searchType === 'location') && <div className={styles.searchDropdown}><div className={styles.searchItem}><span className={styles.searchItemName}>Buscando...</span></div></div>}
+                {(searchResults.length > 0 && searchType === 'location') && (
+                  <div className={styles.searchDropdown}>
+                    {searchResults.map((res: any, idx) => (
+                      <div key={idx} className={styles.searchItem} onClick={() => selectTargetingItem(res)}>
+                        <span className={styles.searchItemName}>{res.name}</span>
+                        <span className={styles.searchItemDetail}>{res.region || res.country_name} · Ciudad</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className={styles.badgeGrid}>
+                {adsConfig.locations.map(loc => (
+                  <div key={loc.key} className={styles.targetingBadge}>
+                    <span>📍 {loc.name}</span>
+                    <span className={styles.badgeRemove} onClick={() => removeTargetingItem(loc.key, 'location')}>✕</span>
+                  </div>
+                ))}
               </div>
            </div>
            
            <div>
               <p style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.25rem" }}>🔥 Intereses (Comportamientos)</p>
               <p style={{ fontSize: "0.75rem", opacity: 0.6, marginBottom: "0.5rem" }}>Sugeridos: Zillow, Real estate investing, Realtor, Mortgage.</p>
-              <input type="text" className={styles.input} placeholder="Buscar intereses..." onChange={(e) => handleSearch(e.target.value, "interest")} />
+              <div className={styles.searchWrapper}>
+                <input type="text" className={styles.input} placeholder="Buscar intereses..." onChange={(e) => handleSearch(e.target.value, "interest")} />
+                {(isSearching && searchType === 'interest') && <div className={styles.searchDropdown}><div className={styles.searchItem}><span className={styles.searchItemName}>Buscando...</span></div></div>}
+                {(searchResults.length > 0 && searchType === 'interest') && (
+                  <div className={styles.searchDropdown}>
+                    {searchResults.map((res: any, idx) => (
+                      <div key={idx} className={styles.searchItem} onClick={() => selectTargetingItem(res)}>
+                        <span className={styles.searchItemName}>{res.name}</span>
+                        <span className={styles.searchItemDetail}>{res.topic} · Audiencia: {res.audience_size_lower_bound?.toLocaleString()} - {res.audience_size_upper_bound?.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className={styles.badgeGrid}>
+                {adsConfig.interests.map(int => (
+                  <div key={int.id} className={styles.targetingBadge}>
+                    <span>🔥 {int.name}</span>
+                    <span className={styles.badgeRemove} onClick={() => removeTargetingItem(int.id, 'interest')}>✕</span>
+                  </div>
+                ))}
+              </div>
            </div>
         </div>
 

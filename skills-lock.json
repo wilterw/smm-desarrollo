@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "meta-ads": {
+      "source": "kostja94/marketing-skills",
+      "sourceType": "github",
+      "computedHash": "ce44d55f93ca582c96db0ea88c39023425dba90dfc5dcf7a8d87f9646dd3649a"
+    }
+  }
+}

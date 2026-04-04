@@ -188,13 +188,14 @@ export async function POST(req: NextRequest) {
               `AdSet - ${ad.title}`,
               {
                 country: adsConfig?.country || "ES",
-                city: adsConfig?.city,
+                locations: adsConfig?.locations,
                 radiusKm: adsConfig?.radiusKm,
                 ageMin: adsConfig?.ageMin || 18,
                 ageMax: adsConfig?.ageMax || 65,
                 gender: adsConfig?.gender || "all",
                 interests: adsConfig?.interests,
-                customAudiences: adsConfig?.customAudiences 
+                customAudiences: adsConfig?.customAudiences,
+                publisherPlatforms: platform === 'instagram' ? ['instagram'] : undefined
               },
               adsConfig?.budgetAmount || 10
             );

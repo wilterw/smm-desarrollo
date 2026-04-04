@@ -296,13 +296,14 @@ export async function createFacebookAdSet(
   name: string,
   targeting: {
     country: string;
-    city?: string;
     radiusKm?: number;
     ageMin: number;
     ageMax: number;
     gender: string; 
-    interests?: string[];
+    interests?: { id: string, name?: string }[];
+    locations?: { key: string, name?: string }[];
     customAudiences?: string[];
+    publisherPlatforms?: string[];
   },
   dailyBudget?: number
 ): Promise<FacebookPublishResult> {
@@ -316,13 +317,13 @@ export async function createFacebookAdSet(
       geo_locations: {},
     };
 
-    // Locations (City + Radius for Housing)
-    if (targeting.city) {
-      targeting_spec.geo_locations.cities = [{
-        key: targeting.city, // City ID from Search API
-        radius: Math.max(targeting.radiusKm || 25, 25), // Housing requires 15 miles (25km)
+    // Locations (Multi-City + Radius for Housing)
+    if (targeting.locations && targeting.locations.length > 0) {
+      targeting_spec.geo_locations.cities = targeting.locations.map(loc => ({
+        key: loc.key,
+        radius: Math.max(targeting.radiusKm || 25, 25),
         distance_unit: "kilometer"
-      }];
+      }));
     } else {
       targeting_spec.geo_locations.countries = [targeting.country || "US"];
     }
@@ -330,18 +331,17 @@ export async function createFacebookAdSet(
     // Age & Gender (Fixed for Housing)
     targeting_spec.age_min = 18;
     targeting_spec.age_max = 65;
-    // Genders must be all [1, 2] for Housing
 
     // Interests (Detailed Targeting)
     if (targeting.interests && targeting.interests.length > 0) {
       targeting_spec.flexible_spec = [{
-        interests: targeting.interests.map(id => ({ id, name: id }))
+        interests: targeting.interests.map(int => ({ id: int.id, name: int.name || int.id }))
       }];
     }
 
-    // Custom Audiences (Retargeting)
-    if (targeting.customAudiences && targeting.customAudiences.length > 0) {
-      targeting_spec.custom_audiences = targeting.customAudiences.map(id => ({ id }));
+    // Placements (Advantage+ Placements by default if not specified)
+    if (targeting.publisherPlatforms && targeting.publisherPlatforms.length > 0) {
+      targeting_spec.publisher_platforms = targeting.publisherPlatforms;
     }
 
     const body: any = {
@@ -494,7 +494,11 @@ export async function createFacebookAdCarouselCreative(
         link: finalLink,
         child_attachments,
         multi_share_optimized: true,
-        multi_share_end_card: false
+        multi_share_end_card: false,
+        call_to_action: {
+           type: adsConfig?.ctaLabel || "LEARN_MORE",
+           value: { link: finalLink }
+        }
       }
     };
 
