@@ -217,7 +217,7 @@ export async function publishToFacebookFeed(
  */
 export async function createFacebookAdCampaign(
   userAccessToken: string,
-  adAccountId: string | undefined, // Usually "act_<account_id>"
+  adAccountId: string | undefined,
   name: string,
   dailyBudget: number,
   objective: string = "OUTCOME_TRAFFIC"
@@ -226,10 +226,10 @@ export async function createFacebookAdCampaign(
     return { success: false, error: "No Ad Account ID provided. Connecting Facebook Ads requires a configured Business Manager." };
   }
 
+  try {
     const objectiveMapping: any = { 'MESSAGES': 'OUTCOME_ENGAGEMENT' };
     const adjObjective = objectiveMapping[objective] || objective || "OUTCOME_TRAFFIC";
 
-    // Creating the Campaign
     const campaignEndpoint = `${FB_GRAPH_URL}/${adAccountId}/campaigns`;
     const res = await fetch(campaignEndpoint, {
       method: "POST",
@@ -250,8 +250,6 @@ export async function createFacebookAdCampaign(
       return { success: false, error: errorMsg };
     }
     
-    // In a real implementation, you would also create an AdSet and an Ad Creative here.
-    // For this module, returning the campaign ID as success.
     return { success: true, postId: data.id };
   } catch (error: any) {
     return { success: false, error: error.message };
