@@ -146,12 +146,15 @@ export async function POST(req: NextRequest) {
           const adAccountId = account.adAccountId;
 
           // A. Campaign
+          const objectiveMapping: any = { 'MESSAGES': 'OUTCOME_ENGAGEMENT' };
+          const campaignObjective = objectiveMapping[adsConfig?.campaignObjective] || adsConfig?.campaignObjective || "OUTCOME_TRAFFIC";
+
           const campRes = await createFacebookAdCampaign(
             account.accessToken, 
             adAccountId, 
             `SMM - ${ad.campaign.name}`, 
             adsConfig?.budgetAmount || 10,
-            adsConfig?.campaignObjective
+            campaignObjective
           );
           if (!campRes.success) throw new Error(`Campaign error: ${campRes.error}`);
 
@@ -171,7 +174,7 @@ export async function POST(req: NextRequest) {
               interests: adsConfig?.interests,
               customAudiences: adsConfig?.customAudiences,
               publisherPlatforms: platform === 'instagram' ? ['instagram'] : undefined,
-              objective: adsConfig?.campaignObjective
+              objective: campaignObjective
             },
             adsConfig?.budgetAmount || 10
           );

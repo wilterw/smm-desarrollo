@@ -226,7 +226,9 @@ export async function createFacebookAdCampaign(
     return { success: false, error: "No Ad Account ID provided. Connecting Facebook Ads requires a configured Business Manager." };
   }
 
-  try {
+    const objectiveMapping: any = { 'MESSAGES': 'OUTCOME_ENGAGEMENT' };
+    const adjObjective = objectiveMapping[objective] || objective || "OUTCOME_TRAFFIC";
+
     // Creating the Campaign
     const campaignEndpoint = `${FB_GRAPH_URL}/${adAccountId}/campaigns`;
     const res = await fetch(campaignEndpoint, {
@@ -234,7 +236,7 @@ export async function createFacebookAdCampaign(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        objective: objective || "OUTCOME_TRAFFIC",
+        objective: adjObjective,
         status: "PAUSED",
         special_ad_categories: ["HOUSING"],
         special_ad_category_country: ["ES", "US"],
