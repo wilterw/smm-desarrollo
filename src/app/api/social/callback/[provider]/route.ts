@@ -57,12 +57,18 @@ export async function GET(
       // 0. Fetch Ad Accounts (User level)
       try {
         const adAccounts = await getFacebookAdAccounts(accessToken);
+        console.log(`[FB_CALLBACK] Found ${adAccounts?.length || 0} ad accounts.`);
+        
         const activeAdAccount = adAccounts.find(a => a.account_status === 1); // 1 = ACTIVE
         if (activeAdAccount) {
-          adAccountId = activeAdAccount.id; // Store "act_xxxx"
+          adAccountId = activeAdAccount.id; 
+        } else if (adAccounts.length > 0) {
+          // Fallback: Si no hay "Active", tomar el primero disponible
+          adAccountId = adAccounts[0].id;
+          console.log(`[FB_CALLBACK] No active account found, falling back to: ${adAccountId}`);
         }
-      } catch (e) {
-        console.error("No Ad Accounts found or permissions missing", e);
+      } catch (e: any) {
+        console.error("[FB_CALLBACK] Ad Accounts error:", e.message);
       }
 
       // 1. Fetch ALL Facebook Pages
