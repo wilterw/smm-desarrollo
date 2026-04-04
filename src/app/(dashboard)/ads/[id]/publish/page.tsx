@@ -47,7 +47,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const [origin, setOrigin] = useState<"feed" | "fanpage" | "reels" | "stories" | null>(null);
   const [destination, setDestination] = useState<Destination | null>(null);
   const [adsConfig, setAdsConfig] = useState<AdsConfig>({
-    campaignObjective: "MESSAGES",
+    campaignObjective: "OUTCOME_ENGAGEMENT",
     ctaLabel: "SEND_MESSAGE",
     advantageContent: true,
     country: "US",
@@ -455,7 +455,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
              <div>
                 <div style={{ fontWeight: 700 }}>
                   {adsConfig.campaignObjective === 'OUTCOME_TRAFFIC' && "Tráfico - Clics e Visitas"}
-                  {adsConfig.campaignObjective === 'MESSAGES' && "Interacción - Recibir más mensajes"}
+                  {adsConfig.campaignObjective === 'OUTCOME_ENGAGEMENT' && "Interacción - Recibir más mensajes"}
                   {adsConfig.campaignObjective === 'OUTCOME_AWARENESS' && "Reconocimiento - Alcance de marca"}
                 </div>
                 <div style={{ fontSize: "0.75rem", fontWeight: 400, opacity: 0.6 }}>Optimizado para obtener los mejores resultados al menor costo.</div>
@@ -469,7 +469,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
               <h3 style={{ margin: 0 }}>Elige un Objetivo</h3>
               <div className={styles.objectiveGrid}>
                 {[
-                  { id: 'MESSAGES', name: 'Interacción (Mensajes)', desc: 'Ideal para WhatsApp o Messenger.', icon: '💬' },
+                  { id: 'OUTCOME_ENGAGEMENT', name: 'Interacción (Mensajes)', desc: 'Ideal para WhatsApp o Messenger.', icon: '💬' },
                   { id: 'OUTCOME_TRAFFIC', name: 'Tráfico', desc: 'Envía personas a tu sitio web.', icon: '🔗' },
                   { id: 'OUTCOME_AWARENESS', name: 'Reconocimiento', desc: 'Llega a la mayor cantidad de personas.', icon: '📢' }
                 ].map(obj => (

@@ -170,7 +170,8 @@ export async function POST(req: NextRequest) {
               gender: adsConfig?.gender || "all",
               interests: adsConfig?.interests,
               customAudiences: adsConfig?.customAudiences,
-              publisherPlatforms: platform === 'instagram' ? ['instagram'] : undefined
+              publisherPlatforms: platform === 'instagram' ? ['instagram'] : undefined,
+              objective: adsConfig?.campaignObjective
             },
             adsConfig?.budgetAmount || 10
           );

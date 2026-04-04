@@ -304,6 +304,8 @@ export async function createFacebookAdSet(
     locations?: { key: string, name?: string }[];
     customAudiences?: string[];
     publisherPlatforms?: string[];
+    objective?: string;
+    optimization_goal?: string;
   },
   dailyBudget?: number
 ): Promise<FacebookPublishResult> {
@@ -349,12 +351,19 @@ export async function createFacebookAdSet(
       campaign_id: campaignId,
       ...budgetParam,
       billing_event: "IMPRESSIONS",
-      optimization_goal: "LINK_CLICKS",
-      billing_event_type: "IMPRESSIONS",
+      optimization_goal: targeting.optimization_goal || (targeting.publisherPlatforms?.includes('instagram') ? "LINK_CLICKS" : "LINK_CLICKS"),
       targeting: targeting_spec,
       status: "PAUSED",
       access_token: userAccessToken,
     };
+
+    // ODAX mapping for Engagement (Messages)
+    if (targeting.objective === 'OUTCOME_ENGAGEMENT') {
+      body.optimization_goal = "REPLIES";
+      body.destination_type = targeting.publisherPlatforms?.includes('instagram') ? "MESSAGING_INSTAGRAM" : "MESSAGING_APPS";
+    } else if (targeting.objective === 'OUTCOME_AWARENESS') {
+      body.optimization_goal = "REACH";
+    }
 
     const res = await fetch(endpoint, {
       method: "POST",
