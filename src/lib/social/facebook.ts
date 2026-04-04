@@ -361,7 +361,7 @@ export async function createFacebookAdSet(
     // ODAX mapping for Engagement (Messages)
     if (targeting.objective === 'OUTCOME_ENGAGEMENT') {
       body.optimization_goal = "REPLIES";
-      body.destination_type = targeting.publisherPlatforms?.includes('instagram') ? "MESSAGING_INSTAGRAM" : "MESSAGING_APPS";
+      body.destination_type = targeting.publisherPlatforms?.includes('instagram') ? "INSTAGRAM_DIRECT" : "MESSENGER";
     } else if (targeting.objective === 'OUTCOME_AWARENESS') {
       body.optimization_goal = "REACH";
     }
