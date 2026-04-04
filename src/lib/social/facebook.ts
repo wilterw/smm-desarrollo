@@ -240,6 +240,7 @@ export async function createFacebookAdCampaign(
         status: "PAUSED",
         special_ad_categories: ["HOUSING"],
         special_ad_category_country: ["ES", "US"],
+        is_adset_budget_sharing_enabled: false,
         access_token: userAccessToken,
       }),
     });
