@@ -105,7 +105,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className={styles.footerEmail}>{session?.user?.email}</div>
           </div>
         </div>
-        <div className={styles.versionTag}>V2.7</div>
+        <div className={styles.versionTag}>V2.8</div>
       </div>
     </aside>
   );
