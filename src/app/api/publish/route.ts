@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
         // 1. Meta Ads Flow (Unified FB/IG)
         if (destination === "ads") {
           if (!account.adAccountId) {
-            throw new Error("No se encontró una Cuenta Publicitaria vinculada. Por favor, DESCONECTA Y RE-CONECTA tu cuenta de Facebook en 'Cuentas Sociales' para sincronizar tus Ads.");
+            throw new Error(`Cuenta Publicitaria no encontrada para '${account.pageName || account.accountName}'. Verifica que tengas acceso al Ads Manager con este usuario de Meta o desconecta y re-conecta en Cuentas Sociales asegurando marcar todos los permisos.`);
           }
           const adAccountId = account.adAccountId;
 
