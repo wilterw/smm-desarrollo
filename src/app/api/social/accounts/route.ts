@@ -21,6 +21,7 @@ export async function GET() {
         accountName: true,
         pageId: true, // Necessary to distinguish between Feed and Fanpages in wizard
         pageName: true,
+        adAccountId: true,
         expiresAt: true,
       },
     });
