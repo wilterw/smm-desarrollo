@@ -394,18 +394,31 @@ export async function uploadFacebookAdImage(
 ): Promise<{ success: boolean; hash?: string; error?: string }> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adimages`;
-    // Meta requires the image via URL or multipart. URL is easier here.
-    const res = await fetch(`${endpoint}?url=${encodeURIComponent(imageUrl)}&access_token=${userAccessToken}`, {
-      method: "POST"
+    
+    // Step 1: Download the image to our server first (more robust than giving Meta a URL)
+    const imageRes = await fetch(imageUrl);
+    const imageBlob = await imageRes.blob();
+    
+    // Step 2: Create a FormData object for the multipart upload
+    const formData = new FormData();
+    formData.append("access_token", userAccessToken);
+    
+    // Meta expects a file field, usually named bytes or the filename
+    const filename = imageUrl.split("/").pop() || "ad-image.jpg";
+    formData.append("filename", new File([imageBlob], filename, { type: imageBlob.type }));
+
+    // Step 3: Perform the upload
+    const res = await fetch(endpoint, {
+      method: "POST",
+      body: formData
     });
+    
     const data = await res.json();
     
     if (data.error || !data.images) {
-      return { success: false, error: data.error?.message || "Failed to upload image to Ad Account" };
+      return { success: false, error: data.error?.message || "Failed to upload image as multipart" };
     }
     
-    // The library returns an object where keys are the filenames. 
-    // Since we used a URL, we look at the first key.
     const firstKey = Object.keys(data.images)[0];
     const hash = data.images[firstKey].hash;
     
