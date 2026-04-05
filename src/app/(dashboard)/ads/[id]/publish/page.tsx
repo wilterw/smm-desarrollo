@@ -551,7 +551,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 let newObj = adsConfig.campaignObjective;
                 
                 // Mapeo Inteligente: Si elige Mensaje, el objetivo DEBE ser Interacción
-                if (newCta === 'SEND_MESSAGE' || newCta === 'WHATSAPP_MESSAGE') {
+                if (newCta === 'MESSAGE_PAGE' || newCta === 'WHATSAPP_MESSAGE') {
                   newObj = 'OUTCOME_ENGAGEMENT';
                 } 
                 // Si elige Informativo, el objetivo DEBE ser Tráfico
@@ -566,7 +566,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 });
               }}
             >
-               <option value="SEND_MESSAGE">Enviar mensaje</option>
+               <option value="MESSAGE_PAGE">Enviar mensaje</option>
                <option value="WHATSAPP_MESSAGE">Enviar mensaje de WhatsApp</option>
                <option value="LEARN_MORE">Más información</option>
                <option value="BOOK_NOW">Reservar</option>
