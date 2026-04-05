@@ -447,7 +447,7 @@ export async function createFacebookAdCreative(
     
     const object_story_spec: any = {
       page_id: pageId,
-      instagram_actor_id: (instagramActorId && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) ? instagramActorId : undefined,
+      instagram_actor_id: (instagramActorId && instagramActorId !== "" && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) ? instagramActorId : undefined,
       link_data: {
         message,
         link: linkUrl || "https://econos.es",
@@ -516,7 +516,7 @@ export async function createFacebookAdCarouselCreative(
 
     const object_story_spec: any = {
       page_id: pageId,
-      instagram_actor_id: (instagramActorId && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) ? instagramActorId : undefined,
+      instagram_actor_id: (instagramActorId && instagramActorId !== "" && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) ? instagramActorId : undefined,
       link_data: {
         message,
         link: finalLink,
