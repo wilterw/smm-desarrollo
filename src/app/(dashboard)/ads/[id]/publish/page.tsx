@@ -541,19 +541,37 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
            </div>
         </div>
 
-        <div className={styles.metaCard}>
-           <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Botón</span></div>
-           <select 
-             className={styles.input} 
-             value={adsConfig.ctaLabel}
-             onChange={(e) => setAdsConfig({...adsConfig, ctaLabel: e.target.value})}
-           >
-              <option value="SEND_MESSAGE">Enviar mensaje</option>
-              <option value="WHATSAPP">Enviar mensaje de WhatsApp</option>
-              <option value="LEARN_MORE">Más información</option>
-              <option value="BOOK_NOW">Reservar</option>
-           </select>
-        </div>
+         <div className={styles.metaCard}>
+            <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Botón</span></div>
+            <select 
+              className={styles.input} 
+              value={adsConfig.ctaLabel}
+              onChange={(e) => {
+                const newCta = e.target.value;
+                let newObj = adsConfig.campaignObjective;
+                
+                // Mapeo Inteligente: Si elige Mensaje, el objetivo DEBE ser Interacción
+                if (newCta === 'SEND_MESSAGE' || newCta === 'WHATSAPP') {
+                  newObj = 'OUTCOME_ENGAGEMENT';
+                } 
+                // Si elige Informativo, el objetivo DEBE ser Tráfico
+                else if (newCta === 'LEARN_MORE' || newCta === 'BOOK_NOW') {
+                  newObj = 'OUTCOME_TRAFFIC';
+                }
+
+                setAdsConfig({
+                  ...adsConfig, 
+                  ctaLabel: newCta,
+                  campaignObjective: newObj
+                });
+              }}
+            >
+               <option value="SEND_MESSAGE">Enviar mensaje</option>
+               <option value="WHATSAPP">Enviar mensaje de WhatsApp</option>
+               <option value="LEARN_MORE">Más información</option>
+               <option value="BOOK_NOW">Reservar</option>
+            </select>
+         </div>
 
         <div className={styles.metaCard}>
            <div className={styles.metaCardHeader}><span className={styles.metaCardTitle}>Destino del Anuncio</span></div>

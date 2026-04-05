@@ -439,13 +439,15 @@ export async function createFacebookAdCreative(
   message: string,
   imageHash: string,
   linkUrl?: string,
-  adsConfig?: any
+  adsConfig?: any,
+  instagramActorId?: string
 ): Promise<FacebookPublishResult> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
     
     const object_story_spec: any = {
       page_id: pageId,
+      instagram_actor_id: instagramActorId || undefined,
       link_data: {
         message,
         link: linkUrl || "https://econos.es",
@@ -494,7 +496,8 @@ export async function createFacebookAdCarouselCreative(
   message: string,
   imageHashes: string[],
   linkUrl?: string,
-  adsConfig?: any
+  adsConfig?: any,
+  instagramActorId?: string
 ): Promise<FacebookPublishResult> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
@@ -511,8 +514,9 @@ export async function createFacebookAdCarouselCreative(
       }
     }));
 
-    const object_story_spec = {
+    const object_story_spec: any = {
       page_id: pageId,
+      instagram_actor_id: instagramActorId || undefined,
       link_data: {
         message,
         link: finalLink,

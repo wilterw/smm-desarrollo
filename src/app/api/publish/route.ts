@@ -199,7 +199,8 @@ export async function POST(req: NextRequest) {
               message,
               hashes,
               ad.linkUrl || undefined,
-              adsConfig
+              adsConfig,
+              account.igAccountId || undefined
             );
           } else {
             creativeRes = await createFacebookAdCreative(
@@ -210,7 +211,8 @@ export async function POST(req: NextRequest) {
               message,
               hashes[0],
               ad.linkUrl || undefined,
-              adsConfig
+              adsConfig,
+              account.igAccountId || undefined
             );
           }
           if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
