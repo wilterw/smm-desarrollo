@@ -87,6 +87,16 @@ export async function getFacebookAdAccounts(accessToken: string) {
 }
 
 /**
+ * Get detailed info of a single Ad Account (status and disable reason)
+ */
+export async function getFacebookAdAccountDetails(adAccountId: string, accessToken: string) {
+  const res = await fetch(`${FB_GRAPH_URL}/${adAccountId}?fields=name,account_status,disable_reason&access_token=${accessToken}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data as { id: string; name: string; account_status: number; disable_reason: number };
+}
+
+/**
  * Publish a post to a Facebook Page
  */
 export async function publishToFacebook(

@@ -11,7 +11,8 @@ import {
   uploadFacebookAdImage,
   createFacebookAdCreative,
   createFacebookAdCarouselCreative,
-  createFacebookAd
+  createFacebookAd,
+  getFacebookAdAccountDetails
 } from "@/lib/social/facebook";
 import { 
   publishToInstagram, 
@@ -144,6 +145,28 @@ export async function POST(req: NextRequest) {
             throw new Error(`Cuenta Publicitaria no encontrada para '${account.pageName || account.accountName}'. Verifica que tengas acceso al Ads Manager con este usuario de Meta o desconecta y re-conecta en Cuentas Sociales asegurando marcar todos los permisos.`);
           }
           const adAccountId = account.adAccountId;
+
+          // X. Status Diagnostic Check
+          try {
+            const accDetails = await getFacebookAdAccountDetails(adAccountId, account.accessToken);
+            if (accDetails.account_status !== 1) {
+              const statusMap: any = {
+                2: "DESACTIVADA (Disabled). Tu cuenta ha sido inhabilitada por Meta. Revisa tu calidad de cuenta en Meta Business Suite.",
+                3: "PAGO PENDIENTE (Settlement Required). Tienes una deuda o problema de facturación. Meta no permite crear anuncios hasta que saldes el saldo pendiente.",
+                7: "EN REVISIÓN (Pending Review). Meta está revisando tu cuenta por motivos de seguridad.",
+                8: "EN REVISIÓN (Settlement Review). Meta está revisando el pago de tu cuenta.",
+                9: "RESTRINGIDA (In Grace Period). Revisa tu configuración de pagos.",
+                101: "CERRADA (Closed). Esta cuenta ya no existe.",
+                102: "PAGO PENDIENTE (Pending Settlement). Meta está procesando un pago pendiente.",
+              };
+              const errorMsg = statusMap[accDetails.account_status] || `ESTADO NO ACTIVO (${accDetails.account_status})`;
+              throw new Error(`Meta Ad Account error: ${errorMsg}`);
+            }
+          } catch (diagError: any) {
+             // Si falla el diagnóstico por permisos, seguimos adelante pero avisamos en logs
+             console.error("[ADS_DIAGNOSTIC] FAILED:", diagError.message);
+             if (diagError.message.includes("Meta Ad Account error")) throw diagError;
+          }
 
           // A. Campaign
           const objectiveMapping: any = { 'MESSAGES': 'OUTCOME_ENGAGEMENT' };
