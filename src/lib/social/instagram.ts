@@ -39,14 +39,18 @@ export async function publishToInstagram(
   caption: string
 ): Promise<InstagramPublishResult> {
   try {
-    // Step 1: Create container
-    // SMM 3.1: Enviar imageUrl como Query Param (más robusto en v25.0)
-    const url = `${FB_GRAPH_URL}/${igAccountId}/media?media_type=IMAGE&image_url=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`;
-    
-    console.log(`[IG_DEBUG] Single Feed - POST URL: ${url}`);
-
-    const containerRes = await fetch(url, { method: "POST" });
-    const containerData = await containerRes.json();
+    // Step 1: Create container using JSON body
+    const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        media_type: "IMAGE",
+        image_url: imageUrl,
+        caption: caption,
+        access_token: accessToken,
+      }),
+    });
+    const containerData = await res.json();
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating container";
       return { success: false, error: errorMsg };
@@ -88,13 +92,18 @@ export async function publishToInstagramReels(
   caption: string
 ): Promise<InstagramPublishResult> {
   try {
-    // SMM 3.1: Query Params para Reels
-    const url = `${FB_GRAPH_URL}/${igAccountId}/media?media_type=REELS&video_url=${encodeURIComponent(videoUrl)}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`;
-    
-    console.log(`[IG_DEBUG] Reel - POST URL: ${url}`);
-
-    const containerRes = await fetch(url, { method: "POST" });
-    const containerData = await containerRes.json();
+    // SMM 3.1: JSON body para Reels
+    const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        media_type: "REELS",
+        video_url: videoUrl,
+        caption: caption,
+        access_token: accessToken,
+      }),
+    });
+    const containerData = await res.json();
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating reels container";
       return { success: false, error: errorMsg };
@@ -137,22 +146,19 @@ export async function publishToInstagramStories(
       return { success: false, error: `SMM 3.1: URI de multimedia inválida o vacía: "${mediaUrl}". Verifica que la URL sea válida y apunte a un recurso accesible.` };
     }
 
-    const params: any = {
+    const body: any = {
       media_type: "STORIES",
       access_token: accessToken,
     };
-    if (mediaType === "video") params.video_url = mediaUrl;
-    else params.image_url = mediaUrl;
+    if (mediaType === "video") body.video_url = mediaUrl;
+    else body.image_url = mediaUrl;
 
-    console.log(`[IG_STORIES] Sending body to Meta:`, JSON.stringify(params, null, 2));
-
-    const typeParam = mediaType === "video" ? `video_url=${encodeURIComponent(mediaUrl)}` : `image_url=${encodeURIComponent(mediaUrl)}`;
-    const url = `${FB_GRAPH_URL}/${igAccountId}/media?media_type=STORIES&${typeParam}&access_token=${accessToken}`;
-    
-    console.log(`[IG_DEBUG] Story - POST URL: ${url}`);
-
-    const containerRes = await fetch(url, { method: "POST" });
-    const containerData = await containerRes.json();
+    const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const containerData = await res.json();
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating story container";
       return { success: false, error: errorMsg };
@@ -193,17 +199,23 @@ export async function publishCarouselToInstagram(
   try {
     const childrenIds: string[] = [];
 
-    // Step 1: Create a container for each item
+    // Step 1: Create a container for each item using JSON body
     for (const item of mediaItems) {
       const isVideo = item.type === "video";
-      const itemTypeParam = isVideo 
-        ? `media_type=VIDEO&video_url=${encodeURIComponent(item.url)}` 
-        : `media_type=IMAGE&image_url=${encodeURIComponent(item.url)}`;
-      const url = `${FB_GRAPH_URL}/${igAccountId}/media?is_carousel_item=true&${itemTypeParam}&access_token=${accessToken}`;
+      const body: any = {
+        is_carousel_item: true,
+        access_token: accessToken,
+        media_type: isVideo ? "VIDEO" : "IMAGE"
+      };
       
-      console.log(`[IG_DEBUG] Carousel Item - POST URL: ${url}`);
+      if (isVideo) body.video_url = item.url;
+      else body.image_url = item.url;
 
-      const res = await fetch(url, { method: "POST" });
+      const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       const data = await res.json();
       if (data.error) throw new Error(`Error creando item: ${data.error.message}`);
       childrenIds.push(data.id);
