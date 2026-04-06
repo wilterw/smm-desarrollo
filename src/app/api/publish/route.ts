@@ -92,6 +92,20 @@ export async function POST(req: NextRequest) {
       })
       .filter(url => url.length > 0);
 
+    for (const d of destinations) {
+      const { platform, destination, adsConfig } = d;
+      const account = socialAccounts.find((acc) => acc.provider === platform);
+      const message = applyUtmTracking(rawMessage, platform, destination, adId);
+
+      const publication = await prisma.publication.create({
+        data: {
+          adId,
+          platform,
+          destination,
+          status: "pending",
+        },
+      });
+
       // Save budget/targeting if it's an ad
       if (destination === "ads" && adsConfig) {
         await prisma.adBudget.create({
