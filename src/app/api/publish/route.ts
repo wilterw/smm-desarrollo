@@ -60,7 +60,8 @@ export async function POST(req: NextRequest) {
     const results: any[] = [];
     const protocol = req.headers.get("x-forwarded-proto") || "http";
     const host = req.headers.get("host") || "localhost:3000";
-    const baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+    let baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+    if (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
     
     let rawMessage = `${ad.title}\n\n${ad.description || ""}`;
     if (ad.campaign.hashtags) {
@@ -74,6 +75,9 @@ export async function POST(req: NextRequest) {
       .map(url => url.trim())
       .filter(url => url.length > 0)
       .map(url => url.startsWith("http") ? url : `${baseUrl}${url}`);
+
+    console.log(`[PUBLISH] Final BaseURL: ${baseUrl}`);
+    console.log(`[PUBLISH] Final MediaURLs:`, mediaFullUrls);
 
     console.log(`[PUBLISH] Ad ID: ${adId}. Found ${mediaFullUrls.length} media items:`, mediaFullUrls);
 

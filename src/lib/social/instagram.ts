@@ -153,6 +153,8 @@ export async function publishToInstagramStories(
     if (mediaType === "video") params.video_url = mediaUrl;
     else params.image_url = mediaUrl;
 
+    console.log(`[IG_STORIES] Sending body to Meta:`, JSON.stringify(params, null, 2));
+
     const containerRes = await fetch(
       `${FB_GRAPH_URL}/${igAccountId}/media`,
       {
@@ -213,9 +215,11 @@ export async function publishCarouselToInstagram(
         params.media_type = "VIDEO";
         params.video_url = item.url;
       } else {
-        params.media_type = "IMAGE";
+        // According to Meta Docs, media_type should be OMITTED for carousel photo items
         params.image_url = item.url;
       }
+
+      console.log(`[IG_CAROUSEL_ITEM] Sending body to Meta:`, JSON.stringify(params, null, 2));
 
       const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
         method: "POST",
