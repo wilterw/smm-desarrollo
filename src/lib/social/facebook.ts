@@ -17,7 +17,7 @@ interface FacebookPublishResult {
 /**
  * Get the OAuth URL to connect a Facebook account
  */
-export function getFacebookOAuthUrl(redirectUri: string): string {
+export function getFacebookOAuthUrl(redirectUri: string, state?: string): string {
   const appId = process.env.FACEBOOK_APP_ID;
   if (!appId) throw new Error("FACEBOOK_APP_ID not configured");
 
@@ -32,7 +32,8 @@ export function getFacebookOAuthUrl(redirectUri: string): string {
     "business_management"
   ].join(",");
 
-  return `https://www.facebook.com/v25.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`;
+  const stateQuery = state ? `&state=${state}` : "";
+  return `https://www.facebook.com/v25.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}${stateQuery}&response_type=code`;
 }
 
 /**
@@ -68,12 +69,19 @@ export async function exchangeFacebookToken(code: string, redirectUri: string): 
 
 /**
  * Get the user's Facebook Pages (needed for publishing)
+ * Now also fetches linked Instagram Business Accounts
  */
 export async function getFacebookPages(accessToken: string) {
-  const res = await fetch(`${FB_GRAPH_URL}/me/accounts?access_token=${accessToken}`);
+  const fields = "id,name,access_token,instagram_business_account{id,name,username}";
+  const res = await fetch(`${FB_GRAPH_URL}/me/accounts?fields=${fields}&access_token=${accessToken}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
-  return data.data as { id: string; name: string; access_token: string }[];
+  return data.data as { 
+    id: string; 
+    name: string; 
+    access_token: string;
+    instagram_business_account?: { id: string; name: string; username: string };
+  }[];
 }
 
 /**

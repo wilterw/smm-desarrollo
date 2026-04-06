@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
 
     switch (provider) {
       case "facebook":
-        oauthUrl = getFacebookOAuthUrl(redirectUri);
+      case "instagram":
+        oauthUrl = getFacebookOAuthUrl(redirectUri, provider);
         break;
       case "youtube":
         oauthUrl = getYouTubeOAuthUrl(redirectUri);
