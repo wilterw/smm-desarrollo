@@ -302,29 +302,6 @@ export async function POST(req: NextRequest) {
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           }
-        }
-          
-          if (destination === "feed") {
-            if (mediaFullUrls.length > 1) {
-              const items = mediaFullUrls.map(url => ({ url, type: ad.mediaType as any }));
-              const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items, message);
-              if (!result.success) throw new Error(result.error);
-              postId = result.postId;
-            } else {
-              const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaUrl, message);
-              if (!result.success) throw new Error(result.error);
-              postId = result.postId;
-            }
-          } else if (destination === "reels") {
-            if (ad.mediaType !== "video") throw new Error("Reels require a video file");
-            const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaUrl, message);
-            if (!result.success) throw new Error(result.error);
-            postId = result.postId;
-          } else if (destination === "stories") {
-            const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaUrl, ad.mediaType as any);
-            if (!result.success) throw new Error(result.error);
-            postId = result.postId;
-          }
         } 
         // 4. YouTube Flow
         else if (platform === "youtube") {
