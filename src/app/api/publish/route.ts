@@ -371,11 +371,17 @@ export async function POST(req: NextRequest) {
         results.push({ platform, destination, status: "published", postId });
       } catch (err: any) {
         console.error(`[Publish Error] ${platform}/${destination}:`, err.message);
+        
+        // SMM 3.1: Capturar información adicional si está disponible
+        const detail = err.response?.data?.error?.message || err.message;
+        const subcode = err.response?.data?.error?.error_subcode ? ` (subcode: ${err.response.data.error.error_subcode})` : "";
+        const fullError = `${detail}${subcode}`;
+
         await prisma.publication.update({
           where: { id: publication.id },
-          data: { status: "failed", errorLog: err.message },
+          data: { status: "failed", errorLog: fullError },
         });
-        results.push({ platform, destination, status: "failed", error: err.message });
+        results.push({ platform, destination, status: "failed", error: fullError });
       }
     }
 

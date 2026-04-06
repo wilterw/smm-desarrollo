@@ -40,18 +40,12 @@ export async function publishToInstagram(
 ): Promise<InstagramPublishResult> {
   try {
     // Step 1: Create container
-    const containerRes = await fetch(
-      `${FB_GRAPH_URL}/${igAccountId}/media`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_url: imageUrl,
-          caption,
-          access_token: accessToken,
-        }),
-      }
-    );
+    // SMM 3.1: Enviar imageUrl como Query Param (más robusto en v25.0)
+    const url = `${FB_GRAPH_URL}/${igAccountId}/media?image_url=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`;
+    
+    console.log(`[IG_DEBUG] Single Feed - POST URL: ${url}`);
+
+    const containerRes = await fetch(url, { method: "POST" });
     const containerData = await containerRes.json();
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating container";
@@ -94,19 +88,12 @@ export async function publishToInstagramReels(
   caption: string
 ): Promise<InstagramPublishResult> {
   try {
-    const containerRes = await fetch(
-      `${FB_GRAPH_URL}/${igAccountId}/media`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          media_type: "REELS",
-          video_url: videoUrl,
-          caption,
-          access_token: accessToken,
-        }),
-      }
-    );
+    // SMM 3.1: Query Params para Reels
+    const url = `${FB_GRAPH_URL}/${igAccountId}/media?media_type=REELS&video_url=${encodeURIComponent(videoUrl)}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`;
+    
+    console.log(`[IG_DEBUG] Reel - POST URL: ${url}`);
+
+    const containerRes = await fetch(url, { method: "POST" });
     const containerData = await containerRes.json();
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating reels container";
@@ -159,14 +146,12 @@ export async function publishToInstagramStories(
 
     console.log(`[IG_STORIES] Sending body to Meta:`, JSON.stringify(params, null, 2));
 
-    const containerRes = await fetch(
-      `${FB_GRAPH_URL}/${igAccountId}/media`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      }
-    );
+    const typeParam = mediaType === "video" ? `video_url=${encodeURIComponent(mediaUrl)}` : `image_url=${encodeURIComponent(mediaUrl)}`;
+    const url = `${FB_GRAPH_URL}/${igAccountId}/media?media_type=STORIES&${typeParam}&access_token=${accessToken}`;
+    
+    console.log(`[IG_DEBUG] Story - POST URL: ${url}`);
+
+    const containerRes = await fetch(url, { method: "POST" });
     const containerData = await containerRes.json();
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating story container";
@@ -211,25 +196,12 @@ export async function publishCarouselToInstagram(
     // Step 1: Create a container for each item
     for (const item of mediaItems) {
       const isVideo = item.type === "video";
-      const params: any = {
-        is_carousel_item: true,
-        access_token: accessToken,
-      };
-      if (isVideo) {
-        params.media_type = "VIDEO";
-        params.video_url = item.url;
-      } else {
-        // According to Meta Docs, media_type should be OMITTED for carousel photo items
-        params.image_url = item.url;
-      }
+      const itemTypeParam = isVideo ? `media_type=VIDEO&video_url=${encodeURIComponent(item.url)}` : `image_url=${encodeURIComponent(item.url)}`;
+      const url = `${FB_GRAPH_URL}/${igAccountId}/media?is_carousel_item=true&${itemTypeParam}&access_token=${accessToken}`;
+      
+      console.log(`[IG_DEBUG] Carousel Item - POST URL: ${url}`);
 
-      console.log(`[IG_CAROUSEL_ITEM] Sending body to Meta:`, JSON.stringify(params, null, 2));
-
-      const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(params),
-      });
+      const res = await fetch(url, { method: "POST" });
       const data = await res.json();
       if (data.error) throw new Error(`Error creando item: ${data.error.message}`);
       childrenIds.push(data.id);
