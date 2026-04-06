@@ -44,7 +44,6 @@ export async function publishToInstagram(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        media_type: "IMAGE",
         image_url: imageUrl,
         caption: caption,
         access_token: accessToken,
@@ -147,11 +146,14 @@ export async function publishToInstagramStories(
     }
 
     const body: any = {
-      media_type: "STORIES",
       access_token: accessToken,
     };
-    if (mediaType === "video") body.video_url = mediaUrl;
-    else body.image_url = mediaUrl;
+    if (mediaType === "video") {
+      body.media_type = "VIDEO";
+      body.video_url = mediaUrl;
+    } else {
+      body.image_url = mediaUrl;
+    }
 
     const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
       method: "POST",
@@ -205,11 +207,14 @@ export async function publishCarouselToInstagram(
       const body: any = {
         is_carousel_item: true,
         access_token: accessToken,
-        media_type: isVideo ? "VIDEO" : "IMAGE"
       };
       
-      if (isVideo) body.video_url = item.url;
-      else body.image_url = item.url;
+      if (isVideo) {
+        body.media_type = "VIDEO";
+        body.video_url = item.url;
+      } else {
+        body.image_url = item.url;
+      }
 
       const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
         method: "POST",

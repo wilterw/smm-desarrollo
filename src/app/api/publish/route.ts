@@ -88,7 +88,19 @@ export async function POST(req: NextRequest) {
         // Asegurar que no empiece por / si baseUrl también termina en / (aunque ya lo limpiamos)
         if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
         
-        return cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
+        let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
+        
+        // SMM 3.3: Meta Compliance Extension Hint
+        // Añade una pista de extensión para que el crawler de Facebook/Instagram identifique el tipo de medio.
+        const connector = fullUrl.includes("?") ? "&" : "?";
+        const filename = cleanUrl.split("/").pop() || "";
+        const ext = filename.split(".").pop()?.toLowerCase();
+        
+        if (ext === "png") fullUrl += `${connector}f=.png`;
+        else if (ext === "mp4" || ad.mediaType === "video") fullUrl += `${connector}f=.mp4`;
+        else fullUrl += `${connector}f=.jpg`;
+
+        return fullUrl;
       })
       .filter(url => url.length > 0);
 
