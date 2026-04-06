@@ -445,22 +445,32 @@ export async function createFacebookAdCreative(
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
     
-    const object_story_spec: any = {
-      page_id: pageId,
-      instagram_actor_id: (instagramActorId && instagramActorId.length > 5 && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) ? instagramActorId : undefined,
-      link_data: {
-        message,
-        link: linkUrl || "https://econos.es",
-        image_hash: imageHash,
-        caption: name,
-        call_to_action: {
-          type: adsConfig?.ctaLabel || "LEARN_MORE",
-          value: {
-             link: linkUrl || "https://econos.es"
-          }
+    const ctaType = adsConfig?.ctaLabel || "LEARN_MORE";
+    const isMessenger = ctaType === 'MESSAGE_PAGE';
+    
+    const link_data: any = {
+      message,
+      // For Messenger ads, the link MUST be the page's messenger URL, not the property web
+      link: isMessenger ? `https://fb.me/${pageId}` : (linkUrl || "https://econos.es"),
+      image_hash: imageHash,
+      caption: name,
+      call_to_action: {
+        type: ctaType,
+        value: {
+           link: isMessenger ? `https://fb.me/${pageId}` : (linkUrl || "https://econos.es")
         }
       }
     };
+
+    const object_story_spec: any = {
+      page_id: pageId,
+      link_data
+    };
+
+    // Only add IG actor if explicitly needed and valid
+    if (instagramActorId && instagramActorId.length > 5 && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) {
+      object_story_spec.instagram_actor_id = instagramActorId;
+    }
 
     const body: any = {
       name,
@@ -501,7 +511,9 @@ export async function createFacebookAdCarouselCreative(
 ): Promise<FacebookPublishResult> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
-    const finalLink = linkUrl || "https://econos.es";
+    const ctaType = adsConfig?.ctaLabel || "LEARN_MORE";
+    const isMessenger = ctaType === 'MESSAGE_PAGE';
+    const finalLink = isMessenger ? `https://fb.me/${pageId}` : (linkUrl || "https://econos.es");
 
     // Create child attachments for each hash
     const child_attachments = imageHashes.slice(0, 10).map((hash, index) => ({
@@ -509,14 +521,13 @@ export async function createFacebookAdCarouselCreative(
       image_hash: hash,
       name: `${name} ${index + 1}`,
       call_to_action: {
-        type: adsConfig?.ctaLabel || "LEARN_MORE",
+        type: ctaType,
         value: { link: finalLink }
       }
     }));
 
     const object_story_spec: any = {
       page_id: pageId,
-      instagram_actor_id: (instagramActorId && instagramActorId.length > 5 && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) ? instagramActorId : undefined,
       link_data: {
         message,
         link: finalLink,
@@ -524,11 +535,15 @@ export async function createFacebookAdCarouselCreative(
         multi_share_optimized: true,
         multi_share_end_card: false,
         call_to_action: {
-           type: adsConfig?.ctaLabel || "LEARN_MORE",
+           type: ctaType,
            value: { link: finalLink }
         }
       }
     };
+
+    if (instagramActorId && instagramActorId.length > 5 && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) {
+      object_story_spec.instagram_actor_id = instagramActorId;
+    }
 
     const body = {
       name: `Carousel - ${name}`,
