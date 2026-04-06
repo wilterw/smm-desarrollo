@@ -60,7 +60,15 @@ export async function POST(req: NextRequest) {
     const results: any[] = [];
     const protocol = req.headers.get("x-forwarded-proto") || "http";
     const host = req.headers.get("host") || "localhost:3000";
-    let baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+    
+    // SMM 3.0: High-reliability BaseURL detection
+    let baseUrl = process.env.NEXTAUTH_URL;
+    if (!baseUrl || baseUrl.includes("localhost")) {
+      // If we are on econos.io, we MUST force HTTPS for Meta to reach us
+      if (host.includes("econos.io")) baseUrl = `https://${host}`;
+      else baseUrl = `${protocol}://${host}`;
+    }
+    
     if (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
     
     let rawMessage = `${ad.title}\n\n${ad.description || ""}`;
@@ -69,15 +77,22 @@ export async function POST(req: NextRequest) {
       rawMessage += `\n\n${tags}`;
     }
     
-    // Multi-media Support (SMM 2.6 Tuning)
+    // SMM 3.0: Aggressive URL Sanitation for Windows paths and Meta strictness
     const mediaUrlsRaw = ad.mediaUrl ? ad.mediaUrl.split(",") : [];
     const mediaFullUrls = mediaUrlsRaw
       .map(url => url.trim())
       .filter(url => url.length > 0)
-      .map(url => url.startsWith("http") ? url : `${baseUrl}${url}`);
+      .map(url => {
+        // Normalización Nuclear: Reemplazar todas las \ de Windows por /
+        let cleanUrl = url.replace(/\\/g, "/");
+        // Asegurar que no empiece por / si baseUrl también termina en / (aunque ya lo limpiamos)
+        if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
+        
+        return cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
+      });
 
-    console.log(`[PUBLISH] Final BaseURL: ${baseUrl}`);
-    console.log(`[PUBLISH] Final MediaURLs:`, mediaFullUrls);
+    console.log(`[SMM 3.0 DEBUG] Final BaseURL: ${baseUrl}`);
+    console.log(`[SMM 3.0 DEBUG] Final MediaURLs:`, mediaFullUrls);
 
     console.log(`[PUBLISH] Ad ID: ${adId}. Found ${mediaFullUrls.length} media items:`, mediaFullUrls);
 

@@ -146,6 +146,10 @@ export async function publishToInstagramStories(
   mediaType: "image" | "video"
 ): Promise<InstagramPublishResult> {
   try {
+    if (!mediaUrl || mediaUrl.trim() === "" || mediaUrl.endsWith("/")) {
+      return { success: false, error: `SMM 3.0: URI de multimedia inválida o vacía: "${mediaUrl}"` };
+    }
+
     const params: any = {
       media_type: "STORIES",
       access_token: accessToken,
