@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     const mediaUrlsRaw = ad.mediaUrl ? ad.mediaUrl.split(",") : [];
     const mediaFullUrls = mediaUrlsRaw
       .map(url => url.trim())
-      .filter(url => url.length > 0)
+      .filter(url => url.length > 0 && !url.endsWith("/"))
       .map(url => {
         // Normalización Nuclear: Reemplazar todas las \ de Windows por /
         let cleanUrl = url.replace(/\\/g, "/");
@@ -89,36 +89,8 @@ export async function POST(req: NextRequest) {
         if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
         
         return cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
-      });
-
-    console.log(`[SMM 3.0 DEBUG] Final BaseURL: ${baseUrl}`);
-    console.log(`[SMM 3.0 DEBUG] Final MediaURLs:`, mediaFullUrls);
-
-    console.log(`[PUBLISH] Ad ID: ${adId}. Found ${mediaFullUrls.length} media items:`, mediaFullUrls);
-
-    for (const destConfig of destinations) {
-      const { platform, destination, adsConfig, socialAccountId } = destConfig;
-      
-      // Find the specific account if socialAccountId is provided, otherwise fallback to the first one (for backward compatibility during migration)
-      let account: any;
-      if (socialAccountId) {
-        account = socialAccounts.find(a => a.id === socialAccountId);
-      } else {
-        account = socialAccounts.find(a => a.provider === platform);
-      }
-      
-      const message = applyUtmTracking(rawMessage, platform, destination, adId);
-
-      const publication = await prisma.publication.create({
-        data: {
-          adId,
-          platform,
-          destination,
-          socialAccountId: account?.id, // Link to specific account (Phase 11)
-          type: destination === "ads" ? "paid" : "organic",
-          status: "pending",
-        },
-      });
+      })
+      .filter(url => url.length > 0);
 
       // Save budget/targeting if it's an ad
       if (destination === "ads" && adsConfig) {
@@ -303,6 +275,12 @@ export async function POST(req: NextRequest) {
           if (!account.igAccountId) throw new Error("No Instagram Business Account linked to the Facebook Page");
           if (mediaFullUrls.length === 0) throw new Error("Instagram requires media");
           
+          // Validar que la URL no esté vacía antes de publicar
+          const mediaUrl = mediaFullUrls[0];
+          if (!mediaUrl || mediaUrl.trim() === "" || mediaUrl.endsWith("/")) {
+            throw new Error(`URL de media inválida para Instagram: "${mediaUrl}"`);
+          }
+          
           if (destination === "feed") {
             if (mediaFullUrls.length > 1) {
               const items = mediaFullUrls.map(url => ({ url, type: ad.mediaType as any }));
@@ -310,17 +288,40 @@ export async function POST(req: NextRequest) {
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
             } else {
-              const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaFullUrls[0], message);
+              const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaUrl, message);
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
             }
           } else if (destination === "reels") {
             if (ad.mediaType !== "video") throw new Error("Reels require a video file");
-            const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaFullUrls[0], message);
+            const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaUrl, message);
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           } else if (destination === "stories") {
-            const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaFullUrls[0], ad.mediaType as any);
+            const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaUrl, ad.mediaType as any);
+            if (!result.success) throw new Error(result.error);
+            postId = result.postId;
+          }
+        }
+          
+          if (destination === "feed") {
+            if (mediaFullUrls.length > 1) {
+              const items = mediaFullUrls.map(url => ({ url, type: ad.mediaType as any }));
+              const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items, message);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            } else {
+              const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaUrl, message);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            }
+          } else if (destination === "reels") {
+            if (ad.mediaType !== "video") throw new Error("Reels require a video file");
+            const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaUrl, message);
+            if (!result.success) throw new Error(result.error);
+            postId = result.postId;
+          } else if (destination === "stories") {
+            const result = await publishToInstagramStories(account.igAccountId, account.accessToken, mediaUrl, ad.mediaType as any);
             if (!result.success) throw new Error(result.error);
             postId = result.postId;
           }

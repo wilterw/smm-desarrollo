@@ -41,7 +41,7 @@ export async function publishToInstagram(
   try {
     // Step 1: Create container
     // SMM 3.1: Enviar imageUrl como Query Param (más robusto en v25.0)
-    const url = `${FB_GRAPH_URL}/${igAccountId}/media?image_url=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`;
+    const url = `${FB_GRAPH_URL}/${igAccountId}/media?media_type=IMAGE&image_url=${encodeURIComponent(imageUrl)}&caption=${encodeURIComponent(caption)}&access_token=${accessToken}`;
     
     console.log(`[IG_DEBUG] Single Feed - POST URL: ${url}`);
 
@@ -134,7 +134,7 @@ export async function publishToInstagramStories(
 ): Promise<InstagramPublishResult> {
   try {
     if (!mediaUrl || mediaUrl.trim() === "" || mediaUrl.endsWith("/")) {
-      return { success: false, error: `SMM 3.0: URI de multimedia inválida o vacía: "${mediaUrl}"` };
+      return { success: false, error: `SMM 3.1: URI de multimedia inválida o vacía: "${mediaUrl}". Verifica que la URL sea válida y apunte a un recurso accesible.` };
     }
 
     const params: any = {
@@ -196,7 +196,9 @@ export async function publishCarouselToInstagram(
     // Step 1: Create a container for each item
     for (const item of mediaItems) {
       const isVideo = item.type === "video";
-      const itemTypeParam = isVideo ? `media_type=VIDEO&video_url=${encodeURIComponent(item.url)}` : `image_url=${encodeURIComponent(item.url)}`;
+      const itemTypeParam = isVideo 
+        ? `media_type=VIDEO&video_url=${encodeURIComponent(item.url)}` 
+        : `media_type=IMAGE&image_url=${encodeURIComponent(item.url)}`;
       const url = `${FB_GRAPH_URL}/${igAccountId}/media?is_carousel_item=true&${itemTypeParam}&access_token=${accessToken}`;
       
       console.log(`[IG_DEBUG] Carousel Item - POST URL: ${url}`);
