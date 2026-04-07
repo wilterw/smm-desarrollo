@@ -193,6 +193,39 @@ export async function publishMultiPhotoToFacebook(
 }
 
 /**
+ * Publish a native video to a Facebook Page Feed
+ */
+export async function publishVideoToFacebook(
+  pageId: string,
+  pageAccessToken: string,
+  message: string,
+  videoUrl: string
+): Promise<FacebookPublishResult> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${pageId}/videos`;
+    const params = new URLSearchParams();
+    params.append("access_token", pageAccessToken);
+    params.append("file_url", videoUrl);
+    if (message) params.append("description", message);
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      body: params,
+    });
+
+    const data = await res.json();
+    if (data.error) {
+       const errorMsg = data.error.error_user_msg || data.error.message || "Unknown error";
+       return { success: false, error: `Error subiendo video a FB: ${errorMsg}` };
+    }
+    
+    return { success: true, postId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Publish a post to a User's Personal Feed
  * Note: Facebook restricts this for most apps, but endpoint is /me/feed
  */
@@ -447,6 +480,38 @@ export async function uploadFacebookAdImage(
 }
 
 /**
+ * Uploads a video to the Ad Account's video library to get a video_id
+ */
+export async function uploadFacebookAdVideo(
+  userAccessToken: string,
+  adAccountId: string,
+  videoUrl: string
+): Promise<{ success: boolean; videoId?: string; error?: string }> {
+  try {
+    const endpoint = `${FB_GRAPH_URL}/${adAccountId}/advideos`;
+    const params = new URLSearchParams();
+    params.append("access_token", userAccessToken);
+    params.append("file_url", videoUrl);
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      body: params
+    });
+    
+    const data = await res.json();
+    
+    if (data.error) {
+       const errorMsg = data.error.error_user_msg || data.error.message || "Failed to upload video to ad account";
+       return { success: false, error: errorMsg };
+    }
+    
+    return { success: true, videoId: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Creates an Ad Creative
  */
 export async function createFacebookAdCreative(
@@ -458,32 +523,41 @@ export async function createFacebookAdCreative(
   imageHash: string,
   linkUrl?: string,
   adsConfig?: any,
-  instagramActorId?: string
+  instagramActorId?: string,
+  isVideo: boolean = false
 ): Promise<FacebookPublishResult> {
   try {
     const endpoint = `${FB_GRAPH_URL}/${adAccountId}/adcreatives`;
     
     const ctaType = adsConfig?.ctaLabel || "LEARN_MORE";
     const isMessenger = ctaType === 'MESSAGE_PAGE';
+    const finalLink = isMessenger ? `https://fb.me/${pageId}` : (linkUrl || "https://econos.es");
     
-    const link_data: any = {
-      message,
-      // For Messenger ads, the link MUST be the page's messenger URL, not the property web
-      link: isMessenger ? `https://fb.me/${pageId}` : (linkUrl || "https://econos.es"),
-      image_hash: imageHash,
-      caption: name,
-      call_to_action: {
-        type: ctaType,
-        value: {
-           link: isMessenger ? `https://fb.me/${pageId}` : (linkUrl || "https://econos.es")
-        }
-      }
-    };
-
     const object_story_spec: any = {
       page_id: pageId,
-      link_data
     };
+
+    if (isVideo) {
+      object_story_spec.video_data = {
+        video_id: imageHash,
+        message,
+        call_to_action: {
+          type: ctaType,
+          value: { link: finalLink }
+        }
+      };
+    } else {
+      object_story_spec.link_data = {
+        message,
+        link: finalLink,
+        image_hash: imageHash,
+        caption: name,
+        call_to_action: {
+          type: ctaType,
+          value: { link: finalLink }
+        }
+      };
+    }
 
     // Only add IG actor if explicitly needed and valid
     if (instagramActorId && instagramActorId.length > 5 && adsConfig?.placements?.some((p: string) => p.includes('instagram'))) {

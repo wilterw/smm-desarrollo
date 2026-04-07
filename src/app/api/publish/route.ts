@@ -7,11 +7,13 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { 
   publishToFacebook, 
+  publishVideoToFacebook,
   publishToFacebookFeed, 
   publishMultiPhotoToFacebook,
   createFacebookAdCampaign,
   createFacebookAdSet,
   uploadFacebookAdImage,
+  uploadFacebookAdVideo,
   createFacebookAdCreative,
   createFacebookAdCarouselCreative,
   createFacebookAd,
@@ -240,24 +242,35 @@ export async function POST(req: NextRequest) {
           );
           if (!adSetRes.success) throw new Error(`AdSet error: ${adSetRes.error}`);
 
-          // C. Image Hashes
-          const uploadPromises = mediaFullUrls.map(url => uploadFacebookAdImage(account.accessToken, adAccountId, url));
-          const uploadResults = await Promise.all(uploadPromises);
-          const hashes = uploadResults.filter(r => r.success).map(r => r.hash!);
-          if (hashes.length === 0) {
-            throw new Error(`Media upload error: ${uploadResults[0]?.error || "No se pudo subir ninguna imagen"}`);
+          // C. Media Processing
+          let mediaIdOrHashes: string[];
+          const isVideo = ad.mediaType === "video";
+
+          if (isVideo) {
+            const videoUpload = await uploadFacebookAdVideo(account.accessToken, adAccountId, mediaFullUrls[0]);
+            if (!videoUpload.success || !videoUpload.videoId) {
+               throw new Error(`Video upload error: ${videoUpload.error || "No se pudo subir el video"}`);
+            }
+            mediaIdOrHashes = [videoUpload.videoId];
+          } else {
+            const uploadPromises = mediaFullUrls.map(url => uploadFacebookAdImage(account.accessToken, adAccountId, url));
+            const uploadResults = await Promise.all(uploadPromises);
+            mediaIdOrHashes = uploadResults.filter(r => r.success).map(r => r.hash!);
+            if (mediaIdOrHashes.length === 0) {
+              throw new Error(`Media upload error: ${uploadResults[0]?.error || "No se pudo subir ninguna imagen"}`);
+            }
           }
 
           // D. Creative
           let creativeRes;
-          if (hashes.length > 1) {
+          if (!isVideo && mediaIdOrHashes.length > 1) {
             creativeRes = await createFacebookAdCarouselCreative(
               account.accessToken,
               adAccountId,
               account.pageId || "",
               ad.title,
               message,
-              hashes,
+              mediaIdOrHashes,
               ad.linkUrl || undefined,
               adsConfig,
               account.igAccountId || undefined
@@ -269,10 +282,11 @@ export async function POST(req: NextRequest) {
               account.pageId || "",
               ad.title,
               message,
-              hashes[0],
+              mediaIdOrHashes[0],
               ad.linkUrl || undefined,
               adsConfig,
-              account.igAccountId || undefined
+              account.igAccountId || undefined,
+              isVideo
             );
           }
           if (!creativeRes.success) throw new Error(`Creative error: ${creativeRes.error}`);
@@ -292,7 +306,11 @@ export async function POST(req: NextRequest) {
         // 2. Facebook Organic Flow
         else if (platform === "facebook") {
           if (destination === "feed") {
-            if (mediaFullUrls.length > 1) {
+            if (ad.mediaType === "video") {
+              const result = await publishVideoToFacebook("me", account.accessToken, message, mediaFullUrls[0]);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            } else if (mediaFullUrls.length > 1) {
               const result = await publishMultiPhotoToFacebook("me", account.accessToken, message, mediaFullUrls);
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
@@ -303,7 +321,12 @@ export async function POST(req: NextRequest) {
             }
           } else if (destination === "fanpage") {
             if (!account.pageId) throw new Error("No Facebook Page connected");
-            if (mediaFullUrls.length > 1) {
+            
+            if (ad.mediaType === "video") {
+              const result = await publishVideoToFacebook(account.pageId, account.accessToken, message, mediaFullUrls[0]);
+              if (!result.success) throw new Error(result.error);
+              postId = result.postId;
+            } else if (mediaFullUrls.length > 1) {
               const result = await publishMultiPhotoToFacebook(account.pageId, account.accessToken, message, mediaFullUrls);
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
