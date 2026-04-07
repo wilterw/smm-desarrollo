@@ -246,25 +246,23 @@ export async function publishCarouselToInstagram(
   try {
     const childrenIds: string[] = [];
 
-    // Step 1: Create a container for each item using JSON body
+    // Step 1: Create a container for each item
     for (const item of mediaItems) {
       const isVideo = item.type === "video";
-      const body: any = {
-        is_carousel_item: true,
-        access_token: accessToken,
-      };
+      const params = new URLSearchParams();
+      params.append("is_carousel_item", "true");
+      params.append("access_token", accessToken);
       
       if (isVideo) {
-        body.media_type = "VIDEO";
-        body.video_url = item.url;
+        params.append("media_type", "VIDEO");
+        params.append("video_url", item.url);
       } else {
-        body.image_url = item.url;
+        params.append("image_url", item.url);
       }
 
       const res = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: params,
       });
       const data = await res.json();
       if (data.error) {
@@ -279,15 +277,15 @@ export async function publishCarouselToInstagram(
     }
 
     // Step 2: Create the carousel container
+    const carouselParams = new URLSearchParams();
+    carouselParams.append("media_type", "CAROUSEL");
+    carouselParams.append("children", childrenIds.join(","));
+    if (caption) carouselParams.append("caption", caption);
+    carouselParams.append("access_token", accessToken);
+
     const carouselRes = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        media_type: "CAROUSEL",
-        children: childrenIds.join(","),
-        caption,
-        access_token: accessToken,
-      }),
+      body: carouselParams,
     });
     const carouselData = await carouselRes.json();
     if (carouselData.error) throw new Error(`Error creando carrusel: ${carouselData.error.message}`);
@@ -297,13 +295,13 @@ export async function publishCarouselToInstagram(
     if (!pollResultCarousel.success) throw new Error(pollResultCarousel.error || "Fallo validando carrusel principal");
 
     // Step 3: Publish the carousel
+    const publishParams = new URLSearchParams();
+    publishParams.append("creation_id", carouselData.id);
+    publishParams.append("access_token", accessToken);
+
     const publishRes = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media_publish`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        creation_id: carouselData.id,
-        access_token: accessToken,
-      }),
+      body: publishParams,
     });
     const publishData = await publishRes.json();
     if (publishData.error) throw new Error(`Error publicando carrusel: ${publishData.error.message}`);
