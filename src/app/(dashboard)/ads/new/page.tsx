@@ -20,6 +20,7 @@ export default function NewAdPage() {
   const [previewImageIndex, setPreviewImageIndex] = useState(0);
   const [previewTab, setPreviewTab] = useState<"facebook" | "instagram" | "youtube">("facebook");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
 
   // New campaign modal state
@@ -166,28 +167,51 @@ export default function NewAdPage() {
     }
   };
 
-  const handleFileChange = async (file: File) => {
-    setMediaType(file.type.startsWith("video/") ? "video" : "image");
+  const handleFileChange = (file: File) => {
+    const isVideo = file.type.startsWith("video/");
+    setMediaType(isVideo ? "video" : "image");
     
-    // Upload immediately
     setUploading(true);
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append("file", file);
     
-    try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        handleAddMedia(data.url);
-        setMediaType(mediaUrls.length === 0 ? data.mediaType : mediaType);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload", true);
+    
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+      }
+    };
+    
+    xhr.onload = () => {
+      setUploading(false);
+      setUploadProgress(0);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          handleAddMedia(data.url);
+          // If we had no media previously, we use the uploaded one's type
+          if (!mediaUrl) {
+            setMediaType(data.mediaType);
+          }
+        } catch(e) {
+          alert("Error decodificando respuesta");
+        }
       } else {
         alert("Error subiendo archivo");
       }
-    } catch {
-      alert("Error de conexión al subir archivo");
-    } finally {
+    };
+    
+    xhr.onerror = () => {
       setUploading(false);
-    }
+      setUploadProgress(0);
+      alert("Error de conexión al subir archivo");
+    };
+    
+    xhr.send(formData);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -374,19 +398,39 @@ export default function NewAdPage() {
 
             {mediaUrls.length > 0 && (
               <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                {mediaUrls.map((url, i) => (
-                  <div key={i} style={{ position: "relative", width: "100px", height: "100px" }}>
-                    <img src={url} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px", border: "1px solid var(--meta-border)" }} />
-                    <button type="button" onClick={() => handleRemoveMedia(url)} style={{ position: "absolute", top: -5, right: -5, background: "var(--meta-accent-red)", color: "white", border: "none", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontSize: "10px" }}>✕</button>
-                  </div>
-                ))}
+                {mediaUrls.map((url, i) => {
+                  const isVid = url.toLowerCase().endsWith(".mp4") || url.toLowerCase().endsWith(".webm");
+                  return (
+                    <div key={i} style={{ position: "relative", width: "100px", height: "100px" }}>
+                      {isVid ? (
+                        <video src={url} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px", border: "1px solid var(--meta-border)" }} muted />
+                      ) : (
+                        <img src={url} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "8px", border: "1px solid var(--meta-border)" }} />
+                      )}
+                      <button type="button" onClick={() => handleRemoveMedia(url)} style={{ position: "absolute", top: -5, right: -5, background: "var(--meta-accent-red)", color: "white", border: "none", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontSize: "10px" }}>✕</button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             <div className={styles.metaUpload} onClick={() => document.getElementById('fileInput')?.click()}>
               <input id="fileInput" type="file" style={{ display: "none" }} accept="image/*,video/*" onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])} />
-              <div style={{ fontSize: "2rem" }}>{uploading ? "⏳" : "📁"}</div>
-              <p className={styles.label}>{uploading ? "Subiendo..." : "Haz clic o arrastra para subir media"}</p>
+              
+              {uploading ? (
+                <div style={{ width: "100%", padding: "0 2rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⏳</div>
+                  <p className={styles.label}>Subiendo... {uploadProgress}%</p>
+                  <div style={{ width: "100%", height: "6px", background: "var(--meta-border)", borderRadius: "3px", marginTop: "10px", overflow: "hidden" }}>
+                    <div style={{ width: `${uploadProgress}%`, height: "100%", background: "var(--meta-accent-blue)", transition: "width 0.2s" }} />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: "2rem" }}>📁</div>
+                  <p className={styles.label}>Haz clic o arrastra para subir media</p>
+                </>
+              )}
             </div>
           </div>
           
@@ -424,7 +468,9 @@ export default function NewAdPage() {
                   </div>
                   <div className={styles.fbMedia}>
                     {filePreviewUrl ? (
-                      mediaType === "video" ? <video src={filePreviewUrl} style={{ width: "100%" }} /> : <img src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      (filePreviewUrl.toLowerCase().endsWith(".mp4") || filePreviewUrl.toLowerCase().endsWith(".webm")) ? 
+                        <video src={filePreviewUrl} style={{ width: "100%", background: "#000" }} controls /> : 
+                        <img src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : <div style={{ height: "180px", background: "#3a3b3c", display: "flex", alignItems: "center", justifyContent: "center" }}>Sin Multimedia</div>}
                   </div>
                   <div className={styles.fbActions}>
@@ -442,7 +488,11 @@ export default function NewAdPage() {
                     <span className={styles.igName}>tu_marca</span>
                   </div>
                   <div className={styles.igMedia}>
-                    {filePreviewUrl ? <img src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                    {filePreviewUrl ? (
+                      (filePreviewUrl.toLowerCase().endsWith(".mp4") || filePreviewUrl.toLowerCase().endsWith(".webm")) ? 
+                        <video src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover", background: "#000" }} controls /> : 
+                        <img src={filePreviewUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : null}
                   </div>
                   <div className={styles.igActions}><span>❤️</span><span>💬</span><span>✈️</span></div>
                   <div className={styles.igText}><b>tu_marca</b> {title} {description}</div>

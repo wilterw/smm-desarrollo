@@ -30,7 +30,7 @@ export async function getInstagramAccountId(
 /**
  * Poll the Instagram Graph API to wait until a media container (especially video) is FINISHED processing.
  */
-async function waitForInstagramMediaReady(containerId: string, accessToken: string, maxAttempts = 15): Promise<boolean> {
+async function waitForInstagramMediaReady(containerId: string, accessToken: string, maxAttempts = 30): Promise<boolean> {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await fetch(`${FB_GRAPH_URL}/${containerId}?fields=status_code&access_token=${accessToken}`);
     const data = await res.json();
