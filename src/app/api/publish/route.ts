@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 import { 
   publishToFacebook, 
   publishToFacebookFeed, 
@@ -70,26 +73,54 @@ export async function POST(req: NextRequest) {
       const tags = ad.campaign.hashtags.split(",").map(t => t.trim().startsWith("#") ? t.trim() : `#${t.trim()}`).join(" ");
       rawMessage += `\n\n${tags}`;
     }
-       // SMM 4.0: URL Sanitation
+    // SMM 5.0: URL Sanitation and External Deep-Download Proxy
     const mediaUrlsRaw = ad.mediaUrl ? ad.mediaUrl.split(",") : [];
-    const mediaFullUrls = mediaUrlsRaw
-      .map(url => url.trim())
-      .filter(url => url.length > 0 && !url.endsWith("/"))
-      .map(url => {
-        let cleanUrl = url.replace(/\\/g, "/");
-        
-        // Migrate legacy /uploads/ paths to /api/media/
-        if (cleanUrl.startsWith("/uploads/")) {
-          cleanUrl = cleanUrl.replace("/uploads/", "/api/media/");
-        }
-        
-        if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
-        
-        let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
+    const mediaFullUrls: string[] = [];
 
-        return fullUrl;
-      })
-      .filter(url => url.length > 0);
+    for (const rawUrl of mediaUrlsRaw) {
+      const url = rawUrl.trim();
+      if (!url || url.endsWith("/")) continue;
+
+      let cleanUrl = url.replace(/\\/g, "/");
+      
+      // Migrate legacy /uploads/ paths to /api/media/
+      if (cleanUrl.startsWith("/uploads/")) {
+        cleanUrl = cleanUrl.replace("/uploads/", "/api/media/");
+      }
+      if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
+      
+      let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
+
+      // Proxied Downloader: If the URL is external (not our own server), download it locally to bypass Meta's crawler getting blocked by CDNs (like apinmo.com)
+      const isInternal = fullUrl.includes(baseUrl.replace("https://", "").replace("http://", ""));
+      if (fullUrl.startsWith("http") && !isInternal) {
+        try {
+          console.log(`[SMM Proxied Downloader] Descargando archivo externo: ${fullUrl}`);
+          const dlRes = await fetch(fullUrl);
+          if (dlRes.ok) {
+            const buffer = await dlRes.arrayBuffer();
+            const extMatch = fullUrl.split("?")[0].split(".").pop();
+            const ext = (extMatch && extMatch.length <= 4) ? extMatch.toLowerCase() : "jpg";
+            
+            const filename = `${randomUUID()}.${ext}`;
+            const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+            
+            await mkdir(UPLOAD_DIR, { recursive: true });
+            await writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(buffer));
+            
+            // Replace external URL with our local, bulletproof API route
+            fullUrl = `${baseUrl}/api/media/${filename}`;
+            console.log(`[SMM Proxied Downloader] Archivo guardado localmente en: ${fullUrl}`);
+          } else {
+            console.warn(`[SMM Proxied Downloader] Falló al descargar ${fullUrl} (HTTP ${dlRes.status})`);
+          }
+        } catch (e: any) {
+          console.error(`[SMM Proxied Downloader] Error descargando ${fullUrl}`, e.message);
+        }
+      }
+
+      mediaFullUrls.push(fullUrl);
+    }
 
     for (const d of destinations) {
       const { platform, destination, adsConfig } = d;
