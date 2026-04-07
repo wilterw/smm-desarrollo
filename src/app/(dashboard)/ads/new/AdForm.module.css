@@ -65,8 +65,17 @@
   justify-content: center;
   font-size: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-smooth);
   color: var(--meta-text-secondary);
+}
+
+.navIconWrapper:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(1.08);
+}
+
+.navIconWrapper:active {
+  transform: scale(0.95);
 }
 
 .navIconActive {
@@ -167,13 +176,14 @@
   color: #e4e6eb;
   padding: 0.75rem 1rem;
   font-size: 0.9375rem;
-  transition: all 0.2s;
+  transition: all var(--transition-smooth);
 }
 
 .input:focus, .textarea:focus, .select:focus {
   outline: none;
   border-color: var(--meta-accent-blue);
   background: #4e4f50;
+  box-shadow: 0 0 0 3px rgba(46, 137, 255, 0.12);
 }
 
 .textarea {
@@ -200,12 +210,14 @@
   text-align: center;
   background: rgba(255,255,255,0.02);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-smooth);
 }
 
 .metaUpload:hover {
   border-color: var(--meta-accent-blue);
   background: rgba(46, 137, 255, 0.05);
+  box-shadow: 0 0 20px rgba(46, 137, 255, 0.08);
+  transform: scale(1.01);
 }
 
 /* Bottom Actions Bar */
@@ -244,12 +256,18 @@
   border-radius: 6px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.1s, background 0.2s;
+  transition: all var(--transition-smooth);
+  box-shadow: 0 2px 8px rgba(46, 137, 255, 0.25);
 }
 
 .btnPrimary:hover {
   background: #2e89ff;
-  transform: scale(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(46, 137, 255, 0.35);
+}
+
+.btnPrimary:active {
+  transform: scale(0.98);
 }
 
 .btnSecondary {
@@ -260,10 +278,16 @@
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: all var(--transition-smooth);
 }
 
 .btnSecondary:hover {
   background: #5f6062;
+  transform: translateY(-1px);
+}
+
+.btnSecondary:active {
+  transform: scale(0.98);
 }
 
 /* Previews (Improved) */

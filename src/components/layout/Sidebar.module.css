@@ -1,7 +1,8 @@
+/* ===== Sidebar ===== */
 .sidebar {
   width: 260px;
   height: 100vh;
-  background-color: var(--bg-secondary);
+  background: var(--gradient-sidebar);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -12,6 +13,18 @@
   transition: transform var(--transition-normal);
 }
 
+/* Subtle top-edge glow */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-warm), transparent);
+  opacity: 0.4;
+}
+
 .logoContainer {
   height: 100px;
   display: flex;
@@ -19,10 +32,28 @@
   padding: 0 1.5rem;
   border-bottom: 1px solid var(--border-color);
   gap: 0.5rem;
+  position: relative;
+}
+
+/* Gradient line at bottom of logo area */
+.logoContainer::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 1.5rem;
+  right: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-primary), transparent);
+  opacity: 0.3;
 }
 
 .smmLogo {
   object-fit: contain;
+  transition: transform var(--transition-smooth);
+}
+
+.smmLogo:hover {
+  transform: scale(1.03);
 }
 
 .closeBtn {
@@ -31,13 +62,15 @@
   font-size: 1.1rem;
   color: var(--text-muted);
   padding: 0.25rem;
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
 .closeBtn:hover {
   color: var(--text-primary);
+  transform: rotate(90deg);
 }
 
+/* ===== Navigation ===== */
 .nav {
   padding: 1.5rem 1rem;
   display: flex;
@@ -66,27 +99,83 @@
   color: var(--text-secondary);
   font-weight: 500;
   font-size: 0.9rem;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle hover background sweep */
+.navItem::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(196, 26, 26, 0.06), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-smooth);
+  border-radius: inherit;
+}
+
+.navItem:hover::before {
+  opacity: 1;
 }
 
 .navItem:hover {
-  background-color: var(--bg-tertiary);
+  background-color: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
-  transform: translateX(2px);
+  transform: translateX(3px);
 }
 
+.navItem:active {
+  transform: translateX(3px) scale(0.98);
+}
+
+/* Active state with left accent bar */
 .navItem.active {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
   color: white;
-  box-shadow: 0 2px 8px rgba(183, 6, 6, 0.4);
+  box-shadow: 0 2px 12px rgba(196, 26, 26, 0.35);
+  transform: translateX(0);
+}
+
+.navItem.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  background: white;
+  border-radius: 0 2px 2px 0;
+  opacity: 0.6;
+}
+
+/* Stagger animation on load */
+.navItem:nth-child(1) { animation: staggerIn 0.3s 0.05s both; }
+.navItem:nth-child(2) { animation: staggerIn 0.3s 0.1s both; }
+.navItem:nth-child(3) { animation: staggerIn 0.3s 0.15s both; }
+.navItem:nth-child(4) { animation: staggerIn 0.3s 0.2s both; }
+.navItem:nth-child(5) { animation: staggerIn 0.3s 0.25s both; }
+.navItem:nth-child(6) { animation: staggerIn 0.3s 0.3s both; }
+.navItem:nth-child(7) { animation: staggerIn 0.3s 0.35s both; }
+.navItem:nth-child(8) { animation: staggerIn 0.3s 0.4s both; }
+
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .navIcon {
   font-size: 1.15rem;
   width: 24px;
   text-align: center;
+  transition: transform var(--transition-fast);
 }
 
+.navItem:hover .navIcon {
+  transform: scale(1.1);
+}
+
+/* ===== Footer ===== */
 .footer {
   padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--border-color);
@@ -102,7 +191,7 @@
   gap: 1rem;
   font-size: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(251, 247, 241, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .legalLink {
@@ -124,7 +213,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-warm));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,6 +221,11 @@
   font-weight: 700;
   color: white;
   flex-shrink: 0;
+  transition: box-shadow var(--transition-smooth);
+}
+
+.userInfo:hover .footerAvatar {
+  box-shadow: 0 0 12px rgba(196, 26, 26, 0.3);
 }
 
 .footerName {
@@ -155,7 +249,7 @@
   color: var(--text-muted);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0.6;
+  opacity: 0.5;
   padding-top: 0.5rem;
 }
 
@@ -164,12 +258,12 @@
   .sidebar {
     transform: translateX(-100%);
     box-shadow: none;
-    width: 280px; /* Slightly wider on mobile for better readability */
+    width: 280px;
   }
 
   .sidebarOpen {
     transform: translateX(0);
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.6);
   }
 
   .closeBtn {

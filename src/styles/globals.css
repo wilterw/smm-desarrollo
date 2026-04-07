@@ -1,5 +1,6 @@
 @import './variables.css';
 
+/* ===== Reset & Base ===== */
 * {
   box-sizing: border-box;
   padding: 0;
@@ -17,6 +18,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ===== Links ===== */
 a {
   color: inherit;
   text-decoration: none;
@@ -27,6 +29,7 @@ a:hover {
   color: var(--accent-primary);
 }
 
+/* ===== Buttons ===== */
 button {
   cursor: pointer;
   border: none;
@@ -38,16 +41,21 @@ input, textarea, select {
   font-family: inherit;
 }
 
-/* Glassmorphism Classes available globally */
+/* ===== Glassmorphism Panel ===== */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
+  transition: border-color var(--transition-smooth), box-shadow var(--transition-smooth);
 }
 
-/* Utility classes for layout */
+.glass-panel:hover {
+  border-color: var(--border-hover);
+}
+
+/* ===== Utility Classes ===== */
 .min-h-screen { min-height: 100vh; }
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
@@ -66,27 +74,79 @@ input, textarea, select {
 .m-0 { margin: 0; }
 .m-auto { margin: auto; }
 
-/* Micro-animations */
-.hover-scale {
-  transition: transform var(--transition-fast);
-}
-.hover-scale:hover {
-  transform: scale(1.02);
-}
-
-.fade-in {
-  animation: fadeIn var(--transition-normal);
-}
-
+/* ===== Global Animations ===== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Custom Scrollbar */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196, 26, 26, 0.2); }
+  50% { box-shadow: 0 0 12px 4px rgba(196, 26, 26, 0.15); }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(196, 26, 26, 0.2); }
+  50% { border-color: rgba(196, 26, 26, 0.5); }
+}
+
+@keyframes scalePress {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Reusable animation classes */
+.fade-in {
+  animation: fadeIn var(--transition-normal) both;
+}
+
+.slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.hover-lift {
+  transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.hover-scale {
+  transition: transform var(--transition-fast);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Press feedback */
+.press-scale:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease-out;
+}
+
+/* ===== Custom Scrollbar ===== */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -94,35 +154,48 @@ input, textarea, select {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* Sidebar overlay for mobile */
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* ===== Text Selection ===== */
+::selection {
+  background: var(--selection-bg);
+  color: var(--text-primary);
+}
+
+/* ===== Sidebar Overlay (mobile) ===== */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 45;
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* Responsive main content */
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0 !important;
   }
-
   .p-6 {
     padding: 1rem;
   }
 }
 
-/* Global Responsive Utilities */
 .hide-mobile { display: none !important; }
 @media (min-width: 768px) {
   .hide-mobile { display: initial !important; }
@@ -138,7 +211,7 @@ input, textarea, select {
   .flex-stack { flex-direction: row; align-items: center; }
 }
 
-/* Custom Checkbox & Radio Styles */
+/* ===== Form Element Styles ===== */
 input[type="checkbox"], input[type="radio"] {
   accent-color: var(--accent-primary);
   width: 1.1rem;
@@ -150,4 +223,13 @@ input[type="checkbox"], input[type="radio"] {
 input:focus-visible, select:focus-visible, button:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
