@@ -1,9 +1,9 @@
 :root {
   /* ===== Premium Dark Theme — Inspired by deep-black/red/amber gradient ===== */
-  --bg-primary: #0d0d0f;
-  --bg-secondary: #161618;
-  --bg-tertiary: #1e1a16;
-  --bg-elevated: #1c1c1f;
+  --bg-primary: rgba(13, 13, 15, 0.55);
+  --bg-secondary: rgba(22, 22, 24, 0.65);
+  --bg-tertiary: rgba(30, 26, 22, 0.7);
+  --bg-elevated: rgba(28, 28, 31, 0.75);
 
   --text-primary: #f0ece6;
   --text-secondary: #c8c4be;

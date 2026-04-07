@@ -5,13 +5,20 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background:
-    radial-gradient(ellipse at 0% 100%, rgba(196, 26, 26, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 50%, rgba(212, 104, 27, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% -20%, rgba(196, 26, 26, 0.1) 0%, transparent 60%),
-    var(--bg-primary);
+  background: url('/images/hero%20service.jpg') no-repeat center center fixed;
+  background-size: cover;
   position: relative;
   overflow: hidden;
+}
+
+/* Dark overlay to keep text readable */
+.container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 13, 15, 0.5);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Subtle circuit-line decoration (top-right, like reference image) */

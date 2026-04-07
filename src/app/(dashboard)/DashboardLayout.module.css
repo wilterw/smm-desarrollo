@@ -1,6 +1,20 @@
 .container {
   display: flex;
   min-height: 100vh;
+  /* The hero gradient image as a fixed, full-screen background */
+  background: url('/images/hero%20service.jpg') no-repeat center center fixed;
+  background-size: cover;
+  position: relative;
+}
+
+/* Dark overlay to keep text readable while seeing the gradient colors */
+.container::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 13, 15, 0.65);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .mainContent {
@@ -8,8 +22,10 @@
   margin-left: 260px;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Avoid flex-item overflow */
+  min-width: 0;
   transition: margin-left var(--transition-normal);
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 1024px) {
