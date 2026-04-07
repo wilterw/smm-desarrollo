@@ -267,7 +267,9 @@ export async function publishCarouselToInstagram(
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (data.error) throw new Error(`Error creando item: ${data.error.message}`);
+      if (data.error) {
+        throw new Error(`[Debug Meta] Error en item ${item.url} (isVideo: ${isVideo}). Detalle: ${JSON.stringify(data.error)}`);
+      }
       
       // Esperar a que el item esté listo (imagen o video)
       const pollResult = await waitForInstagramMediaReady(data.id, accessToken);
