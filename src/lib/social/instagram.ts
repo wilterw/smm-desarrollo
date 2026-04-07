@@ -28,6 +28,28 @@ export async function getInstagramAccountId(
 }
 
 /**
+ * Poll the Instagram Graph API to wait until a media container (especially video) is FINISHED processing.
+ */
+async function waitForInstagramMediaReady(containerId: string, accessToken: string, maxAttempts = 15): Promise<boolean> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await fetch(`${FB_GRAPH_URL}/${containerId}?fields=status_code&access_token=${accessToken}`);
+    const data = await res.json();
+    
+    if (data.status_code === "FINISHED") {
+      return true;
+    }
+    if (data.status_code === "ERROR" || data.error) {
+      console.error("[IG_POLL] Error en el procesamiento del medio:", data);
+      return false;
+    }
+    
+    // Status is IN_PROGRESS. Wait 4 seconds before polling again.
+    await new Promise(resolve => setTimeout(resolve, 4000));
+  }
+  return false; // Timed out
+}
+
+/**
  * Publish a photo to Instagram
  * Step 1: Create a media container
  * Step 2: Publish the media container
@@ -108,6 +130,12 @@ export async function publishToInstagramReels(
       return { success: false, error: errorMsg };
     }
 
+    // Esperar a que el video termine de procesarse en Instagram
+    const isReady = await waitForInstagramMediaReady(containerData.id, accessToken);
+    if (!isReady) {
+      return { success: false, error: "El contenido multimedia excedió el tiempo de procesamiento o falló en Meta." };
+    }
+
     const publishRes = await fetch(
       `${FB_GRAPH_URL}/${igAccountId}/media_publish`,
       {
@@ -164,6 +192,14 @@ export async function publishToInstagramStories(
     if (containerData.error) {
       const errorMsg = containerData.error.error_user_msg || containerData.error.message || "Unknown error creating story container";
       return { success: false, error: errorMsg };
+    }
+
+    // Esperar a que el medio esté procesado (especialmente si es video)
+    if (mediaType === "video") {
+      const isReady = await waitForInstagramMediaReady(containerData.id, accessToken);
+      if (!isReady) {
+        return { success: false, error: "El contenido multimedia excedió el tiempo de procesamiento o falló en Meta." };
+      }
     }
 
     const publishRes = await fetch(
@@ -223,6 +259,13 @@ export async function publishCarouselToInstagram(
       });
       const data = await res.json();
       if (data.error) throw new Error(`Error creando item: ${data.error.message}`);
+      
+      // Esperar si es video
+      if (isVideo) {
+        const isReady = await waitForInstagramMediaReady(data.id, accessToken);
+        if (!isReady) throw new Error("El video del carrusel excedió el tiempo de procesamiento en Meta.");
+      }
+      
       childrenIds.push(data.id);
     }
 
@@ -239,6 +282,10 @@ export async function publishCarouselToInstagram(
     });
     const carouselData = await carouselRes.json();
     if (carouselData.error) throw new Error(`Error creando carrusel: ${carouselData.error.message}`);
+
+    // Wait for the carousel container to be ready
+    const isReady = await waitForInstagramMediaReady(carouselData.id, accessToken);
+    if (!isReady) throw new Error("El carrusel excedió el tiempo de procesamiento en Meta.");
 
     // Step 3: Publish the carousel
     const publishRes = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media_publish`, {
