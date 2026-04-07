@@ -70,29 +70,22 @@ export async function POST(req: NextRequest) {
       const tags = ad.campaign.hashtags.split(",").map(t => t.trim().startsWith("#") ? t.trim() : `#${t.trim()}`).join(" ");
       rawMessage += `\n\n${tags}`;
     }
-    
-    // SMM 3.0: Aggressive URL Sanitation for Windows paths and Meta strictness
+       // SMM 4.0: URL Sanitation
     const mediaUrlsRaw = ad.mediaUrl ? ad.mediaUrl.split(",") : [];
     const mediaFullUrls = mediaUrlsRaw
       .map(url => url.trim())
       .filter(url => url.length > 0 && !url.endsWith("/"))
       .map(url => {
-        // Normalización Nuclear: Reemplazar todas las \ de Windows por /
         let cleanUrl = url.replace(/\\/g, "/");
-        // Asegurar que no empiece por / si baseUrl también termina en / (aunque ya lo limpiamos)
+        
+        // Migrate legacy /uploads/ paths to /api/media/
+        if (cleanUrl.startsWith("/uploads/")) {
+          cleanUrl = cleanUrl.replace("/uploads/", "/api/media/");
+        }
+        
         if (cleanUrl.startsWith("/")) cleanUrl = cleanUrl.substring(1);
         
         let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
-        
-        // SMM 3.3: Meta Compliance Extension Hint
-        // Añade una pista de extensión para que el crawler de Facebook/Instagram identifique el tipo de medio.
-        const connector = fullUrl.includes("?") ? "&" : "?";
-        const filename = cleanUrl.split("/").pop() || "";
-        const ext = filename.split(".").pop()?.toLowerCase();
-        
-        if (ext === "png") fullUrl += `${connector}f=.png`;
-        else if (ext === "mp4" || ad.mediaType === "video") fullUrl += `${connector}f=.mp4`;
-        else fullUrl += `${connector}f=.jpg`;
 
         return fullUrl;
       })

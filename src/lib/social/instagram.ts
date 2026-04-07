@@ -179,10 +179,10 @@ export async function publishToInstagramStories(
     }
 
     const body: any = {
+      media_type: "STORIES",
       access_token: accessToken,
     };
     if (mediaType === "video") {
-      body.media_type = "VIDEO";
       body.video_url = mediaUrl;
     } else {
       body.image_url = mediaUrl;
