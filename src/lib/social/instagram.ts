@@ -30,23 +30,28 @@ export async function getInstagramAccountId(
 /**
  * Poll the Instagram Graph API to wait until a media container (especially video) is FINISHED processing.
  */
-async function waitForInstagramMediaReady(containerId: string, accessToken: string, maxAttempts = 30): Promise<boolean> {
+async function waitForInstagramMediaReady(containerId: string, accessToken: string, maxAttempts = 30): Promise<{ success: boolean; error?: string }> {
   for (let i = 0; i < maxAttempts; i++) {
-    const res = await fetch(`${FB_GRAPH_URL}/${containerId}?fields=status_code&access_token=${accessToken}`);
+    const res = await fetch(`${FB_GRAPH_URL}/${containerId}?fields=status_code,status&access_token=${accessToken}`);
     const data = await res.json();
     
     if (data.status_code === "FINISHED") {
-      return true;
+      return { success: true };
     }
-    if (data.status_code === "ERROR" || data.error) {
-      console.error("[IG_POLL] Error en el procesamiento del medio:", data);
-      return false;
+    if (data.status_code === "ERROR") {
+      console.error("[IG_POLL] Error status_code:", data);
+      // Meta returns further details in the `status` field sometimes
+      const errorMessage = data.status || "Meta API rechazó el video por formato inválido o URL inaccesible.";
+      return { success: false, error: `Error de Meta API: ${errorMessage}` };
+    }
+    if (data.error) {
+      return { success: false, error: data.error.message || "Error al consultar estado" };
     }
     
     // Status is IN_PROGRESS. Wait 4 seconds before polling again.
     await new Promise(resolve => setTimeout(resolve, 4000));
   }
-  return false; // Timed out
+  return { success: false, error: "El procesamiento del video excedió los 2 minutos límite de Meta." };
 }
 
 /**
@@ -131,9 +136,9 @@ export async function publishToInstagramReels(
     }
 
     // Esperar a que el video termine de procesarse en Instagram
-    const isReady = await waitForInstagramMediaReady(containerData.id, accessToken);
-    if (!isReady) {
-      return { success: false, error: "El contenido multimedia excedió el tiempo de procesamiento o falló en Meta." };
+    const pollResult = await waitForInstagramMediaReady(containerData.id, accessToken);
+    if (!pollResult.success) {
+      return { success: false, error: pollResult.error || "Fallo en validación multimedia" };
     }
 
     const publishRes = await fetch(
@@ -196,9 +201,9 @@ export async function publishToInstagramStories(
 
     // Esperar a que el medio esté procesado (especialmente si es video)
     if (mediaType === "video") {
-      const isReady = await waitForInstagramMediaReady(containerData.id, accessToken);
-      if (!isReady) {
-        return { success: false, error: "El contenido multimedia excedió el tiempo de procesamiento o falló en Meta." };
+      const pollResult = await waitForInstagramMediaReady(containerData.id, accessToken);
+      if (!pollResult.success) {
+        return { success: false, error: pollResult.error || "Fallo en validación multimedia" };
       }
     }
 
@@ -262,8 +267,8 @@ export async function publishCarouselToInstagram(
       
       // Esperar si es video
       if (isVideo) {
-        const isReady = await waitForInstagramMediaReady(data.id, accessToken);
-        if (!isReady) throw new Error("El video del carrusel excedió el tiempo de procesamiento en Meta.");
+        const pollResult = await waitForInstagramMediaReady(data.id, accessToken);
+        if (!pollResult.success) throw new Error(pollResult.error || "Fallo validando video del carrusel");
       }
       
       childrenIds.push(data.id);
@@ -284,8 +289,8 @@ export async function publishCarouselToInstagram(
     if (carouselData.error) throw new Error(`Error creando carrusel: ${carouselData.error.message}`);
 
     // Wait for the carousel container to be ready
-    const isReady = await waitForInstagramMediaReady(carouselData.id, accessToken);
-    if (!isReady) throw new Error("El carrusel excedió el tiempo de procesamiento en Meta.");
+    const pollResultCarousel = await waitForInstagramMediaReady(carouselData.id, accessToken);
+    if (!pollResultCarousel.success) throw new Error(pollResultCarousel.error || "Fallo validando carrusel principal");
 
     // Step 3: Publish the carousel
     const publishRes = await fetch(`${FB_GRAPH_URL}/${igAccountId}/media_publish`, {

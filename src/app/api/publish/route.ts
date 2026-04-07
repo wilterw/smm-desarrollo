@@ -59,16 +59,10 @@ export async function POST(req: NextRequest) {
 
     const results: any[] = [];
     const protocol = req.headers.get("x-forwarded-proto") || "http";
-    const host = req.headers.get("host") || "localhost:3000";
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost:3000";
     
-    // SMM 3.0: High-reliability BaseURL detection
-    let baseUrl = process.env.NEXTAUTH_URL;
-    if (!baseUrl || baseUrl.includes("localhost")) {
-      // If we are on econos.io, we MUST force HTTPS for Meta to reach us
-      if (host.includes("econos.io")) baseUrl = `https://${host}`;
-      else baseUrl = `${protocol}://${host}`;
-    }
-    
+    // SMM 4.0: BaseURL — uses NEXTAUTH_URL from env (set to https://smm.econos.io in prod)
+    let baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
     if (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
     
     let rawMessage = `${ad.title}\n\n${ad.description || ""}`;

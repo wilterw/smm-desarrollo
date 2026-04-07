@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
     const absoluteUrl = `${baseUrl}/uploads/${filename}`;
 
     return NextResponse.json({
-      url: `/uploads/${filename}`,
-      relativeUrl: `/uploads/${filename}`,
+      url: `/api/media/${filename}`,
+      relativeUrl: `/api/media/${filename}`,
       mediaType,
       originalName: file.name,
       size: file.size,
