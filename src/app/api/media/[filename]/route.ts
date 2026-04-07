@@ -22,17 +22,20 @@ export async function GET(
 
     const fileBuffer = await readFile(filepath);
     
+    const ext = cleanFilename.split(".").pop()?.toLowerCase() || "";
     let contentType = "application/octet-stream";
-    if (cleanFilename.endsWith(".mp4")) contentType = "video/mp4";
-    else if (cleanFilename.endsWith(".webm")) contentType = "video/webm";
-    else if (cleanFilename.endsWith(".png")) contentType = "image/png";
-    else if (cleanFilename.endsWith(".jpg") || cleanFilename.endsWith(".jpeg")) contentType = "image/jpeg";
-    else if (cleanFilename.endsWith(".gif")) contentType = "image/gif";
+    if (ext === "mp4") contentType = "video/mp4";
+    else if (ext === "webm") contentType = "video/webm";
+    else if (ext === "png") contentType = "image/png";
+    else if (ext === "jpg" || ext === "jpeg") contentType = "image/jpeg";
+    else if (ext === "gif") contentType = "image/gif";
 
     return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
         "Content-Type": contentType,
+        "Content-Length": fileBuffer.byteLength.toString(),
+        "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=31536000",
       },
     });
