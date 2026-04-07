@@ -297,7 +297,7 @@ export async function POST(req: NextRequest) {
           if (destination === "feed") {
             if (mediaFullUrls.length > 1) {
               const items = mediaFullUrls.map(url => {
-                const isVideo = url.includes("f=.mp4") || url.toLowerCase().endsWith(".mp4");
+                const isVideo = url.toLowerCase().includes(".mp4") || url.toLowerCase().includes(".webm") || url.toLowerCase().includes(".mov");
                 return { url, type: isVideo ? "video" : "image" } as const;
               });
               const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items as { url: string; type: "image" | "video" }[], message);

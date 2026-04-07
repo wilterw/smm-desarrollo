@@ -258,6 +258,7 @@ export async function publishCarouselToInstagram(
         body.media_type = "VIDEO";
         body.video_url = item.url;
       } else {
+        body.media_type = "IMAGE";
         body.image_url = item.url;
       }
 
