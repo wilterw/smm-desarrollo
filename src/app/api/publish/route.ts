@@ -309,14 +309,23 @@ export async function POST(req: NextRequest) {
           
           if (destination === "feed") {
             if (mediaFullUrls.length > 1) {
-              const items = mediaFullUrls.map(url => ({ url, type: ad.mediaType as any }));
-              const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items, message);
+              const items = mediaFullUrls.map(url => {
+                const isVideo = url.includes("f=.mp4") || url.toLowerCase().endsWith(".mp4");
+                return { url, type: isVideo ? "video" : "image" } as const;
+              });
+              const result = await publishCarouselToInstagram(account.igAccountId, account.accessToken, items as { url: string; type: "image" | "video" }[], message);
               if (!result.success) throw new Error(result.error);
               postId = result.postId;
             } else {
-              const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaUrl, message);
-              if (!result.success) throw new Error(result.error);
-              postId = result.postId;
+              if (ad.mediaType === "video") {
+                const result = await publishToInstagramReels(account.igAccountId, account.accessToken, mediaUrl, message);
+                if (!result.success) throw new Error(result.error);
+                postId = result.postId;
+              } else {
+                const result = await publishToInstagram(account.igAccountId, account.accessToken, mediaUrl, message);
+                if (!result.success) throw new Error(result.error);
+                postId = result.postId;
+              }
             }
           } else if (destination === "reels") {
             if (ad.mediaType !== "video") throw new Error("Reels require a video file");
