@@ -84,6 +84,12 @@ export async function publishToInstagram(
 
     const containerId = containerData.id;
 
+    // Esperar a que el contenedor esté listo
+    const pollResult = await waitForInstagramMediaReady(containerId, accessToken);
+    if (!pollResult.success) {
+      return { success: false, error: pollResult.error || "Fallo en validación multimedia" };
+    }
+
     // Step 2: Publish container
     const publishRes = await fetch(
       `${FB_GRAPH_URL}/${igAccountId}/media_publish`,
@@ -199,12 +205,10 @@ export async function publishToInstagramStories(
       return { success: false, error: errorMsg };
     }
 
-    // Esperar a que el medio esté procesado (especialmente si es video)
-    if (mediaType === "video") {
-      const pollResult = await waitForInstagramMediaReady(containerData.id, accessToken);
-      if (!pollResult.success) {
-        return { success: false, error: pollResult.error || "Fallo en validación multimedia" };
-      }
+    // Esperar a que el medio esté procesado (imágenes y videos)
+    const pollResult = await waitForInstagramMediaReady(containerData.id, accessToken);
+    if (!pollResult.success) {
+      return { success: false, error: pollResult.error || "Fallo en validación multimedia" };
     }
 
     const publishRes = await fetch(
@@ -265,11 +269,9 @@ export async function publishCarouselToInstagram(
       const data = await res.json();
       if (data.error) throw new Error(`Error creando item: ${data.error.message}`);
       
-      // Esperar si es video
-      if (isVideo) {
-        const pollResult = await waitForInstagramMediaReady(data.id, accessToken);
-        if (!pollResult.success) throw new Error(pollResult.error || "Fallo validando video del carrusel");
-      }
+      // Esperar a que el item esté listo (imagen o video)
+      const pollResult = await waitForInstagramMediaReady(data.id, accessToken);
+      if (!pollResult.success) throw new Error(pollResult.error || "Fallo validando item del carrusel");
       
       childrenIds.push(data.id);
     }
