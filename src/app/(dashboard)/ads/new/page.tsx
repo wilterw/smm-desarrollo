@@ -269,9 +269,18 @@ export default function NewAdPage() {
       <div className={styles.mainLayout}>
         {/* LEFT NAV: The "Tree" */}
         <div className={styles.leftNav}>
-          <div className={styles.navIconWrapper} title="Campaña">🚀</div>
-          <div className={styles.navIconWrapper} title="Conjunto de Anuncios">🎯</div>
-          <div className={`${styles.navIconWrapper} ${styles.navIconActive}`} title="Anuncio">🖼️</div>
+          <div className={styles.navIconWrapper} title="Campaña">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-1.9"/><path d="m3.1 7.1 1.9 1.9"/><path d="M5 16h14"/><path d="M5 8h14"/><path d="m19 21 1.9-1.9"/><path d="m19.1 7.1 1.9 1.9"/><path d="M9 12h6"/><path d="M12 9v6"/></svg>
+             <span className={styles.navIconLabel}>Campaña</span>
+          </div>
+          <div className={styles.navIconWrapper} title="Conjunto de Anuncios">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 3v18"/><path d="M3 7h18"/><path d="M3 17h18"/><path d="M17 3v18"/></svg>
+             <span className={styles.navIconLabel}>Conjunto</span>
+          </div>
+          <div className={`${styles.navIconWrapper} ${styles.navIconActive}`} title="Anuncio">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+             <span className={styles.navIconLabel}>Anuncio</span>
+          </div>
         </div>
 
         {/* CENTER AREA: Form Cards */}

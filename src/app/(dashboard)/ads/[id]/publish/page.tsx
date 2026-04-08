@@ -715,29 +715,29 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       <div className={styles.mainLayout} style={{ gridTemplateColumns: (step === 5 && publishType === 'ads' && platform === 'facebook') ? '64px 1fr' : undefined }}>
         <div className={styles.leftNav}>
           <div className={`${styles.navIconWrapper} ${step >= 1 ? styles.navIconActive : ''}`} onClick={() => setStep(1)}>
-            <span>📱</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>
             <span className={styles.navIconLabel}>Red</span>
           </div>
           <div className={`${styles.navIconWrapper} ${step >= 2 ? styles.navIconActive : ''}`} onClick={() => setStep(2)}>
-            <span>👤</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span className={styles.navIconLabel}>Titular</span>
           </div>
           <div className={`${styles.navIconWrapper} ${step >= 3 ? styles.navIconActive : ''}`} onClick={() => setStep(3)}>
-            <span>📁</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
             <span className={styles.navIconLabel}>Tipo</span>
           </div>
           <div className={`${styles.navIconWrapper} ${step >= 4 ? styles.navIconActive : ''}`} onClick={() => setStep(4)}>
-            <span>🚩</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
             <span className={styles.navIconLabel}>Cuenta</span>
           </div>
           {publishType === 'ads' && platform === 'facebook' && (
             <div className={`${styles.navIconWrapper} ${step >= 5 ? styles.navIconActive : ''}`} onClick={() => setStep(5)}>
-              <span>⚙️</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
               <span className={styles.navIconLabel}>Segmentar</span>
             </div>
           )}
           <div className={`${styles.navIconWrapper} ${step === (publishType === 'ads' && platform === 'facebook' ? 6 : 5) ? styles.navIconActive : ''}`} onClick={() => setStep(publishType === 'ads' && platform === 'facebook' ? 6 : 5)}>
-            <span>🚀</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
             <span className={styles.navIconLabel}>Publicar</span>
           </div>
         </div>

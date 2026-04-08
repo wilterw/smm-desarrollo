@@ -22,8 +22,20 @@
 }
 
 @media (max-width: 768px) {
-  .mainLayout { grid-template-columns: 1fr !important; }
-  .leftNav { display: none; }
+  .mainLayout { 
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none !important;
+  }
+  .leftNav { 
+    flex-direction: row !important;
+    padding: 0.75rem !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color);
+    width: 100%;
+    justify-content: center;
+    gap: 1.5rem !important;
+  }
   .centerArea { padding: 1rem !important; }
 }
 
@@ -57,7 +69,27 @@
 .navIconActive {
   background: var(--selection-bg);
   color: var(--accent-primary); /* Econos Red */
-  box-shadow: 0 0 0 1px var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 0 15px var(--accent-glow);
+  position: relative;
+}
+
+.navIconActive::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 14px;
+  border: 1px solid var(--accent-primary);
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+@keyframes glowPulse {
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+  100% { opacity: 0.3; transform: scale(1); }
 }
 
 .navIconLabel {
