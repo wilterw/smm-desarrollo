@@ -41,7 +41,19 @@
     flex-direction: column;
   }
   .leftNav {
-    display: none;
+    padding: 0.5rem;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1.5rem;
+    border-right: none;
+    border-bottom: 1px solid var(--meta-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .navIconWrapper {
+    width: 36px;
+    height: 36px;
   }
 }
 

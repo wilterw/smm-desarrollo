@@ -12,7 +12,11 @@
   left: 0;
   top: 0;
   z-index: 50;
-  transition: transform var(--transition-normal);
+  transition: transform var(--transition-normal), width var(--transition-normal);
+}
+
+.sidebarCollapsed {
+  width: 80px;
 }
 
 /* Subtle top-edge glow */
@@ -28,13 +32,24 @@
 }
 
 .logoContainer {
-  height: 100px;
-  display: flex;
-  align-items: center;
-  padding: 0 1.5rem;
   border-bottom: 1px solid var(--border-color);
+  justify-content: center;
   gap: 0.5rem;
   position: relative;
+  overflow: hidden;
+}
+
+.sidebarCollapsed .logoContainer {
+  padding: 0;
+}
+
+.iconLogo {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Gradient line at bottom of logo area */
@@ -104,6 +119,12 @@
   transition: all var(--transition-smooth);
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebarCollapsed .navItem {
+  justify-content: center;
+  padding: 0.7rem 0;
 }
 
 /* Subtle hover background sweep */
@@ -243,6 +264,32 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 160px;
+}
+
+.collapseToggle {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 0.4rem;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  width: 100%;
+}
+
+.collapseToggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.sidebarCollapsed .footer {
+  padding: 1.25rem 0.5rem;
+  align-items: center;
+}
+
+.sidebarCollapsed .userInfo {
+  justify-content: center;
 }
 
 .versionTag {

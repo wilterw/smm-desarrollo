@@ -28,6 +28,10 @@
   z-index: 1;
 }
 
+.mainContentCollapsed {
+  margin-left: 80px;
+}
+
 @media (max-width: 1024px) {
   .mainContent {
     margin-left: 0;

@@ -11,6 +11,21 @@ export default function DashboardLayoutClient({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sidebar-collapsed");
+      return saved === "true";
+    }
+    return false;
+  });
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  };
 
   return (
     <div className={styles.container}>
@@ -23,10 +38,18 @@ export default function DashboardLayoutClient({
         />
       )}
       
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+        isCollapsed={isCollapsed}
+        onToggleCollapse={toggleCollapse}
+      />
       
-      <div className={`${styles.mainContent} main-content`}>
-        <Header onMenuToggle={() => setSidebarOpen((p) => !p)} />
+      <div className={`${styles.mainContent} ${isCollapsed ? styles.mainContentCollapsed : ""} main-content`}>
+        <Header 
+          onMenuToggle={() => setSidebarOpen((p) => !p)} 
+          isCollapsed={isCollapsed}
+        />
         <main className={styles.pageContainer}>
           {children}
         </main>

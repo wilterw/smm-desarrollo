@@ -44,6 +44,10 @@
   transition: all var(--transition-smooth);
 }
 
+.menuBtnVisible {
+  display: flex !important;
+}
+
 .menuBtn:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: scale(1.05);

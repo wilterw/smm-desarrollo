@@ -7,9 +7,10 @@ import { usePathname } from "next/navigation";
 
 type HeaderProps = {
   onMenuToggle?: () => void;
+  isCollapsed?: boolean;
 };
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, isCollapsed }: HeaderProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
   
@@ -29,7 +30,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
     <header className={styles.header}>
       <div className={styles.left}>
         {onMenuToggle && (
-          <button className={styles.menuBtn} onClick={onMenuToggle} aria-label="Toggle menu">
+          <button 
+            className={`${styles.menuBtn} ${isCollapsed ? styles.menuBtnVisible : ""}`} 
+            onClick={onMenuToggle} 
+            aria-label="Toggle menu"
+          >
             <span className={styles.menuIcon}>☰</span>
           </button>
         )}

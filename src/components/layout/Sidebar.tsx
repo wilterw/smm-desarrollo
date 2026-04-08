@@ -21,23 +21,32 @@ const adminItems = [
 type SidebarProps = {
   isOpen?: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   
   const isAdmin = session?.user?.role === "SUPER_ADMIN" || session?.user?.role === "ADMIN";
 
   const handleNavClick = () => {
-    // Close sidebar on mobile after clicking a link
     if (onClose) onClose();
   };
 
   return (
-    <aside className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
+    <aside className={`
+      ${styles.sidebar} 
+      ${isOpen ? styles.sidebarOpen : ""} 
+      ${isCollapsed ? styles.sidebarCollapsed : ""}
+    `}>
       <div className={styles.logoContainer}>
-        <Image src="/images/logo-smm.png" alt="SMM Logo" width={210} height={60} className={styles.smmLogo} priority />
+        {isCollapsed ? (
+          <Image src="/images/logo-icon.png" alt="Icon" width={32} height={32} className={styles.iconLogo} />
+        ) : (
+          <Image src="/images/logo-smm.png" alt="SMM Logo" width={210} height={60} className={styles.smmLogo} priority />
+        )}
         {onClose && (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close menu">
             ✕
@@ -46,9 +55,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
       
       <nav className={styles.nav}>
-        <div className={styles.navSection}>
-          General
-        </div>
+        {!isCollapsed && <div className={styles.navSection}>General</div>}
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
           const isDashActive = item.href === "/" && pathname === "/";
@@ -58,18 +65,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               href={item.href}
               className={`${styles.navItem} ${isActive || isDashActive ? styles.active : ""}`}
               onClick={handleNavClick}
+              title={isCollapsed ? item.name : ""}
             >
               <span className={styles.navIcon}>{item.icon}</span>
-              {item.name}
+              {!isCollapsed && <span>{item.name}</span>}
             </Link>
           );
         })}
 
         {isAdmin && (
           <>
-            <div className={styles.navSection} style={{ marginTop: "1.5rem" }}>
-              Administración
-            </div>
+            {!isCollapsed && (
+              <div className={styles.navSection} style={{ marginTop: "1.5rem" }}>
+                Administración
+              </div>
+            )}
             {adminItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return (
@@ -78,9 +88,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   href={item.href}
                   className={`${styles.navItem} ${isActive ? styles.active : ""}`}
                   onClick={handleNavClick}
+                  title={isCollapsed ? item.name : ""}
                 >
                   <span className={styles.navIcon}>{item.icon}</span>
-                  {item.name}
+                  {!isCollapsed && <span>{item.name}</span>}
                 </Link>
               );
             })}
@@ -89,23 +100,39 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </nav>
 
       <div className={styles.footer}>
-        <div className={styles.legalLinks}>
-          <Link href="/privacy-policy" className={styles.legalLink} onClick={handleNavClick}>
-            Política de Privacidad
-          </Link>
-        </div>
+        {!isCollapsed && (
+          <div className={styles.legalLinks}>
+            <Link href="/privacy-policy" className={styles.legalLink} onClick={handleNavClick}>
+              Política de Privacidad
+            </Link>
+          </div>
+        )}
         <div className={styles.userInfo}>
           <div className={styles.footerAvatar}>
             {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
           </div>
-          <div>
-            <div className={styles.footerName}>
-              {session?.user?.name || "Usuario"}
+          {!isCollapsed && (
+            <div>
+              <div className={styles.footerName}>
+                {session?.user?.name || "Usuario"}
+              </div>
+              <div className={styles.footerEmail}>{session?.user?.email}</div>
             </div>
-            <div className={styles.footerEmail}>{session?.user?.email}</div>
-          </div>
+          )}
         </div>
-        <div className={styles.versionTag}>V2.9</div>
+        
+        {/* Toggle Collapse Button (PC Only) */}
+        {!isOpen && onToggleCollapse && (
+          <button 
+            className={styles.collapseToggle} 
+            onClick={onToggleCollapse}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? "→" : "← Colapsar"}
+          </button>
+        )}
+
+        {!isCollapsed && <div className={styles.versionTag}>V2.9</div>}
       </div>
     </aside>
   );
