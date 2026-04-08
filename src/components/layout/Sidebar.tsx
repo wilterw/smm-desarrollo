@@ -42,11 +42,22 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
       ${isCollapsed ? styles.sidebarCollapsed : ""}
     `}>
       <div className={styles.logoContainer}>
+        {onToggleCollapse && (
+          <button 
+            className={styles.sidebarToggleBtn} 
+            onClick={onToggleCollapse}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? "→" : "←"}
+          </button>
+        )}
+        
         {isCollapsed ? (
           <Image src="/images/logo-icon.png" alt="Icon" width={32} height={32} className={styles.iconLogo} />
         ) : (
-          <Image src="/images/logo-smm.png" alt="SMM Logo" width={210} height={60} className={styles.smmLogo} priority />
+          <Image src="/images/logo-smm.png" alt="SMM Logo" width={180} height={50} className={styles.smmLogo} priority />
         )}
+        
         {onClose && (
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close menu">
             ✕
@@ -120,17 +131,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
             </div>
           )}
         </div>
-        
-        {/* Toggle Collapse Button (PC Only) */}
-        {!isOpen && onToggleCollapse && (
-          <button 
-            className={styles.collapseToggle} 
-            onClick={onToggleCollapse}
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? "→" : "← Colapsar"}
-          </button>
-        )}
 
         {!isCollapsed && <div className={styles.versionTag}>V2.9</div>}
       </div>

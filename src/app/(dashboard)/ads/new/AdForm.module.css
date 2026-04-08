@@ -18,54 +18,53 @@
 }
 
 /* FB Ads Manager Style 3-Column Layout */
+/* Horizontal Flow Layout (Meta Ads Style) */
 .mainLayout {
-  display: grid;
-  grid-template-columns: 64px 1fr 420px;
-  flex: 1; /* This is key to let bottomBar stay at the bottom */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 0;
   width: 100%;
 }
 
+.contentRow {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  flex: 1;
+  min-height: 0;
+}
+
 @media (max-width: 1024px) {
-  .mainLayout {
-    grid-template-columns: 64px 1fr;
-  }
-  .rightSidebar {
-    display: none; /* Hide preview on smaller screens or stack it */
+  .contentRow {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .mainLayout {
-    display: flex;
-    flex-direction: column;
-  }
   .leftNav {
-    padding: 0.5rem;
-    flex-direction: row;
-    justify-content: center;
     gap: 1.5rem;
-    border-right: none;
-    border-bottom: 1px solid var(--meta-border);
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    padding: 0.5rem;
   }
   .navIconWrapper {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
   }
 }
 
 /* Left Navigation icons (The "Tree") */
+/* Top Navigation icons (The "Tree") - Now Horizontal */
 .leftNav {
   background: var(--meta-sidebar);
-  border-right: 1px solid var(--meta-border);
+  border-bottom: 1px solid var(--meta-border);
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Force horizontal */
   align-items: center;
-  padding-top: 1.5rem;
-  gap: 2.5rem; /* More intentional gap for 'tree' view */
+  justify-content: center;
+  padding: 0.75rem;
+  gap: 2rem;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .navIconWrapper {
