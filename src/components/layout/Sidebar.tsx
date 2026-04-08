@@ -53,7 +53,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         )}
         
         {isCollapsed ? (
-          <Image src="/images/logo-icon.png" alt="Icon" width={32} height={32} className={styles.iconLogo} />
+          <Image src="/images/solo smm.png" alt="Icon" width={40} height={40} className={styles.iconLogo} />
         ) : (
           <Image src="/images/logo-smm.png" alt="SMM Logo" width={180} height={50} className={styles.smmLogo} priority />
         )}
