@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./Publish.module.css";
 
 type AdsConfig = {
@@ -227,12 +228,14 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const renderPlatformSelection = () => (
     <div className={styles.destinationGrid}>
       {[
-        { id: 'facebook', name: 'Facebook', icon: '🔵', desc: 'Muro y Fanpages de FB' },
-        { id: 'instagram', name: 'Instagram', icon: '📸', desc: 'Fotos y Reels de IG' },
-        { id: 'youtube', name: 'YouTube', icon: '🔴', desc: 'Videos y Shorts de YT' }
+        { id: 'facebook', name: 'Facebook', logo: '/images/facebook.png', desc: 'Muro y Fanpages de FB' },
+        { id: 'instagram', name: 'Instagram', logo: '/images/instagram.png', desc: 'Fotos y Reels de IG' },
+        { id: 'youtube', name: 'YouTube', logo: '/images/youtube.png', desc: 'Videos y Shorts de YT' }
       ].map(p => (
         <div key={p.id} className={`${styles.destinationCard} ${platform === p.id ? styles.destinationCardActive : ''}`} onClick={() => { setPlatform(p.id as any); setError(null); setStep(2); }}>
-          <div className={styles.destinationIcon}>{p.icon}</div>
+          <div className={styles.destinationIcon}>
+            <Image src={p.logo} alt={p.name} width={32} height={32} style={{ objectFit: 'contain' }} />
+          </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <span style={{ fontWeight: 700 }}>{p.name}</span>
             <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{p.desc}</span>
@@ -715,7 +718,17 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       <div className={styles.mainLayout} style={{ gridTemplateColumns: (step === 5 && publishType === 'ads' && platform === 'facebook') ? '64px 1fr' : undefined }}>
         <div className={styles.leftNav}>
           <div className={`${styles.navIconWrapper} ${step >= 1 ? styles.navIconActive : ''}`} onClick={() => setStep(1)}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>
+            {platform ? (
+              <Image 
+                src={`/images/${platform}.png`} 
+                alt={platform} 
+                width={24} 
+                height={24} 
+                style={{ objectFit: 'contain', filter: step >= 1 ? 'none' : 'grayscale(1) opacity(0.5)' }} 
+              />
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>
+            )}
             <span className={styles.navIconLabel}>Red</span>
           </div>
           <div className={`${styles.navIconWrapper} ${step >= 2 ? styles.navIconActive : ''}`} onClick={() => setStep(2)}>

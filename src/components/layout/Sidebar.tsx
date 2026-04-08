@@ -42,15 +42,18 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
       ${isCollapsed ? styles.sidebarCollapsed : ""}
     `}>
       <div className={styles.logoContainer}>
-        {onToggleCollapse && (
-          <button 
-            className={styles.sidebarToggleBtn} 
-            onClick={onToggleCollapse}
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? "→" : "←"}
-          </button>
-        )}
+        {/* Only show collapse toggle in PC/Desktop */}
+        <div className={styles.pcOnly}>
+          {onToggleCollapse && (
+            <button 
+              className={styles.sidebarToggleBtn} 
+              onClick={onToggleCollapse}
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isCollapsed ? "→" : "←"}
+            </button>
+          )}
+        </div>
         
         {isCollapsed ? (
           <Image src="/images/solo smm.png" alt="Icon" width={40} height={40} className={styles.iconLogo} />
