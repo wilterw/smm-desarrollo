@@ -412,21 +412,21 @@ export default function EditAdPage({ params }: { params: Promise<{ id: string }>
                   className={`${styles.previewTab} ${previewTab === "facebook" ? styles.previewTabActive : ""}`} 
                   onClick={() => setPreviewTab("facebook")}
                 >
-                  📘 Facebook
+                  <img src="/images/facebook.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> Facebook
                 </button>
                 <button 
                   type="button" 
                   className={`${styles.previewTab} ${previewTab === "instagram" ? styles.previewTabActive : ""}`} 
                   onClick={() => setPreviewTab("instagram")}
                 >
-                  📷 Instagram
+                  <img src="/images/instagram.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> Instagram
                 </button>
                 <button 
                   type="button" 
                   className={`${styles.previewTab} ${previewTab === "youtube" ? styles.previewTabActive : ""}`} 
                   onClick={() => setPreviewTab("youtube")}
                 >
-                  🎬 YouTube
+                  <img src="/images/youtube.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> YouTube
                 </button>
               </div>
 

@@ -24,7 +24,7 @@ const providers = [
     key: "facebook",
     name: "Facebook",
     desc: "Publica en Pages y accede a Instagram",
-    icon: "📘",
+    iconSrc: "/images/facebook.png",
     iconClass: styles.providerFb,
     btnClass: styles.connectBtnFb,
   },
@@ -32,7 +32,7 @@ const providers = [
     key: "instagram",
     name: "Instagram",
     desc: "Requiere cuenta de Facebook vinculada",
-    icon: "📷",
+    iconSrc: "/images/instagram.png",
     iconClass: styles.providerIg,
     btnClass: styles.connectBtnIg,
   },
@@ -40,7 +40,7 @@ const providers = [
     key: "youtube",
     name: "YouTube",
     desc: "Sube videos directamente a tu canal",
-    icon: "🎬",
+    iconSrc: "/images/youtube.png",
     iconClass: styles.providerYt,
     btnClass: styles.connectBtnYt,
   },
@@ -155,7 +155,7 @@ export default function AccountsPage() {
             <div key={p.key} className={`glass-panel ${styles.providerCard}`}>
               <div className={styles.providerHeader}>
                 <div className={`${styles.providerIcon} ${p.iconClass}`}>
-                  {p.icon}
+                  <img src={p.iconSrc} alt={p.name} style={{ width: 32, height: 32, objectFit: "contain" }} />
                 </div>
                 <div>
                   <div className={styles.providerName}>{p.name}</div>

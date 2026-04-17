@@ -455,9 +455,9 @@ export default function NewAdPage() {
             </div>
 
             <div className={styles.previewTabs}>
-              <div className={`${styles.previewTab} ${previewTab === 'facebook' ? styles.previewTabActive : ''}`} onClick={() => setPreviewTab('facebook')}>Facebook</div>
-              <div className={`${styles.previewTab} ${previewTab === 'instagram' ? styles.previewTabActive : ''}`} onClick={() => setPreviewTab('instagram')}>Instagram</div>
-              <div className={`${styles.previewTab} ${previewTab === 'youtube' ? styles.previewTabActive : ''}`} onClick={() => setPreviewTab('youtube')}>YouTube</div>
+              <div className={`${styles.previewTab} ${previewTab === 'facebook' ? styles.previewTabActive : ''}`} onClick={() => setPreviewTab('facebook')}><img src="/images/facebook.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> Facebook</div>
+              <div className={`${styles.previewTab} ${previewTab === 'instagram' ? styles.previewTabActive : ''}`} onClick={() => setPreviewTab('instagram')}><img src="/images/instagram.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> Instagram</div>
+              <div className={`${styles.previewTab} ${previewTab === 'youtube' ? styles.previewTabActive : ''}`} onClick={() => setPreviewTab('youtube')}><img src="/images/youtube.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} /> YouTube</div>
             </div>
 
             <div style={{ marginTop: "1rem" }}>

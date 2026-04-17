@@ -176,9 +176,9 @@ export default function DashboardHome() {
   const maxMetrics = getMaxMetrics();
 
   const getPlatformIcon = (platform: string) => {
-    if (platform === "facebook") return "📘";
-    if (platform === "instagram") return "📷";
-    if (platform === "youtube") return "🎬";
+    if (platform === "facebook") return <img src="/images/facebook.png" alt="Facebook" style={{ width: 20, height: 20, objectFit: "contain" }} />;
+    if (platform === "instagram") return <img src="/images/instagram.png" alt="Instagram" style={{ width: 20, height: 20, objectFit: "contain" }} />;
+    if (platform === "youtube") return <img src="/images/youtube.png" alt="YouTube" style={{ width: 20, height: 20, objectFit: "contain" }} />;
     return "🌐";
   };
 
@@ -479,21 +479,21 @@ export default function DashboardHome() {
         <div className={styles.sectionTitle}>Distribución por Plataforma</div>
         <div className={styles.platformGrid}>
           <div className={`glass-panel ${styles.platformCard}`}>
-            <div className={styles.platformIcon}>📘</div>
+            <div className={styles.platformIcon}><img src="/images/facebook.png" alt="Facebook" style={{ width: 28, height: 28, objectFit: "contain" }} /></div>
             <div className={styles.platformName}>Facebook</div>
             <div className={`${styles.platformCount} ${styles.platformFb}`}>
               {data.platformDistribution.facebook || 0}
             </div>
           </div>
           <div className={`glass-panel ${styles.platformCard}`}>
-            <div className={styles.platformIcon}>📷</div>
+            <div className={styles.platformIcon}><img src="/images/instagram.png" alt="Instagram" style={{ width: 28, height: 28, objectFit: "contain" }} /></div>
             <div className={styles.platformName}>Instagram</div>
             <div className={`${styles.platformCount} ${styles.platformIg}`}>
               {data.platformDistribution.instagram || 0}
             </div>
           </div>
           <div className={`glass-panel ${styles.platformCard}`}>
-            <div className={styles.platformIcon}>🎬</div>
+            <div className={styles.platformIcon}><img src="/images/youtube.png" alt="YouTube" style={{ width: 28, height: 28, objectFit: "contain" }} /></div>
             <div className={styles.platformName}>YouTube</div>
             <div className={`${styles.platformCount} ${styles.platformYt}`}>
               {data.platformDistribution.youtube || 0}

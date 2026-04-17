@@ -89,6 +89,8 @@ async function scrapeMHEstate(propertyId: string, originalUrl: string) {
 
   const descrip  = getXmlTag(block, "descrip1") || getXmlTag(block, "descripcion") || "";
   const numfotos = parseInt(getXmlTag(block, "numfotos") || "0", 10) || 15;
+  const rawPrice = getXmlTag(block, "precioinmo") || getXmlTag(block, "precioalq") || getXmlTag(block, "precio") || getXmlTag(block, "precio_venta") || "";
+  const price = rawPrice.replace(/[^0-9.]/g, ""); // Extrae solo los numeros
 
   // Clean and truncate description: first meaningful paragraph only (~280 chars)
   let cleanDescrip = descrip.replace(/\s+/g, " ").replace(/~~/g, " ").trim();
@@ -117,6 +119,8 @@ async function scrapeMHEstate(propertyId: string, originalUrl: string) {
   return {
     title: cleanTitle(displayTitle).substring(0, 100),
     description: cleanDescrip,
+    price,
+    city: ciudad,
     images,
     hashtags,
     suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",
@@ -193,9 +197,14 @@ async function scrapeGeneric(url: string) {
 
   const hashtags = generateHashtags([title]);
 
+  const priceTag = getMeta("product:price:amount") || "";
+  const cityTag = getMeta("og:locality") || getMeta("place:location:locality") || "";
+
   return {
     title: title.substring(0, 100),
     description: description.substring(0, 500),
+    price: priceTag,
+    city: cityTag,
     images,
     hashtags,
     suggestedComment: "📍 Consulta detalles y agenda tu visita. ¡Te asesoramos sin compromiso!",

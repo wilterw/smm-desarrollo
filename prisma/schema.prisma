@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -184,3 +184,66 @@ model DataDeletionRequest {
   createdAt        DateTime @default(now())
 }
 
+/// ============================================
+/// MÓDULO: Catálogo Inmobiliario (Advantage+)
+/// ============================================
+
+model PropertyCatalog {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  metaCatalogId   String?
+  metaFeedId      String?
+  feedUrl         String?
+  status          String   @default("draft")
+  syncError       String?
+  lastSyncAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  properties      Property[]
+
+  @@index([userId])
+}
+
+model Property {
+  id              String   @id @default(cuid())
+  catalogId       String
+
+  name            String
+  description     String
+  price           Float
+  currency        String   @default("EUR")
+  availability    String   @default("for_sale")
+
+  address         String
+  city            String
+  state           String?
+  country         String   @default("ES")
+  postalCode      String?
+  latitude        Float?
+  longitude       Float?
+
+  propertyType    String   @default("house")
+  bedrooms        Int?
+  bathrooms       Int?
+  areaSqm         Float?
+  yearBuilt       Int?
+
+  imageUrl        String
+  images          String?
+  virtualTourUrl  String?
+  listingUrl      String?
+
+  metaItemId      String?
+  syncStatus      String   @default("pending")
+  syncError       String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  catalog         PropertyCatalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@index([catalogId])
+  @@index([syncStatus])
+}
