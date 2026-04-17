@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: Request,
-  { params }: { params: { catalogId: string } }
+  { params }: { params: Promise<{ catalogId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   
@@ -14,7 +14,7 @@ export async function GET(
   }
 
   // Await params since Next.js 15+ or 14.2 sometimes requires it or just use it directly
-  const catalogId = params.catalogId;
+  const { catalogId } = await params;
 
   try {
     const catalog = await prisma.propertyCatalog.findFirst({
@@ -42,7 +42,7 @@ export async function GET(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { catalogId: string } }
+  { params }: { params: Promise<{ catalogId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   
@@ -50,10 +50,12 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { catalogId } = await params;
+
   try {
     const catalog = await prisma.propertyCatalog.findFirst({
       where: { 
-        id: params.catalogId,
+        id: catalogId,
         userId: session.user.id
       }
     });

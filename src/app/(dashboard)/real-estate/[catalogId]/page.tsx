@@ -282,10 +282,11 @@ function InternalCatalogView({ catalogId }: { catalogId: string }) {
   );
 }
 
-export default function InternalCatalogPage({ params }: { params: { catalogId: string } }) {
+export default function InternalCatalogPage({ params }: { params: Promise<{ catalogId: string }> }) {
+  const { catalogId } = React.use(params);
   return (
     <Suspense fallback={<div style={{ padding: "2rem" }}>Cargando...</div>}>
-      <InternalCatalogView catalogId={params.catalogId} />
+      <InternalCatalogView catalogId={catalogId} />
     </Suspense>
   );
 }

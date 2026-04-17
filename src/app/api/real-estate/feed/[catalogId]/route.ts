@@ -19,11 +19,13 @@ function escapeXml(unsafe: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { catalogId: string } }
+  { params }: { params: Promise<{ catalogId: string }> }
 ) {
   try {
+    const { catalogId } = await params;
+
     const catalog = await prisma.propertyCatalog.findUnique({
-      where: { id: params.catalogId },
+      where: { id: catalogId },
       include: {
         properties: {
            // We only include properties that are not drafts or errors natively,

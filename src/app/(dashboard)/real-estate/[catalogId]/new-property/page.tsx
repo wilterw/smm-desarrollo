@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../../RealEstate.module.css";
 
-export default function NewPropertyPage({ params }: { params: { catalogId: string } }) {
+export default function NewPropertyPage({ params }: { params: Promise<{ catalogId: string }> }) {
   const router = useRouter();
-  const catalogId = params.catalogId;
+  const { catalogId } = React.use(params);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 

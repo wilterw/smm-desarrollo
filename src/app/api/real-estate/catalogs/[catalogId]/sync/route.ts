@@ -8,14 +8,16 @@ const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { catalogId: string } }
+  { params }: { params: Promise<{ catalogId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
+  const { catalogId } = await params;
+
   try {
     const catalog = await prisma.propertyCatalog.findUnique({
-      where: { id: params.catalogId },
+      where: { id: catalogId },
       include: {
         properties: { where: { syncStatus: { not: "draft" } } }
       }
