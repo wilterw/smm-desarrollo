@@ -184,8 +184,9 @@ function InternalCatalogView({ catalogId }: { catalogId: string }) {
                 </div>
                 <div className={styles.cardActions}>
                   <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); setViewingItem(item); setViewingIndex(0); }}>👁️ Ver</button>
-                  <button className={`${styles.iconBtn} ${styles.iconBtnPublish}`} onClick={(e) => { e.stopPropagation(); handleSync(item); }}>
-                    {syncing === item.id ? "..." : "🔄 Sync"}
+                  <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); router.push(`/real-estate/${catalogId}/${item.id}/edit`); }}>✏️ Editar</button>
+                  <button className={`${styles.iconBtn} ${styles.iconBtnPublish}`} onClick={(e) => { e.stopPropagation(); router.push(`/real-estate/${catalogId}/${item.id}/publish`); }}>
+                    🚀 Publicar
                   </button>
                   <button 
                     className={`${styles.iconBtn} ${styles.iconBtnDanger}`} 
@@ -260,11 +261,11 @@ function InternalCatalogView({ catalogId }: { catalogId: string }) {
               </div>
 
               <div className={styles.modalActions}>
-                <button className={styles.modalBtn} onClick={() => alert("Próximamente")}>
+                <button className={styles.modalBtn} onClick={() => router.push(`/real-estate/${catalogId}/${viewingItem.id}/edit`)}>
                   ✏️ Editar
                 </button>
-                <button className={styles.modalBtn} style={{ borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }} onClick={() => handleSync(viewingItem)} disabled={syncing === viewingItem.id}>
-                  {syncing === viewingItem.id ? "Sincronizando..." : "🚀 Sincronizar en Meta"}
+                <button className={styles.modalBtn} style={{ borderColor: "var(--accent-primary)", color: "var(--accent-primary)" }} onClick={() => router.push(`/real-estate/${catalogId}/${viewingItem.id}/publish`)}>
+                  🚀 Publicar & Sync Meta
                 </button>
                 <button 
                   className={`${styles.modalBtn} ${styles.modalBtnDanger}`} 

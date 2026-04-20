@@ -242,8 +242,34 @@ model Property {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  publications    PropertyPublication[]
+
   catalog         PropertyCatalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
 
   @@index([catalogId])
   @@index([syncStatus])
+}
+
+/// ============================================
+/// Publicaciones de Propiedades (Orgánico/Ads/Sync)
+/// ============================================
+
+model PropertyPublication {
+  id              String    @id @default(cuid())
+  propertyId      String
+  catalogId       String
+  platform        String    // "facebook", "instagram"
+  type            String    @default("organic") // "organic", "ads", "catalog_sync"
+  status          String    @default("pending") // "pending", "published", "failed"
+  destination     String?   // "feed", "fanpage", "carousel", "reels", "ads", "catalog_sync"
+  externalPostId  String?
+  publishedAt     DateTime?
+  errorLog        String?
+
+  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+
+  @@index([propertyId])
+  @@index([catalogId])
 }

@@ -23,6 +23,10 @@ export default function NewDynamicCampaignPage() {
   const [hashtagsStr, setHashtagsStr] = useState("");
   const [isTranslating, setIsTranslating] = useState<string | null>(null);
 
+  const [activeTab, setActiveTab] = useState("facebook");
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+
   const [formData, setFormData] = useState({
     catalogId: preselectedCatalogId,
     newCatalogName: "",
@@ -137,6 +141,45 @@ export default function NewDynamicCampaignPage() {
      } else {
         setSelectedImages([...selectedImages, img]);
      }
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingMedia(true);
+    const newUrls: string[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith("image/")) {
+            alert(`El archivo ${file.name} no es una imagen válida`);
+            continue;
+        }
+
+        const ext = file.name.split('.').pop();
+        const newName = `prop_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`;
+        const renFile = new File([file], newName, { type: file.type });
+
+        const formDataData = new FormData();
+        formDataData.append("file", renFile);
+        
+        try {
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: formDataData
+            });
+            if (res.ok) {
+                const data = await res.json();
+                newUrls.push(data.url);
+            }
+        } catch {
+            console.error("Error al subir archivo");
+        }
+    }
+    
+    if (newUrls.length > 0) {
+        setSelectedImages([...selectedImages, ...newUrls]);
+    }
+    setUploadingMedia(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -362,21 +405,28 @@ export default function NewDynamicCampaignPage() {
                </div>
             </div>
             
-            {/* Componente para agregar URL de imagen manual, si no quiso usar el scrape */}
-            {selectedImages.length === 0 && (
-               <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
-                 <label className={styles.label}>URL Imagen Principal Manual (Si no usas Extractor)</label>
-                 <input 
-                   type="url" 
-                   className={styles.input} 
-                   placeholder="https://..." 
-                   onChange={(e) => {
-                      if (e.target.value) setSelectedImages([e.target.value]);
-                   }}
-                 />
-                 <small style={{ color: "var(--warning)", marginTop: "4px" }}>Nota: Para subir fotos es mejor usar el Auto Extractor de URL de arriba.</small>
-               </div>
-            )}
+            {/* Componente para agregar Imagen o Dropzone */}
+            <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
+                <label className={styles.label}>Imágenes de la propiedad (Upload o Extractor Automático)</label>
+                <div 
+                  className={styles.metaUpload}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--accent-primary)"; }}
+                  onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--border-color)"; }}
+                  onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "var(--border-color)"; handleFileUpload(e.dataTransfer.files); }}
+                >
+                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{uploadingMedia ? "⏳" : "📥"}</div>
+                  <div style={{ fontWeight: "600", marginBottom: "0.25rem" }}>
+                    {uploadingMedia ? "Subiendo imágenes..." : "Arrastra tus imágenes aquí"}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "1rem" }}>
+                    o haz clic para explorar tus archivos
+                  </div>
+                  <label className={styles.btnSecondary} style={{ padding: "0.5rem 1.5rem", display: "inline-block", cursor: "pointer" }}>
+                    Seleccionar Archivos
+                    <input type="file" multiple accept="image/*" style={{ display: "none" }} onChange={(e) => handleFileUpload(e.target.files)} disabled={uploadingMedia}/>
+                  </label>
+                </div>
+            </div>
           </div>
           
           <div style={{ height: "40px" }} />
@@ -385,32 +435,85 @@ export default function NewDynamicCampaignPage() {
         {/* RIGHT SIDEBAR: Sticky Previews */}
         <div className={styles.rightSidebar}>
           <div className={styles.stickyPreview}>
-            <div className={styles.cardHeader} style={{ background: "transparent", border: "none", marginBottom: "1rem" }}>
-              <span className={styles.cardTitle}>Vista Previa en Tiempo Real</span>
+            <div className={styles.previewTabs}>
+               <div className={`${styles.previewTab} ${activeTab === 'facebook' ? styles.previewTabActive : ''}`} onClick={() => { setActiveTab('facebook'); setCurrentSlide(0); }}>
+                 <img src="/images/facebook.png" alt="FB" width={16} height={16} /> Facebook
+               </div>
+               <div className={`${styles.previewTab} ${activeTab === 'instagram' ? styles.previewTabActive : ''}`} onClick={() => { setActiveTab('instagram'); setCurrentSlide(0); }}>
+                 <img src="/images/instagram.png" alt="IG" width={16} height={16} /> Instagram
+               </div>
             </div>
 
             <div className={styles.previewBox}>
+               {activeTab === 'facebook' ? (
+                  <>
+                     <div className={styles.fbPostHeader}>
+                        <div className={styles.fbAvatar}>A</div>
+                        <div>
+                           <div className={styles.fbName}>Agencia Inmobiliaria</div>
+                           <div className={styles.fbTime}>Publicidad • 🌍</div>
+                        </div>
+                     </div>
+                     <div className={styles.fbText}>
+                        {formData.description ? (formData.description.length > 90 ? formData.description.substring(0, 90) + '...' : formData.description) : 'Descripción de la propiedad...'}
+                        {hashtagsStr && <div style={{ color: "var(--accent-primary)", marginTop: "0.25rem" }}>{hashtagsStr}</div>}
+                     </div>
+                  </>
+               ) : (
+                  <div className={styles.igPostHeader}>
+                     <div className={styles.igAvatar}>
+                        <div className={styles.igAvatarInner}>AG</div>
+                     </div>
+                     <div className={styles.igName}>agencia.inmobiliaria</div>
+                  </div>
+               )}
+
               <div className={styles.previewMedia}>
                 {selectedImages.length > 0 ? (
-                  <img src={selectedImages[0]} className={styles.previewImg} alt="Preview" />
+                  <>
+                     <img src={selectedImages[currentSlide]} className={styles.previewImg} alt="Preview" />
+                     {selectedImages.length > 1 && (
+                        <>
+                           {currentSlide > 0 && <button className={styles.carouselArrow} style={{ left: 10 }} onClick={() => setCurrentSlide(c => c - 1)}>◀</button>}
+                           {currentSlide < selectedImages.length - 1 && <button className={styles.carouselArrow} style={{ right: 10 }} onClick={() => setCurrentSlide(c => c + 1)}>▶</button>}
+                           <div className={styles.carouselDots}>
+                              {selectedImages.map((_, idx) => (
+                                 <div key={idx} className={`${styles.carouselDot} ${currentSlide === idx ? styles.carouselDotActive : ''}`} onClick={() => setCurrentSlide(idx)} />
+                              ))}
+                           </div>
+                        </>
+                     )}
+                     <div className={styles.priceOverlay}>
+                        <div className={styles.priceOverlayPrice}>{formData.price ? `${Number(formData.price).toLocaleString()} ${formData.currency}` : "Precio..."}</div>
+                        <div className={styles.priceOverlayAction}>{formData.availability === "for_rent" ? "ALQUILAR" : "COMPRAR"}</div>
+                     </div>
+                  </>
                 ) : (
                   <span style={{ color: "#666" }}>Ninguna Imagen Asignada</span>
                 )}
               </div>
-              <div className={styles.previewBody}>
+              
+              <div className={styles.previewBody} style={{ borderBottom: activeTab === 'facebook' ? '1px solid var(--border-color)' : 'none' }}>
                  <div className={styles.previewTitle}>{formData.name || "Título de la propiedad..."}</div>
-                 <div className={styles.previewPrice}>
-                    {formData.price ? `${Number(formData.price).toLocaleString()} ${formData.currency}` : "Precio..."}
-                 </div>
                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-                    📍 {formData.city || "Ciudad..."} <br/>
-                    {formData.availability === "for_rent" ? "🔑 Alquiler" : "🏠 Venta"}
+                    📍 {formData.city || "Ciudad..."}
                  </div>
-                 {hashtagsStr && <div style={{ color: "var(--accent-primary)", fontSize: "0.8rem", marginTop: "0.5rem" }}>{hashtagsStr}</div>}
               </div>
-              <div style={{ background: "rgba(255,255,255,0.03)", padding: "0.75rem", borderTop: "1px solid var(--border-color)", textAlign: "center", fontSize: "0.85rem", color: "var(--accent-primary)", fontWeight: "600" }}>
-                 Elemento Dinámico Advantage+
-              </div>
+              
+              {activeTab === 'instagram' && (
+                 <>
+                    <div className={styles.igActions}>❤️ 💬 🚀</div>
+                    <div className={styles.igText}>
+                       <b>agencia.inmobiliaria</b> {formData.description ? (formData.description.length > 90 ? formData.description.substring(0, 90) + '...' : formData.description) : 'Descripción de la propiedad...'}
+                       {hashtagsStr && <div style={{ color: "var(--accent-primary)", marginTop: "0.25rem" }}>{hashtagsStr}</div>}
+                    </div>
+                 </>
+              )}
+              {activeTab === 'facebook' && (
+                 <div style={{ background: "rgba(255,255,255,0.03)", padding: "0.75rem", textAlign: "center", fontSize: "0.85rem", color: "var(--accent-primary)", fontWeight: "600" }}>
+                    Elemento Dinámico Advantage+
+                 </div>
+              )}
             </div>
             
             {/* Additional preview info */}

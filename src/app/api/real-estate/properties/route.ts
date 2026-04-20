@@ -13,6 +13,20 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const filter = url.searchParams.get("filter") || "all";
+    const id = url.searchParams.get("id");
+
+    // Single property fetch for edit mode
+    if (id) {
+      const property = await prisma.property.findFirst({
+        where: { id, catalog: { userId: session.user.id } },
+        include: {
+          catalog: { select: { id: true, name: true, metaCatalogId: true } },
+          publications: { orderBy: { createdAt: 'desc' }, take: 10 }
+        }
+      });
+      if (!property) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json(property);
+    }
 
     const whereClause: any = {
       catalog: { userId: session.user.id }
@@ -27,7 +41,12 @@ export async function GET(req: Request) {
     const properties = await prisma.property.findMany({
       where: whereClause,
       include: {
-        catalog: { select: { name: true, metaCatalogId: true } }
+        catalog: { select: { id: true, name: true, metaCatalogId: true } },
+        publications: {
+          orderBy: { createdAt: 'desc' },
+          take: 3,
+          select: { id: true, platform: true, type: true, status: true, destination: true, publishedAt: true }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -121,6 +140,52 @@ export async function POST(req: Request) {
     return NextResponse.json(property, { status: 201 });
   } catch (error) {
     console.error("Error creating property:", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const body = await req.json();
+    const { id, ...updates } = body;
+
+    if (!id) return NextResponse.json({ error: "No ID provided" }, { status: 400 });
+
+    const prop = await prisma.property.findFirst({
+      where: { id, catalog: { userId: session.user.id } }
+    });
+    if (!prop) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const data: any = {};
+    if (updates.name !== undefined) data.name = updates.name;
+    if (updates.description !== undefined) data.description = updates.description;
+    if (updates.price !== undefined) data.price = parseFloat(updates.price);
+    if (updates.currency !== undefined) data.currency = updates.currency;
+    if (updates.availability !== undefined) data.availability = updates.availability;
+    if (updates.address !== undefined) data.address = updates.address;
+    if (updates.city !== undefined) data.city = updates.city;
+    if (updates.state !== undefined) data.state = updates.state;
+    if (updates.country !== undefined) data.country = updates.country;
+    if (updates.propertyType !== undefined) data.propertyType = updates.propertyType;
+    if (updates.imageUrl !== undefined) data.imageUrl = updates.imageUrl;
+    if (updates.listingUrl !== undefined) data.listingUrl = updates.listingUrl;
+    if (updates.images !== undefined) {
+      data.images = Array.isArray(updates.images) ? JSON.stringify(updates.images) : updates.images;
+    }
+    // Reset sync status on edit
+    data.syncStatus = "pending";
+
+    const updated = await prisma.property.update({
+      where: { id },
+      data
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Error updating property:", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
