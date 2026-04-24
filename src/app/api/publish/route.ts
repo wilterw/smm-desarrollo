@@ -410,10 +410,20 @@ export async function POST(req: NextRequest) {
           if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
           
+          const { publishToYouTube, publishToYouTubeShorts } = require("@/lib/social/youtube");
+          const videoResponse = await fetch(mediaFullUrls[0]);
+          if (!videoResponse.ok) throw new Error("No se pudo descargar el video para subir a YouTube.");
+          const arrayBuffer = await videoResponse.arrayBuffer();
+          const videoBuffer = Buffer.from(arrayBuffer);
+          
           if (destination === "shorts") {
-            throw new Error("La publicación en YouTube Shorts requiere acceso al sistema de archivos del servidor (próximamente)");
+            const result = await publishToYouTubeShorts(account.accessToken, ad.title, message, videoBuffer);
+            if (!result.success) throw new Error(result.error);
+            postId = result.videoId;
           } else {
-            throw new Error("La publicación en YouTube requiere acceso al sistema de archivos del servidor (próximamente)");
+            const result = await publishToYouTube(account.accessToken, ad.title, message, videoBuffer);
+            if (!result.success) throw new Error(result.error);
+            postId = result.videoId;
           }
         }
 

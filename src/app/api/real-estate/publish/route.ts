@@ -231,6 +231,24 @@ export async function POST(req: NextRequest) {
                 if (!result.success) throw new Error(result.error);
                 postId = result.postId;
              }
+           } else if (platform === "youtube") {
+             if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
+             
+             const { publishToYouTube, publishToYouTubeShorts } = require("@/lib/social/youtube");
+             const videoResponse = await fetch(mediaFullUrls[0]);
+             if (!videoResponse.ok) throw new Error("No se pudo descargar el video para subir a YouTube.");
+             const arrayBuffer = await videoResponse.arrayBuffer();
+             const videoBuffer = Buffer.from(arrayBuffer);
+             
+             if (destination === "shorts") {
+               const result = await publishToYouTubeShorts(account.accessToken, property.name, finalMsg, videoBuffer);
+               if (!result.success) throw new Error(result.error);
+               postId = result.videoId;
+             } else {
+               const result = await publishToYouTube(account.accessToken, property.name, finalMsg, videoBuffer);
+               if (!result.success) throw new Error(result.error);
+               postId = result.videoId;
+             }
            }
         }
 
