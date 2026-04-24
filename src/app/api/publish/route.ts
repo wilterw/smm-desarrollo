@@ -411,10 +411,21 @@ export async function POST(req: NextRequest) {
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
           
           const { publishToYouTube, publishToYouTubeShorts } = require("@/lib/social/youtube");
-          const videoResponse = await fetch(mediaFullUrls[0]);
-          if (!videoResponse.ok) throw new Error("No se pudo descargar el video para subir a YouTube.");
-          const arrayBuffer = await videoResponse.arrayBuffer();
-          const videoBuffer = Buffer.from(arrayBuffer);
+          
+          let videoBuffer: Buffer;
+          try {
+            const filename = mediaFullUrls[0].split("/").pop() || "";
+            const os = require("os");
+            const path = require("path");
+            const fs = require("fs/promises");
+            const localPath = path.join(os.tmpdir(), "smm-uploads", filename);
+            videoBuffer = await fs.readFile(localPath);
+          } catch (localErr) {
+            const videoResponse = await fetch(mediaFullUrls[0]);
+            if (!videoResponse.ok) throw new Error(`No se pudo descargar el video HTTP ${videoResponse.status} de ${mediaFullUrls[0]}`);
+            const arrayBuffer = await videoResponse.arrayBuffer();
+            videoBuffer = Buffer.from(arrayBuffer);
+          }
           
           if (destination === "shorts") {
             const result = await publishToYouTubeShorts(account.accessToken, ad.title, message, videoBuffer);
