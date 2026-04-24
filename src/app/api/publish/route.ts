@@ -93,27 +93,52 @@ export async function POST(req: NextRequest) {
       
       let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
 
-      // Proxied Downloader: If the URL is external (not our own server), download it locally to bypass Meta's crawler getting blocked by CDNs (like apinmo.com)
-      const isInternal = fullUrl.includes(baseUrl.replace("https://", "").replace("http://", ""));
-      if (fullUrl.startsWith("http") && !isInternal) {
+      // Proxied Downloader: Process all images to fix Aspect Ratio for Meta and cache locally
+      if (fullUrl.startsWith("http")) {
         try {
-          console.log(`[SMM Proxied Downloader] Descargando archivo externo: ${fullUrl}`);
+          console.log(`[SMM Proxied Downloader] Descargando y procesando archivo: ${fullUrl}`);
           const dlRes = await fetch(fullUrl);
           if (dlRes.ok) {
             const buffer = await dlRes.arrayBuffer();
             const extMatch = fullUrl.split("?")[0].split(".").pop();
             const ext = (extMatch && extMatch.length <= 4) ? extMatch.toLowerCase() : "jpg";
+            const isVideo = ext === "mp4" || ext === "webm" || ext === "mov";
             
-            const filename = `${randomUUID()}.${ext}`;
+            let finalBuffer = Buffer.from(buffer);
+            let finalExt = ext;
+            
+            if (!isVideo) {
+               try {
+                 const sharp = require("sharp");
+                 const image = sharp(finalBuffer);
+                 const metadata = await image.metadata();
+                 const width = metadata.width || 1080;
+                 const height = metadata.height || 1080;
+                 const size = Math.max(width, height);
+                 
+                 finalBuffer = await image
+                   .resize(size, size, {
+                     fit: 'contain',
+                     background: { r: 255, g: 255, b: 255, alpha: 1 }
+                   })
+                   .jpeg({ quality: 90 })
+                   .toBuffer();
+                 finalExt = "jpg";
+               } catch (sharpErr: any) {
+                 console.error("[SMM Proxied Downloader] Error processing image with sharp:", sharpErr.message);
+               }
+            }
+            
+            const filename = `${randomUUID()}.${finalExt}`;
             const os = require("os");
             const UPLOAD_DIR = path.join(os.tmpdir(), "smm-uploads");
             
             await mkdir(UPLOAD_DIR, { recursive: true });
-            await writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(buffer));
+            await writeFile(path.join(UPLOAD_DIR, filename), finalBuffer);
             
             // Replace external URL with our local, bulletproof API route
             fullUrl = `${baseUrl}/api/media/${filename}`;
-            console.log(`[SMM Proxied Downloader] Archivo guardado localmente en: ${fullUrl}`);
+            console.log(`[SMM Proxied Downloader] Archivo procesado y guardado localmente en: ${fullUrl}`);
           } else {
             console.warn(`[SMM Proxied Downloader] Falló al descargar ${fullUrl} (HTTP ${dlRes.status})`);
           }

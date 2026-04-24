@@ -74,20 +74,48 @@ export async function POST(req: NextRequest) {
       
       let fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `${baseUrl}/${cleanUrl}`;
 
-      const isInternal = fullUrl.includes(baseUrl.replace("https://", "").replace("http://", ""));
-      if (fullUrl.startsWith("http") && !isInternal) {
+      // Proxied Downloader: Process all images to fix Aspect Ratio for Meta and cache locally
+      if (fullUrl.startsWith("http")) {
         try {
           const dlRes = await fetch(fullUrl);
           if (dlRes.ok) {
             const buffer = await dlRes.arrayBuffer();
             const extMatch = fullUrl.split("?")[0].split(".").pop();
             const ext = (extMatch && extMatch.length <= 4) ? extMatch.toLowerCase() : "jpg";
-            const filename = `${randomUUID()}.${ext}`;
+            const isVideo = ext === "mp4" || ext === "webm" || ext === "mov";
+            
+            let finalBuffer = Buffer.from(buffer);
+            let finalExt = ext;
+            
+            // Fix aspect ratio for images to avoid Instagram Carousel 36003 errors
+            if (!isVideo) {
+               try {
+                 const sharp = require("sharp");
+                 const image = sharp(finalBuffer);
+                 const metadata = await image.metadata();
+                 const width = metadata.width || 1080;
+                 const height = metadata.height || 1080;
+                 const size = Math.max(width, height);
+                 
+                 finalBuffer = await image
+                   .resize(size, size, {
+                     fit: 'contain',
+                     background: { r: 255, g: 255, b: 255, alpha: 1 }
+                   })
+                   .jpeg({ quality: 90 })
+                   .toBuffer();
+                 finalExt = "jpg";
+               } catch (sharpErr: any) {
+                 console.error("[RealEstate Proxy] Error processing image with sharp:", sharpErr.message);
+               }
+            }
+            
+            const filename = `${randomUUID()}.${finalExt}`;
             const os = require("os");
             const UPLOAD_DIR = path.join(os.tmpdir(), "smm-uploads");
             
             await mkdir(UPLOAD_DIR, { recursive: true });
-            await writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(buffer));
+            await writeFile(path.join(UPLOAD_DIR, filename), finalBuffer);
             
             fullUrl = `${baseUrl}/api/media/${filename}`;
           }
