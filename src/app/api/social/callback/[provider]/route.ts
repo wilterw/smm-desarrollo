@@ -161,6 +161,22 @@ export async function GET(
       providerAccountId = meData.id;
       accountName = meData.name || null;
       
+      // Fetch YouTube Channel Info
+      try {
+        const ytRes = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true", {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const ytData = await ytRes.json();
+        if (ytData.items && ytData.items.length > 0) {
+          pageId = ytData.items[0].id;
+          pageName = ytData.items[0].snippet.title;
+        } else {
+          pageName = "Canal de YouTube";
+        }
+      } catch (e) {
+        console.warn("[YT_CALLBACK] Could not fetch channel info", e);
+      }
+      
     } else {
       return NextResponse.redirect(new URL("/settings/accounts?error=invalid_provider", baseUrl));
     }

@@ -26,6 +26,7 @@ export function getYouTubeOAuthUrl(redirectUri: string): string {
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube",
     "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/adwords",
   ].join(" ");
 
   const params = new URLSearchParams({

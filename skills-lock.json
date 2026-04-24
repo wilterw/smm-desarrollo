@@ -1,6 +1,16 @@
 {
   "version": 1,
   "skills": {
+    "YouTube Automation": {
+      "source": "claude-office-skills/skills",
+      "sourceType": "github",
+      "computedHash": "8346543324f4ff58706175fe6f2c6cdd9c42a0590e99bd923113ed03e42b9d57"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
     "meta-ads": {
       "source": "kostja94/marketing-skills",
       "sourceType": "github",
