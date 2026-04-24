@@ -120,14 +120,14 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
       }
     });
 
-    fetch("/api/social/accounts").then(r => r.json()).then(accounts => {
+    fetch("/api/social/accounts", { cache: "no-store" }).then(r => r.json()).then(accounts => {
       // Dev Mock
-      if (accounts.length === 0) {
+      if (!accounts || accounts.length === 0) {
         setSocialAccounts([{ id: "mock-fb", provider: "facebook", accountName: "SML Pro Account", pageName: "Econos Real Estate", pageId: "123", accessToken: "mock" }]);
-      } else {
+      } else if (Array.isArray(accounts)) {
         setSocialAccounts(accounts);
       }
-    });
+    }).catch(e => console.error("Error fetching accounts", e));
   }, [resolvedParams.id]);
 
   const toggleSection = (section: keyof typeof openSections) => {
@@ -247,7 +247,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
 
   const renderTitularSelection = () => {
     const platformAccounts = socialAccounts.filter(a => a.provider === platform);
-    const uniqueTitulars = Array.from(new Set(platformAccounts.map(a => a.accountName))).filter(Boolean);
+    const uniqueTitulars = Array.from(new Set(platformAccounts.map(a => a.accountName || "Titular Conectado")));
 
     return (
       <div className={styles.destinationGrid}>
@@ -289,10 +289,11 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
   const renderIdentitySelection = () => {
     if (publishType === 'organic' && !origin) {
       const options = [
-        { id: 'feed', name: platform === 'facebook' ? 'Reservado Personal' : 'Perfil (Feed)', icon: '👤', desc: platform === 'facebook' ? 'No permitido por Meta' : 'Muro de la cuenta', disabled: platform === 'facebook' },
-        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: false },
+        { id: 'feed', name: platform === 'youtube' ? 'Video Regular' : (platform === 'facebook' ? 'Reservado Personal' : 'Perfil (Feed)'), icon: platform === 'youtube' ? '📺' : '👤', desc: platform === 'facebook' ? 'No permitido por Meta' : 'Publicación normal', disabled: platform === 'facebook' },
+        { id: 'fanpage', name: 'Fanpages del Titular', icon: '🚩', desc: 'Publicar en tus páginas', disabled: platform === 'youtube' },
         { id: 'reels', name: 'Instagram Reels', icon: '🎬', desc: 'Video vertical 9:16', disabled: platform !== 'instagram' },
-        { id: 'stories', name: 'Instagram Stories', icon: '✨', desc: 'Contenido 24h', disabled: platform !== 'instagram' }
+        { id: 'stories', name: 'Instagram Stories', icon: '✨', desc: 'Contenido 24h', disabled: platform !== 'instagram' },
+        { id: 'shorts', name: 'YouTube Shorts', icon: '📱', desc: 'Video vertical <60s', disabled: platform !== 'youtube' }
       ];
 
       return (
@@ -304,7 +305,7 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
                 if (o.disabled) return;
                 setOrigin(o.id as any);
                 if (o.id === 'feed') {
-                  const personalAcc = socialAccounts.find(a => a.provider === platform && a.accountName === selectedTitular && !a.pageId);
+                  const personalAcc = socialAccounts.find(a => a.provider === platform && (a.accountName || "Titular Conectado") === selectedTitular && !a.pageId);
                   if (personalAcc) setSelectedAccountIds([personalAcc.id]);
                 }
               }}>
@@ -321,8 +322,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
 
     const filteredFanpages = socialAccounts.filter(acc => {
       const isCorrectPlatform = acc.provider === platform;
-      
-      return isCorrectPlatform && acc.accountName === selectedTitular && acc.pageId;
+      const accName = acc.accountName || "Titular Conectado";
+      return isCorrectPlatform && accName === selectedTitular && acc.pageId;
     });
 
     return (
@@ -331,8 +332,8 @@ export default function PublishWizard({ params }: { params: Promise<{ id: string
           <div key={acc.id} className={`${styles.accountCard} ${selectedAccountIds.includes(acc.id) ? styles.accountCardActive : ''}`} onClick={() => toggleAccountSelection(acc.id)}>
             <div className={styles.accountAvatar}>🚩</div>
             <div className={styles.accountInfo}>
-              <span className={styles.accountName}>{acc.pageName || "Página vinculada"}</span>
-              <span className={styles.accountHandle}>{platform === 'facebook' ? 'Fanpage' : 'Instagram Page'} de {acc.accountName}</span>
+              <span className={styles.accountName}>{acc.pageName || "Canal vinculado"}</span>
+              <span className={styles.accountHandle}>{platform === 'facebook' ? 'Fanpage' : (platform === 'youtube' ? 'Canal' : 'Instagram Page')} de {acc.accountName}</span>
             </div>
             <div style={{ marginLeft: "auto", fontSize: "1.2rem" }}>{selectedAccountIds.includes(acc.id) ? "✅" : "➕"}</div>
           </div>
