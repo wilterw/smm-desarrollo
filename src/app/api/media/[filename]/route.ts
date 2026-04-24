@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFile, stat } from "fs/promises";
 import path from "path";
 import fs from "fs";
+import os from "os";
 
 /**
  * Resolve clean filename, content type, and file path from the route params
  */
 function resolveFile(filename: string) {
   const cleanFilename = filename.split("?")[0];
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
+  const uploadDir = path.join(os.tmpdir(), "smm-uploads");
   const filepath = path.join(uploadDir, cleanFilename);
 
   const ext = cleanFilename.split(".").pop()?.toLowerCase() || "";

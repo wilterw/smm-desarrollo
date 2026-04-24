@@ -3,9 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import os from "os";
 import { randomUUID } from "crypto";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const UPLOAD_DIR = path.join(os.tmpdir(), "smm-uploads");
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);

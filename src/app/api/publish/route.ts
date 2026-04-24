@@ -105,7 +105,8 @@ export async function POST(req: NextRequest) {
             const ext = (extMatch && extMatch.length <= 4) ? extMatch.toLowerCase() : "jpg";
             
             const filename = `${randomUUID()}.${ext}`;
-            const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+            const os = require("os");
+            const UPLOAD_DIR = path.join(os.tmpdir(), "smm-uploads");
             
             await mkdir(UPLOAD_DIR, { recursive: true });
             await writeFile(path.join(UPLOAD_DIR, filename), Buffer.from(buffer));
