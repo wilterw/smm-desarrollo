@@ -291,7 +291,7 @@ export default function NewDynamicCampaignPage() {
             
             <div className={styles.formGroup}>
               <label className={styles.label}>Importar datos desde URL de la Propiedad</label>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div className={styles.inputRow}>
                 <input 
                   className={styles.input} 
                   placeholder="https://idealista.com/... o mhestate.es/..." 
@@ -300,7 +300,7 @@ export default function NewDynamicCampaignPage() {
                   disabled={scrapingLoading}
                   style={{ flex: 1 }}
                 />
-                <button type="button" className={styles.btnPrimary} onClick={handleScrapeLink} disabled={scrapingLoading} style={{ padding: "0 1rem" }}>
+                <button type="button" className={styles.btnPrimary} onClick={handleScrapeLink} disabled={scrapingLoading} style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap" }}>
                   {scrapingLoading ? "Extrayendo..." : "🔗 Extraer"}
                 </button>
               </div>
@@ -333,7 +333,7 @@ export default function NewDynamicCampaignPage() {
             
             <div className={styles.formGroup} style={{ marginTop: "1rem" }}>
               <label className={styles.label}>Traductor Automático de Ficha</label>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div className={styles.buttonGroup}>
                 {[
                   { code: "es", label: "🇪🇸 Español" },
                   { code: "en", label: "🇬🇧 Inglés" },
@@ -359,7 +359,7 @@ export default function NewDynamicCampaignPage() {
               <span className={styles.cardTitle}>🏢 3. Detalles de la Propiedad (Ítem)</span>
             </div>
             
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className={styles.grid2}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Título Corto *</label>
                 <input name="name" className={styles.input} placeholder="Vila en Marbella" value={formData.name} onChange={handleChange} required />
@@ -373,7 +373,7 @@ export default function NewDynamicCampaignPage() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className={styles.grid2}>
                <div className={styles.formGroup}>
                  <label className={styles.label}>Precio *</label>
                  <input type="number" name="price" className={styles.input} value={formData.price} onChange={handleChange} required />
@@ -394,7 +394,7 @@ export default function NewDynamicCampaignPage() {
               <input value={hashtagsStr} placeholder="#inmueble #madrid" onChange={(e) => setHashtagsStr(e.target.value)} className={styles.input} />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className={styles.grid2}>
                <div className={styles.formGroup}>
                  <label className={styles.label}>Ciudad *</label>
                  <input name="city" className={styles.input} placeholder="Málaga" value={formData.city} onChange={handleChange} required />

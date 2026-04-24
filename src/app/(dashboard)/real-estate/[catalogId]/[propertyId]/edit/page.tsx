@@ -209,7 +209,7 @@ function EditPropertyView({ catalogId, propertyId }: { catalogId: string, proper
           <div className={styles.configCard}>
              <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>🛠️ Detalles Principales</span>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div className={styles.buttonGroup}>
                 {[ { code: "es", label: "🇪🇸" }, { code: "en", label: "🇬🇧" }, { code: "sv", label: "🇸🇪" }].map(lang => (
                   <button key={lang.code} type="button" onClick={() => handleTranslate(lang.code)} disabled={!!isTranslating} className={styles.btnSecondary} style={{ padding: "0.2rem 0.5rem", fontSize: "0.8rem" }}>
                     {lang.label}
@@ -218,7 +218,7 @@ function EditPropertyView({ catalogId, propertyId }: { catalogId: string, proper
               </div>
             </div>
             
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className={styles.grid2}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Título Corto *</label>
                 <input name="name" className={styles.input} placeholder="Vila en Marbella" value={formData.name} onChange={handleChange} required />
@@ -232,7 +232,7 @@ function EditPropertyView({ catalogId, propertyId }: { catalogId: string, proper
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className={styles.grid2}>
                <div className={styles.formGroup}>
                  <label className={styles.label}>Precio *</label>
                  <input type="number" name="price" className={styles.input} value={formData.price} onChange={handleChange} required />
@@ -253,7 +253,7 @@ function EditPropertyView({ catalogId, propertyId }: { catalogId: string, proper
               <input value={hashtagsStr} placeholder="#inmueble #madrid" onChange={(e) => setHashtagsStr(e.target.value)} className={styles.input} />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className={styles.grid2}>
                <div className={styles.formGroup}>
                  <label className={styles.label}>Ciudad *</label>
                  <input name="city" className={styles.input} placeholder="Málaga" value={formData.city} onChange={handleChange} required />
