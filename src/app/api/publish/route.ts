@@ -407,6 +407,28 @@ export async function POST(req: NextRequest) {
         } 
         // 4. YouTube Flow
         else if (platform === "youtube") {
+          // Check token expiry and refresh if needed
+          let accessTokenToUse = account.accessToken;
+          if (account.expiresAt && new Date(account.expiresAt).getTime() < Date.now() + 5 * 60 * 1000) {
+            if (!account.refreshToken) {
+              throw new Error("El token de YouTube ha expirado y no hay un refresh token disponible. Por favor desconecta y vuelve a conectar tu cuenta de YouTube.");
+            }
+            try {
+              const { refreshYouTubeToken } = require("@/lib/social/youtube");
+              accessTokenToUse = await refreshYouTubeToken(account.refreshToken);
+              // Update in DB
+              await prisma.socialAccount.update({
+                where: { id: account.id },
+                data: {
+                  accessToken: accessTokenToUse,
+                  expiresAt: new Date(Date.now() + 3500 * 1000) // approx 1 hour
+                }
+              });
+            } catch (refreshErr: any) {
+              throw new Error(`Error renovando el token de YouTube: ${refreshErr.message}. Por favor desconecta y vuelve a conectar tu cuenta de YouTube.`);
+            }
+          }
+
           if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
           
@@ -428,11 +450,11 @@ export async function POST(req: NextRequest) {
           }
           
           if (destination === "shorts") {
-            const result = await publishToYouTubeShorts(account.accessToken, ad.title, message, videoBuffer);
+            const result = await publishToYouTubeShorts(accessTokenToUse, ad.title, message, videoBuffer);
             if (!result.success) throw new Error(result.error);
             postId = result.videoId;
           } else {
-            const result = await publishToYouTube(account.accessToken, ad.title, message, videoBuffer);
+            const result = await publishToYouTube(accessTokenToUse, ad.title, message, videoBuffer);
             if (!result.success) throw new Error(result.error);
             postId = result.videoId;
           }
