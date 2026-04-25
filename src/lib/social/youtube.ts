@@ -142,8 +142,6 @@ export async function publishToYouTube(
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json; charset=UTF-8",
-          "X-Upload-Content-Length": videoBuffer.length.toString(),
-          "X-Upload-Content-Type": "video/mp4",
         },
         body: JSON.stringify(metadata),
       }
