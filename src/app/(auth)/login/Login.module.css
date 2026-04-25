@@ -76,6 +76,9 @@
 
 .logo {
   object-fit: contain;
+  width: auto;
+  height: auto;
+  max-width: 100%;
   transition: transform var(--transition-smooth);
 }
 

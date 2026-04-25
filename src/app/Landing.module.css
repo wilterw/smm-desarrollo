@@ -32,6 +32,13 @@
   animation: fadeIn 0.8s ease-out;
 }
 
+.logo {
+  object-fit: contain;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+}
+
 .divider {
   width: 1px;
   height: 60px;

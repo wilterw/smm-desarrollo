@@ -17,9 +17,9 @@ export default async function HomePage() {
     <div className={styles.container}>
       <header className={styles.hero}>
         <div className={styles.logoContainer}>
-          <Image src="/images/logo-econos.png" alt="Econos" width={220} height={70} priority />
+          <Image src="/images/logo-econos.png" alt="Econos" width={220} height={70} className={styles.logo} priority />
           <div className={styles.divider}></div>
-          <Image src="/images/logo-smm.png" alt="Social Media Manager IA" width={160} height={60} priority />
+          <Image src="/images/logo-smm.png" alt="Social Media Manager IA" width={160} height={60} className={styles.logo} priority />
         </div>
         
         <h1 className={styles.title}>

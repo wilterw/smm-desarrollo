@@ -161,6 +161,8 @@
 
 .iconLogo {
   object-fit: contain;
+  width: auto;
+  height: auto;
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -171,6 +173,8 @@
 
 .smmLogo {
   object-fit: contain;
+  width: auto;
+  height: auto;
   transition: transform var(--transition-smooth);
 }
 
