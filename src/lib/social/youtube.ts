@@ -115,20 +115,22 @@ export async function publishToYouTube(
     // Truncate description to 5000 chars (YouTube limit)
     const sanitizedDescription = description.substring(0, 5000);
 
-    // Step 1: Create the video resource
+    // Step 1: Create the video resource (initiate resumable upload)
     const metadataRes = await fetch(
       `${YT_API_URL}/videos?uploadType=resumable&part=snippet,status`,
       {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=UTF-8",
+          "X-Upload-Content-Type": "video/*",
+          "X-Upload-Content-Length": videoBuffer.length.toString(),
         },
         body: JSON.stringify({
           snippet: { 
             title: sanitizedTitle, 
             description: sanitizedDescription,
-            categoryId: "22" // Default to 'People & Blogs' to avoid missing category error
+            categoryId: "22" 
           },
           status: { 
             privacyStatus: "public",
@@ -148,8 +150,8 @@ export async function publishToYouTube(
     const uploadRes = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "video/*",
+        "Content-Length": videoBuffer.length.toString(),
       },
       body: new Uint8Array(videoBuffer),
     });
