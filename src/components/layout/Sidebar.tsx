@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 const navItems = [
-  { name: "Dashboard", href: "/", iconSrc: "/images/dashboard.jpg" },
+  { name: "Dashboard", href: "/dashboard", iconSrc: "/images/dashboard.jpg" },
   { 
     name: "Campañas", 
     href: "/campaigns", 
