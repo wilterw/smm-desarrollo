@@ -179,7 +179,7 @@ export async function publishToYouTube(
         "Content-Type": "video/mp4",
         "Content-Length": videoBuffer.length.toString(),
       },
-      body: videoBuffer,
+      body: new Uint8Array(videoBuffer),
     });
 
     const uploadText = await uploadRes.text();
