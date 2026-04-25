@@ -110,6 +110,11 @@ export async function publishToYouTube(
   videoBuffer: Buffer
 ): Promise<YouTubePublishResult> {
   try {
+    // Truncate title to 100 chars (YouTube limit)
+    const sanitizedTitle = title.substring(0, 100).trim() || "Video de SMM";
+    // Truncate description to 5000 chars (YouTube limit)
+    const sanitizedDescription = description.substring(0, 5000);
+
     // Step 1: Create the video resource
     const metadataRes = await fetch(
       `${YT_API_URL}/videos?uploadType=resumable&part=snippet,status`,
@@ -120,8 +125,15 @@ export async function publishToYouTube(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          snippet: { title, description },
-          status: { privacyStatus: "public" },
+          snippet: { 
+            title: sanitizedTitle, 
+            description: sanitizedDescription,
+            categoryId: "22" // Default to 'People & Blogs' to avoid missing category error
+          },
+          status: { 
+            privacyStatus: "public",
+            selfDeclaredMadeForKids: false
+          },
         }),
       }
     );
