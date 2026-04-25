@@ -234,11 +234,16 @@ export async function POST(req: NextRequest) {
            } else if (platform === "youtube") {
              if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
              
+             const filename = mediaFullUrls[0].split("/").pop() || "";
+             const isVideoFile = filename.toLowerCase().endsWith(".mp4") || filename.toLowerCase().endsWith(".mov") || filename.toLowerCase().endsWith(".webm");
+             if (!isVideoFile) {
+                throw new Error("YouTube requiere exclusivamente un archivo de video (.mp4, .mov, .webm). El archivo actual parece ser una imagen.");
+             }
+             
              const { publishToYouTube, publishToYouTubeShorts } = require("@/lib/social/youtube");
              
              let videoBuffer: Buffer;
              try {
-               const filename = mediaFullUrls[0].split("/").pop() || "";
                const os = require("os");
                const path = require("path");
                const fs = require("fs/promises");
