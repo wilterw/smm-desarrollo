@@ -82,7 +82,11 @@ export default function LoginPage() {
         </form>
         
         <footer className={styles.footer}>
-          <a href="/privacy-policy" className={styles.legalLink}>Política de Privacidad</a>
+          <div className={styles.legalLinks}>
+            <a href="/privacy-policy" className={styles.legalLink}>Política de Privacidad</a>
+            <span className={styles.legalSeparator}>|</span>
+            <a href="/terms" className={styles.legalLink}>Condiciones de Uso</a>
+          </div>
           <p>© {new Date().getFullYear()} Econos</p>
         </footer>
       </div>

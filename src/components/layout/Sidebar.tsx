@@ -171,7 +171,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className={styles.footer}>
         <div className={styles.legalLinks}>
           <Link href="/privacy-policy" className={styles.legalLink} onClick={handleNavClick}>
-            Política de Privacidad
+            Privacidad
+          </Link>
+          <span className={styles.legalDivider}>|</span>
+          <Link href="/terms" className={styles.legalLink} onClick={handleNavClick}>
+            Condiciones
           </Link>
         </div>
         <div className={styles.userInfo}>

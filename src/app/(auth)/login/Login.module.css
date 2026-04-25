@@ -207,3 +207,14 @@
   color: var(--accent-primary);
   text-decoration: underline;
 }
+
+.legalLinks {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.legalSeparator {
+  opacity: 0.3;
+}

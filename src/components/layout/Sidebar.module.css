@@ -407,6 +407,11 @@
   color: var(--accent-primary);
 }
 
+.legalDivider {
+  opacity: 0.2;
+  color: var(--text-muted);
+}
+
 .userInfo {
   display: flex;
   align-items: center;
