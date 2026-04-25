@@ -429,32 +429,86 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          if (mediaFullUrls.length === 0) throw new Error("YouTube requiere obligatoriamente un video para publicar.");
           if (ad.mediaType !== "video") throw new Error("YouTube requiere exclusivamente un archivo de video.");
           
           const { publishToYouTube, publishToYouTubeShorts } = require("@/lib/social/youtube");
           
+          // Read video directly from local disk using the ORIGINAL mediaUrl filename.
+          // This avoids the circular self-fetch problem where the server tries to 
+          // download from its own /api/media/ route (which fails in Docker/containers).
           let videoBuffer: Buffer;
+          const osModule = require("os");
+          const pathModule = require("path");
+          const fsModule = require("fs/promises");
+          const UPLOAD_DIR = pathModule.join(osModule.tmpdir(), "smm-uploads");
+          
+          // Extract the original filename from ad.mediaUrl (e.g. "/api/media/abc.mp4" → "abc.mp4")
+          const originalMediaUrl = ad.mediaUrl || "";
+          const originalFilename = originalMediaUrl.split("/").pop()?.split(",")[0]?.trim() || "";
+          
+          console.log(`[YouTube Upload] ad.mediaUrl = "${originalMediaUrl}"`);
+          console.log(`[YouTube Upload] Extracted filename = "${originalFilename}"`);
+          console.log(`[YouTube Upload] Looking in UPLOAD_DIR = "${UPLOAD_DIR}"`);
+
+          if (!originalFilename) {
+            throw new Error("No se encontró un archivo de video válido en el anuncio.");
+          }
+
+          // Strategy 1: Read directly from the local uploads directory
+          const localPath = pathModule.join(UPLOAD_DIR, originalFilename);
           try {
-            const filename = mediaFullUrls[0].split("/").pop() || "";
-            const os = require("os");
-            const path = require("path");
-            const fs = require("fs/promises");
-            const localPath = path.join(os.tmpdir(), "smm-uploads", filename);
-            videoBuffer = await fs.readFile(localPath);
-          } catch (localErr) {
-            const videoResponse = await fetch(mediaFullUrls[0]);
-            if (!videoResponse.ok) throw new Error(`No se pudo descargar el video HTTP ${videoResponse.status} de ${mediaFullUrls[0]}`);
-            const arrayBuffer = await videoResponse.arrayBuffer();
-            videoBuffer = Buffer.from(arrayBuffer);
+            videoBuffer = await fsModule.readFile(localPath);
+            console.log(`[YouTube Upload] Video leído desde disco local: ${localPath} (${videoBuffer.length} bytes)`);
+          } catch (localErr: any) {
+            console.warn(`[YouTube Upload] No se pudo leer desde ${localPath}: ${localErr.message}`);
+            
+            // Strategy 2: Also try the proxied filename from mediaFullUrls
+            let found = false;
+            for (const proxyUrl of mediaFullUrls) {
+              const proxyFilename = proxyUrl.split("/").pop() || "";
+              const proxyPath = pathModule.join(UPLOAD_DIR, proxyFilename);
+              try {
+                videoBuffer = await fsModule.readFile(proxyPath);
+                console.log(`[YouTube Upload] Video leído desde proxy path: ${proxyPath} (${videoBuffer.length} bytes)`);
+                found = true;
+                break;
+              } catch { /* continue to next */ }
+            }
+            
+            if (!found) {
+              // Strategy 3: List files in upload dir and try to find any mp4
+              try {
+                const files = await fsModule.readdir(UPLOAD_DIR);
+                console.log(`[YouTube Upload] Archivos en ${UPLOAD_DIR}: ${files.join(", ")}`);
+              } catch { console.warn(`[YouTube Upload] No se pudo listar ${UPLOAD_DIR}`); }
+              
+              // Strategy 4: Last resort - download via HTTP from original URL
+              const originalUrl = originalMediaUrl.startsWith("http") 
+                ? originalMediaUrl 
+                : `${baseUrl}/${originalMediaUrl.replace(/^\//, "")}`;
+              console.log(`[YouTube Upload] Intentando descarga HTTP desde: ${originalUrl}`);
+              const videoResponse = await fetch(originalUrl);
+              if (!videoResponse.ok) {
+                throw new Error(`No se pudo obtener el video. Intentos: disco(${localPath}), HTTP(${originalUrl} → ${videoResponse.status}). Verifica que el video existe.`);
+              }
+              const arrayBuffer = await videoResponse.arrayBuffer();
+              videoBuffer = Buffer.from(arrayBuffer);
+              console.log(`[YouTube Upload] Video descargado vía HTTP (${videoBuffer.length} bytes)`);
+            }
           }
           
+          if (!videoBuffer! || videoBuffer!.length === 0) {
+            throw new Error("El buffer del video está vacío. El archivo puede estar corrupto o no existir.");
+          }
+          
+          console.log(`[YouTube Upload] Subiendo video (${videoBuffer!.length} bytes) con título: "${ad.title}"`);
+          
           if (destination === "shorts") {
-            const result = await publishToYouTubeShorts(accessTokenToUse, ad.title, message, videoBuffer);
+            const result = await publishToYouTubeShorts(accessTokenToUse, ad.title, message, videoBuffer!);
             if (!result.success) throw new Error(result.error);
             postId = result.videoId;
           } else {
-            const result = await publishToYouTube(accessTokenToUse, ad.title, message, videoBuffer);
+            const result = await publishToYouTube(accessTokenToUse, ad.title, message, videoBuffer!);
             if (!result.success) throw new Error(result.error);
             postId = result.videoId;
           }

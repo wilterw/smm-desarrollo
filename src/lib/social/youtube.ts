@@ -110,12 +110,31 @@ export async function publishToYouTube(
   videoBuffer: Buffer
 ): Promise<YouTubePublishResult> {
   try {
-    // Truncate title to 100 chars (YouTube limit)
-    const sanitizedTitle = title.substring(0, 100).trim() || "Video de SMM";
-    // Truncate description to 5000 chars (YouTube limit)
-    const sanitizedDescription = description.substring(0, 5000);
+    // Sanitize metadata per YouTube API limits
+    const sanitizedTitle = (title || "").substring(0, 100).trim() || "Video de SMM";
+    const sanitizedDescription = (description || "").substring(0, 5000);
+    
+    // Remove any characters that could cause issues
+    const cleanTitle = sanitizedTitle.replace(/[<>]/g, "");
+    const cleanDescription = sanitizedDescription.replace(/[<>]/g, "");
 
-    // Step 1: Create the video resource (initiate resumable upload)
+    console.log(`[YouTube API] Initiating resumable upload...`);
+    console.log(`[YouTube API] Title: "${cleanTitle}" (${cleanTitle.length} chars)`);
+    console.log(`[YouTube API] Video size: ${videoBuffer.length} bytes`);
+
+    const metadata = {
+      snippet: {
+        title: cleanTitle,
+        description: cleanDescription,
+        categoryId: "22"
+      },
+      status: {
+        privacyStatus: "public",
+        selfDeclaredMadeForKids: false
+      }
+    };
+
+    // Step 1: Initiate resumable upload session
     const metadataRes = await fetch(
       `${YT_API_URL}/videos?uploadType=resumable&part=snippet,status`,
       {
@@ -123,44 +142,67 @@ export async function publishToYouTube(
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json; charset=UTF-8",
-          "X-Upload-Content-Type": "video/*",
           "X-Upload-Content-Length": videoBuffer.length.toString(),
+          "X-Upload-Content-Type": "video/mp4",
         },
-        body: JSON.stringify({
-          snippet: { 
-            title: sanitizedTitle, 
-            description: sanitizedDescription,
-            categoryId: "22" 
-          },
-          status: { 
-            privacyStatus: "public",
-            selfDeclaredMadeForKids: false
-          },
-        }),
+        body: JSON.stringify(metadata),
       }
     );
 
-    const uploadUrl = metadataRes.headers.get("location");
-    if (!uploadUrl) {
-      const errData = await metadataRes.json();
-      return { success: false, error: errData?.error?.message || "Failed to initiate upload" };
+    // If the metadata request itself failed, extract the error
+    if (!metadataRes.ok) {
+      const errBody = await metadataRes.text();
+      console.error(`[YouTube API] Metadata request failed (HTTP ${metadataRes.status}): ${errBody}`);
+      try {
+        const errJson = JSON.parse(errBody);
+        const errMsg = errJson?.error?.message || errJson?.error?.errors?.[0]?.message || errBody;
+        const errReason = errJson?.error?.errors?.[0]?.reason || "";
+        return { success: false, error: `YouTube API (${metadataRes.status}): ${errMsg}${errReason ? ` [${errReason}]` : ""}` };
+      } catch {
+        return { success: false, error: `YouTube API error (HTTP ${metadataRes.status}): ${errBody.substring(0, 500)}` };
+      }
     }
 
-    // Step 2: Upload the video content
+    const uploadUrl = metadataRes.headers.get("location");
+    if (!uploadUrl) {
+      const resText = await metadataRes.text();
+      console.error(`[YouTube API] No upload URL in response. Body: ${resText}`);
+      return { success: false, error: "YouTube no devolvió una URL de subida. Respuesta: " + resText.substring(0, 300) };
+    }
+
+    console.log(`[YouTube API] Upload URL obtained. Uploading ${videoBuffer.length} bytes...`);
+
+    // Step 2: Upload the actual video bytes
     const uploadRes = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
-        "Content-Type": "video/*",
+        "Content-Type": "video/mp4",
         "Content-Length": videoBuffer.length.toString(),
       },
-      body: new Uint8Array(videoBuffer),
+      body: videoBuffer,
     });
 
-    const uploadData = await uploadRes.json();
-    if (uploadData.error) return { success: false, error: uploadData.error.message };
+    const uploadText = await uploadRes.text();
+    console.log(`[YouTube API] Upload response (HTTP ${uploadRes.status}): ${uploadText.substring(0, 500)}`);
 
+    if (!uploadRes.ok) {
+      try {
+        const errJson = JSON.parse(uploadText);
+        return { success: false, error: `YouTube upload failed (${uploadRes.status}): ${errJson?.error?.message || uploadText.substring(0, 300)}` };
+      } catch {
+        return { success: false, error: `YouTube upload failed (HTTP ${uploadRes.status}): ${uploadText.substring(0, 300)}` };
+      }
+    }
+
+    const uploadData = JSON.parse(uploadText);
+    if (uploadData.error) {
+      return { success: false, error: uploadData.error.message };
+    }
+
+    console.log(`[YouTube API] Video uploaded successfully! ID: ${uploadData.id}`);
     return { success: true, videoId: uploadData.id };
   } catch (error: any) {
+    console.error(`[YouTube API] Exception:`, error);
     return { success: false, error: error.message };
   }
 }
