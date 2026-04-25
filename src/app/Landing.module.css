@@ -10,6 +10,30 @@
   overflow: hidden;
 }
 
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.5rem 2rem;
+  gap: 2rem;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+.navLink {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.navLink:hover {
+  color: var(--accent-primary);
+}
+
 /* Hero Section */
 .hero {
   flex: 1;
@@ -17,7 +41,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: 6rem 2rem 4rem;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -86,6 +110,26 @@
 .loginBtn:hover {
   transform: translateY(-4px) scale(1.05);
   box-shadow: 0 15px 40px rgba(196, 26, 26, 0.4);
+}
+
+.whatsappBtn {
+  padding: 1rem 2.5rem;
+  background: #25d366;
+  color: white;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: 0 10px 30px rgba(37, 211, 102, 0.2);
+  transition: all var(--transition-spring);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.whatsappBtn:hover {
+  transform: translateY(-4px) scale(1.05);
+  background: #22c35e;
+  box-shadow: 0 15px 40px rgba(37, 211, 102, 0.3);
 }
 
 /* Features/Purpose Section */
@@ -168,6 +212,11 @@
 }
 
 @media (max-width: 768px) {
+  .navbar {
+    justify-content: center;
+    padding: 1rem;
+    gap: 1rem;
+  }
   .logoContainer {
     flex-direction: column;
     gap: 1rem;
