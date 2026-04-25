@@ -4,8 +4,9 @@
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  background: radial-gradient(circle at top left, rgba(183, 6, 6, 0.1), transparent),
-              radial-gradient(circle at bottom right, rgba(47, 36, 24, 0.15), transparent);
+  background: radial-gradient(circle at top left, rgba(183, 6, 6, 0.15), transparent),
+              radial-gradient(circle at bottom right, rgba(212, 104, 27, 0.1), transparent),
+              #0d0d0f;
 }
 
 .content {
