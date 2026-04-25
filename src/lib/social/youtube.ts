@@ -135,13 +135,17 @@ export async function publishToYouTube(
     };
 
     // Step 1: Initiate resumable upload session
+    // MUST use the /upload/ endpoint, not the standard API endpoint
+    const UPLOAD_API_URL = "https://www.googleapis.com/upload/youtube/v3";
     const metadataRes = await fetch(
-      `${YT_API_URL}/videos?uploadType=resumable&part=snippet,status`,
+      `${UPLOAD_API_URL}/videos?uploadType=resumable&part=snippet,status`,
       {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json; charset=UTF-8",
+          "X-Upload-Content-Length": videoBuffer.length.toString(),
+          "X-Upload-Content-Type": "video/mp4",
         },
         body: JSON.stringify(metadata),
       }
