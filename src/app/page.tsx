@@ -69,12 +69,12 @@ export default async function HomePage() {
 
       <footer className={styles.footer}>
         <div className={styles.legalLinks}>
-          <Link href="/privacy-policy" className={styles.legalLink}>
+          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>
             Política de Privacidad
-          </Link>
-          <Link href="/terms" className={styles.legalLink}>
+          </a>
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>
             Condiciones de Uso
-          </Link>
+          </a>
         </div>
         
         <div className={styles.copyright}>
