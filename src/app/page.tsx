@@ -89,6 +89,33 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className={styles.legalSection}>
+        <h2 className={styles.legalTitle}>Transparencia y Seguridad</h2>
+        <div className={styles.legalGrid}>
+          <div className={styles.legalCard}>
+            <span className={styles.legalCardIcon}>🛡️</span>
+            <h3 className={styles.legalCardTitle}>Privacidad de Datos</h3>
+            <p className={styles.legalCardText}>
+              Nos tomamos muy en serio la seguridad de tu información. Consulta cómo protegemos tus datos y los de tus clientes.
+            </p>
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className={styles.legalCTA}>
+              Consultar Política de Privacidad
+            </a>
+          </div>
+          
+          <div className={styles.legalCard}>
+            <span className={styles.legalCardIcon}>📜</span>
+            <h3 className={styles.legalCardTitle}>Términos del Servicio</h3>
+            <p className={styles.legalCardText}>
+              Conoce las condiciones de uso de nuestra plataforma y las integraciones oficiales con Meta y Google.
+            </p>
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.legalCTA}>
+              Ver Condiciones de Uso
+            </a>
+          </div>
+        </div>
+      </section>
+
       <footer className={styles.footer}>
         <div className={styles.legalLinks}>
           <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className={styles.legalLink}>

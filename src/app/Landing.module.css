@@ -232,3 +232,91 @@
     max-width: 300px;
   }
 }
+
+/* Legal Banner for Google Verification */
+.legalSection {
+  padding: 6rem 2rem;
+  background: rgba(183, 6, 6, 0.03);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3rem;
+}
+
+.legalTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.legalGrid {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1000px;
+  justify-content: center;
+}
+
+.legalCard {
+  flex: 1;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-smooth);
+}
+
+.legalCard:hover {
+  transform: translateY(-8px);
+  border-color: var(--accent-primary);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.legalCardIcon {
+  font-size: 2.5rem;
+}
+
+.legalCardTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.legalCardText {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.legalCTA {
+  display: inline-block;
+  padding: 1rem 2rem;
+  background: transparent;
+  border: 2px solid var(--accent-primary);
+  color: var(--accent-primary);
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--transition-fast);
+}
+
+.legalCTA:hover {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 10px 20px rgba(196, 26, 26, 0.3);
+}
+
+@media (max-width: 768px) {
+  .legalGrid {
+    flex-direction: column;
+  }
+}
