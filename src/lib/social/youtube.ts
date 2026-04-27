@@ -102,17 +102,18 @@ export async function refreshYouTubeToken(refreshToken: string): Promise<string>
 /**
  * Upload a video to YouTube (resumable upload)
  *
- * IMPORTANT: Unverified Google Cloud projects can ONLY upload videos as "private".
- * Setting privacyStatus to "public" or "unlisted" will return a 400 error.
- * To upload as public, the project must pass Google's compliance audit:
- * https://support.google.com/youtube/contact/yt_api_form
+ * NOTE: If uploads fail with 400 "badRequest", check:
+ * 1. Title must not contain newlines or control characters
+ * 2. Description must not contain control characters (except \n \r \t)
+ * 3. Do NOT send an empty tags array
+ * 4. Unverified Google Cloud projects can only upload as "private"
  */
 export async function publishToYouTube(
   accessToken: string,
   title: string,
   description: string,
   videoBuffer: Buffer,
-  privacyStatus: "private" | "public" | "unlisted" = "private"
+  privacyStatus: "private" | "public" | "unlisted" = "public"
 ): Promise<YouTubePublishResult> {
   try {
     // ── Sanitize Title ──
@@ -249,7 +250,7 @@ export async function publishToYouTubeShorts(
   title: string,
   description: string,
   videoBuffer: Buffer,
-  privacyStatus: "private" | "public" | "unlisted" = "private"
+  privacyStatus: "private" | "public" | "unlisted" = "public"
 ): Promise<YouTubePublishResult> {
   const shortDescription = description.includes("#Shorts") 
     ? description 
