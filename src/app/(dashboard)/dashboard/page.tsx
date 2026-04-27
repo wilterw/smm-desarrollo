@@ -539,19 +539,25 @@ export default function DashboardHome() {
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.80rem" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                            <span style={{ minWidth: 50 }}>👁️ Imp: <b>{pub.impressions}</b></span>
+                            <span style={{ minWidth: 50 }}>
+                              {pub.platform === "youtube" ? "👁️ Views:" : "👁️ Imp:"} <b>{pub.impressions}</b>
+                            </span>
                             <div className={styles.metricBar}>
                               <div className={`${styles.metricBarFill} ${styles.metricImpressions}`} style={{ width: `${safePercent(pub.impressions, maxMetrics.impressions)}%` }} />
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                            <span style={{ minWidth: 50 }}>📈 Alcance: <b>{pub.reach}</b></span>
+                            <span style={{ minWidth: 50 }}>
+                              {pub.platform === "youtube" ? "👍 Likes:" : "📈 Alcance:"} <b>{pub.reach}</b>
+                            </span>
                             <div className={styles.metricBar}>
                               <div className={`${styles.metricBarFill} ${styles.metricReach}`} style={{ width: `${safePercent(pub.reach, maxMetrics.reach)}%` }} />
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                            <span style={{ minWidth: 50 }}>👆 Clics: <b>{pub.clicks}</b></span>
+                            <span style={{ minWidth: 50 }}>
+                              {pub.platform === "youtube" ? "💬 Coments:" : "👆 Clics:"} <b>{pub.clicks}</b>
+                            </span>
                             <div className={styles.metricBar}>
                               <div className={`${styles.metricBarFill} ${styles.metricClicks}`} style={{ width: `${safePercent(pub.clicks, maxMetrics.clicks)}%` }} />
                             </div>

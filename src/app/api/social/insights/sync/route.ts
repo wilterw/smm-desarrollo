@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getFacebookPostInsights, getFacebookAdInsights } from "@/lib/social/facebook";
+import { getYouTubeVideoMetrics, refreshYouTubeToken } from "@/lib/social/youtube";
 
 /**
  * GET /api/social/insights/sync?publicationId=...
@@ -39,7 +40,15 @@ export async function GET(req: NextRequest) {
 
     if (!account) return NextResponse.json({ error: "Social account not connected" }, { status: 400 });
 
-    let insights: any = null;
+    let insights: { 
+      success: boolean; 
+      reach?: number; 
+      clicks?: number; 
+      impressions?: number; 
+      spend?: number; 
+      engagement?: number;
+      error?: string 
+    } | null = null;
 
     if (publication.platform === "facebook") {
       if (publication.destination === "ads") {
@@ -47,8 +56,33 @@ export async function GET(req: NextRequest) {
       } else {
         insights = await getFacebookPostInsights(publication.externalPostId, account.accessToken);
       }
-    } 
-    // Add Instagram/YouTube logic here as needed
+    } else if (publication.platform === "youtube") {
+      let currentToken: string = account.accessToken;
+      
+      // Check if Google token is expired (they last 1h)
+      if (account.expiresAt && new Date(account.expiresAt) <= new Date()) {
+        if (account.refreshToken) {
+          try {
+            console.log(`[Sync] Refreshing expired YouTube token for account ${account.id}`);
+            currentToken = await refreshYouTubeToken(account.refreshToken);
+            
+            // Save new token and update expiration (approx 1h)
+            await prisma.socialAccount.update({
+              where: { id: account.id },
+              data: { 
+                accessToken: currentToken,
+                expiresAt: new Date(Date.now() + 3500 * 1000) 
+              }
+            });
+          } catch (refreshErr: unknown) {
+            const errMsg = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+            console.error("[Sync] Failed to refresh YT token:", errMsg);
+          }
+        }
+      }
+      
+      insights = await getYouTubeVideoMetrics(publication.externalPostId, currentToken);
+    }
 
     if (insights && insights.success) {
       const updated = await prisma.publication.update({
@@ -66,8 +100,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: insights?.error || "Could not fetch insights" }, { status: 500 });
     }
 
-  } catch (error: any) {
-    console.error("Sync error:", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : "Internal server error";
+    console.error("Sync error:", errMsg);
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

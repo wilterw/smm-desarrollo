@@ -141,7 +141,7 @@ export async function publishToYouTube(
 
     // ── Build Metadata ──
     // CRITICAL: Do NOT include an empty tags array — the YouTube API returns 400 if tags is empty.
-    const metadata: any = {
+    const metadata = {
       snippet: {
         title: cleanTitle,
         description: cleanDescription,
@@ -235,9 +235,10 @@ export async function publishToYouTube(
     console.log(`[YouTube API] ✓ Video uploaded successfully! ID: ${uploadData.id}`);
     console.log(`[YouTube API] Watch at: https://www.youtube.com/watch?v=${uploadData.id}`);
     return { success: true, videoId: uploadData.id };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error(`[YouTube API] ✗ Exception:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: message };
   }
 }
 
@@ -257,4 +258,46 @@ export async function publishToYouTubeShorts(
     : `${description}\n\n#Shorts`;
     
   return publishToYouTube(accessToken, title, shortDescription, videoBuffer, privacyStatus);
+}
+
+/**
+ * Fetch metrics for a YouTube video using the Data API v3
+ * Maps YouTube metrics -> SMM Publication fields:
+ *   viewCount     -> impressions
+ *   likeCount     -> reach
+ *   commentCount  -> clicks
+ */
+export async function getYouTubeVideoMetrics(
+  videoId: string,
+  accessToken: string
+): Promise<{
+  success: boolean;
+  impressions?: number;
+  reach?: number;
+  clicks?: number;
+  error?: string;
+}> {
+  try {
+    const endpoint = `${YT_API_URL}/videos?part=statistics&id=${videoId}&access_token=${accessToken}`;
+    const res = await fetch(endpoint);
+    const data = await res.json();
+
+    if (data.error) {
+      return { success: false, error: data.error.message };
+    }
+
+    if (!data.items || data.items.length === 0) {
+      return { success: false, error: "Video no encontrado en YouTube" };
+    }
+
+    const stats = data.items[0].statistics;
+    return {
+      success: true,
+      impressions: parseInt(stats.viewCount || "0"),
+      reach: parseInt(stats.likeCount || "0"),
+      clicks: parseInt(stats.commentCount || "0"),
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }
