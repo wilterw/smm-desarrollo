@@ -502,13 +502,26 @@ export async function POST(req: NextRequest) {
           }
           
           console.log(`[YouTube Upload] Subiendo video (${videoBuffer!.length} bytes) con título: "${ad.title}"`);
+          console.log(`[YouTube Upload] Destination: "${destination}"`);
           
           if (destination === "shorts") {
+            // Shorts: ensure #Shorts is in the description
+            console.log(`[YouTube Upload] → Publishing as YouTube SHORT`);
             const result = await publishToYouTubeShorts(accessTokenToUse, ad.title, message, videoBuffer!);
             if (!result.success) throw new Error(result.error);
             postId = result.videoId;
           } else {
-            const result = await publishToYouTube(accessTokenToUse, ad.title, message, videoBuffer!);
+            // Organic: REMOVE #Shorts from title and description to prevent
+            // YouTube from auto-classifying it as a Short
+            const organicMessage = message
+              .replace(/#Shorts\b/gi, "")
+              .replace(/\n{3,}/g, "\n\n")  // Clean up extra blank lines left behind
+              .trim();
+            const organicTitle = ad.title
+              .replace(/#Shorts\b/gi, "")
+              .trim();
+            console.log(`[YouTube Upload] → Publishing as ORGANIC video (stripped #Shorts if present)`);
+            const result = await publishToYouTube(accessTokenToUse, organicTitle, organicMessage, videoBuffer!);
             if (!result.success) throw new Error(result.error);
             postId = result.videoId;
           }
