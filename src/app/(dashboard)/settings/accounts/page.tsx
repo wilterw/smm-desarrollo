@@ -217,7 +217,26 @@ export default function AccountsPage() {
       </div>
 
       <div className={styles.infoBox}>
-        <strong>💡</strong> Conecta tus redes sociales y concede los permisos necesarios para poder publicar directamente desde SMM.
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <strong style={{ fontSize: '1.2rem' }}>💡</strong>
+          <div>
+            <p>Conecta tus redes sociales y concede los permisos necesarios para poder publicar directamente desde SMM.</p>
+            <div className={styles.revocationLinks}>
+              <p style={{ marginTop: '0.75rem', fontWeight: '500', fontSize: '0.8rem', opacity: 0.9 }}>Gestión de seguridad y privacidad:</p>
+              <ul className={styles.revocationList}>
+                <li>
+                  Google / YouTube: <a href="https://security.google.com/settings/security/permissions" target="_blank" rel="noopener noreferrer">Revocar acceso o gestionar permisos de Google</a>
+                </li>
+                <li>
+                  Meta (Facebook/Instagram): <a href="https://www.facebook.com/settings?tab=business_tools" target="_blank" rel="noopener noreferrer">Gestionar aplicaciones comerciales en Facebook</a>
+                </li>
+              </ul>
+              <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                Al conectar tus cuentas, aceptas nuestros <a href="/privacy-policy" style={{ textDecoration: 'underline' }}>Términos y Política de Privacidad</a>.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -97,3 +97,9 @@
 
 .infoBox { padding: 1rem; border-radius: var(--radius-md); background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
 .infoBox strong { color: var(--text-primary); }
+
+.revocationLinks { margin-top: 0.5rem; }
+.revocationList { list-style: disc; margin-left: 1.25rem; margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.revocationList li { font-size: 0.8rem; color: var(--text-secondary); }
+.revocationList a { color: var(--accent-primary); text-decoration: none; transition: all var(--transition-fast); }
+.revocationList a:hover { color: var(--accent-hover); text-decoration: underline; }
