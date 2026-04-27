@@ -101,38 +101,58 @@ export async function refreshYouTubeToken(refreshToken: string): Promise<string>
 
 /**
  * Upload a video to YouTube (resumable upload)
- * Note: For production, use resumable upload for large files
+ *
+ * IMPORTANT: Unverified Google Cloud projects can ONLY upload videos as "private".
+ * Setting privacyStatus to "public" or "unlisted" will return a 400 error.
+ * To upload as public, the project must pass Google's compliance audit:
+ * https://support.google.com/youtube/contact/yt_api_form
  */
 export async function publishToYouTube(
   accessToken: string,
   title: string,
   description: string,
-  videoBuffer: Buffer
+  videoBuffer: Buffer,
+  privacyStatus: "private" | "public" | "unlisted" = "private"
 ): Promise<YouTubePublishResult> {
   try {
-    // Sanitize metadata per YouTube API limits
-    const sanitizedTitle = (title || "").substring(0, 100).trim() || "Video de SMM";
-    const sanitizedDescription = (description || "").substring(0, 5000);
-    
-    // Remove any characters that could cause issues
-    const cleanTitle = sanitizedTitle.replace(/[<>]/g, "");
-    const cleanDescription = sanitizedDescription.replace(/[<>]/g, "");
+    // ── Sanitize Title ──
+    // YouTube limits: max 100 chars, no <>, no newlines, no control characters
+    let cleanTitle = (title || "")
+      .replace(/[\r\n]+/g, " ")          // Replace newlines with spaces
+      .replace(/[<>]/g, "")              // Remove angle brackets
+      .replace(/[\x00-\x1F\x7F]/g, "")  // Remove control characters
+      .substring(0, 100)
+      .trim();
+    if (!cleanTitle) cleanTitle = "Video de SMM";
 
-    console.log(`[YouTube API] Initiating resumable upload...`);
+    // ── Sanitize Description ──
+    // YouTube limits: max 5000 chars, no <>, keep newlines (they're valid in descriptions)
+    const cleanDescription = (description || "")
+      .replace(/[<>]/g, "")
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // Remove control chars except \n \r \t
+      .substring(0, 5000);
+
+    console.log(`[YouTube API] ═══ Initiating Resumable Upload ═══`);
     console.log(`[YouTube API] Title: "${cleanTitle}" (${cleanTitle.length} chars)`);
-    console.log(`[YouTube API] Video size: ${videoBuffer.length} bytes`);
+    console.log(`[YouTube API] Description length: ${cleanDescription.length} chars`);
+    console.log(`[YouTube API] Privacy: ${privacyStatus}`);
+    console.log(`[YouTube API] Video size: ${videoBuffer.length} bytes (${(videoBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
 
-    const metadata = {
+    // ── Build Metadata ──
+    // CRITICAL: Do NOT include an empty tags array — the YouTube API returns 400 if tags is empty.
+    const metadata: any = {
       snippet: {
         title: cleanTitle,
         description: cleanDescription,
-        categoryId: "22"
+        categoryId: "22"  // People & Blogs
       },
       status: {
-        privacyStatus: "public",
+        privacyStatus,
         selfDeclaredMadeForKids: false
       }
     };
+
+    console.log(`[YouTube API] Metadata payload:`, JSON.stringify(metadata, null, 2));
 
     // Step 1: Initiate resumable upload session
     // MUST use the /upload/ endpoint, not the standard API endpoint
@@ -154,12 +174,22 @@ export async function publishToYouTube(
     // If the metadata request itself failed, extract the error
     if (!metadataRes.ok) {
       const errBody = await metadataRes.text();
-      console.error(`[YouTube API] Metadata request failed (HTTP ${metadataRes.status}): ${errBody}`);
+      console.error(`[YouTube API] ✗ Metadata request failed (HTTP ${metadataRes.status})`);
+      console.error(`[YouTube API] Full error response: ${errBody}`);
       try {
         const errJson = JSON.parse(errBody);
         const errMsg = errJson?.error?.message || errJson?.error?.errors?.[0]?.message || errBody;
         const errReason = errJson?.error?.errors?.[0]?.reason || "";
-        return { success: false, error: `YouTube API (${metadataRes.status}): ${errMsg}${errReason ? ` [${errReason}]` : ""}` };
+        const errDomain = errJson?.error?.errors?.[0]?.domain || "";
+        const errLocation = errJson?.error?.errors?.[0]?.location || "";
+        
+        let hint = "";
+        if (errReason === "badRequest" && privacyStatus !== "private") {
+          hint = " HINT: Los proyectos de Google Cloud no verificados solo pueden subir videos como 'private'. Cambia privacyStatus a 'private' o verifica tu proyecto en https://support.google.com/youtube/contact/yt_api_form";
+        }
+        
+        console.error(`[YouTube API] Error details → reason: ${errReason}, domain: ${errDomain}, location: ${errLocation}`);
+        return { success: false, error: `YouTube API (${metadataRes.status}): ${errMsg}${errReason ? ` [${errReason}]` : ""}${hint}` };
       } catch {
         return { success: false, error: `YouTube API error (HTTP ${metadataRes.status}): ${errBody.substring(0, 500)}` };
       }
@@ -172,7 +202,7 @@ export async function publishToYouTube(
       return { success: false, error: "YouTube no devolvió una URL de subida. Respuesta: " + resText.substring(0, 300) };
     }
 
-    console.log(`[YouTube API] Upload URL obtained. Uploading ${videoBuffer.length} bytes...`);
+    console.log(`[YouTube API] ✓ Upload URL obtained. Uploading ${(videoBuffer.length / 1024 / 1024).toFixed(2)} MB...`);
 
     // Step 2: Upload the actual video bytes
     const uploadRes = await fetch(uploadUrl, {
@@ -201,27 +231,29 @@ export async function publishToYouTube(
       return { success: false, error: uploadData.error.message };
     }
 
-    console.log(`[YouTube API] Video uploaded successfully! ID: ${uploadData.id}`);
+    console.log(`[YouTube API] ✓ Video uploaded successfully! ID: ${uploadData.id}`);
+    console.log(`[YouTube API] Watch at: https://www.youtube.com/watch?v=${uploadData.id}`);
     return { success: true, videoId: uploadData.id };
   } catch (error: any) {
-    console.error(`[YouTube API] Exception:`, error);
+    console.error(`[YouTube API] ✗ Exception:`, error);
     return { success: false, error: error.message };
   }
 }
 
 /**
  * Upload a video to YouTube Shorts
+ * Shorts are recognized by the #Shorts hashtag in title or description
  */
 export async function publishToYouTubeShorts(
   accessToken: string,
   title: string,
   description: string,
-  videoBuffer: Buffer
+  videoBuffer: Buffer,
+  privacyStatus: "private" | "public" | "unlisted" = "private"
 ): Promise<YouTubePublishResult> {
-  // Shorts are recognized by the #Shorts hashtag in title or description
   const shortDescription = description.includes("#Shorts") 
     ? description 
     : `${description}\n\n#Shorts`;
     
-  return publishToYouTube(accessToken, title, shortDescription, videoBuffer);
+  return publishToYouTube(accessToken, title, shortDescription, videoBuffer, privacyStatus);
 }
